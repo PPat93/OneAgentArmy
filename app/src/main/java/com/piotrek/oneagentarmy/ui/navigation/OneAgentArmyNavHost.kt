@@ -1,6 +1,7 @@
 package com.piotrek.oneagentarmy.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
@@ -15,12 +16,15 @@ import com.piotrek.oneagentarmy.ui.chat.ChatScreen
 import com.piotrek.oneagentarmy.ui.chat.ChatViewModel
 import com.piotrek.oneagentarmy.ui.conversationlist.ConversationListScreen
 import com.piotrek.oneagentarmy.ui.conversationlist.ConversationListViewModel
+import kotlinx.coroutines.launch
 
 @Composable
 fun OneAgentArmyNavHost(
     conversationRepository: ConversationRepository,
     navController: NavHostController = rememberNavController(),
 ) {
+    val coroutineScope = rememberCoroutineScope()
+
     NavHost(navController = navController, startDestination = Destinations.CONVERSATION_LIST) {
         composable(Destinations.CONVERSATION_LIST) {
             val viewModel: ConversationListViewModel = viewModel(
@@ -34,8 +38,10 @@ fun OneAgentArmyNavHost(
                     navController.navigate(Destinations.chatRoute(conversationId))
                 },
                 onNewConversation = {
-                    val conversation = conversationRepository.createConversation(title = "Nowa rozmowa")
-                    navController.navigate(Destinations.chatRoute(conversation.id))
+                    coroutineScope.launch {
+                        val conversation = conversationRepository.createConversation(title = "Nowa rozmowa")
+                        navController.navigate(Destinations.chatRoute(conversation.id))
+                    }
                 },
             )
         }
