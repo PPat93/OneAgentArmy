@@ -1,0 +1,40 @@
+<resources>
+    <string name="app_name">OneAgentArmy</string>
+
+    <string name="new_conversation">Nowa rozmowa</string>
+    <string name="settings">Ustawienia</string>
+    <string name="back">Wstecz</string>
+    <string name="empty_conversation_list">Brak rozmów - kliknij +, żeby zacząć</string>
+    <string name="empty_chat">Napisz wiadomość, aby rozpocząć rozmowę</string>
+    <string name="message_placeholder">Napisz wiadomość…</string>
+    <string name="send">Wyślij</string>
+    <string name="rename">Zmień nazwę</string>
+    <string name="delete">Usuń</string>
+    <string name="save">Zapisz</string>
+    <string name="cancel">Anuluj</string>
+    <string name="clear">Wyczyść</string>
+    <string name="dismiss">Zamknij</string>
+
+    <string name="rename_conversation_title">Zmień nazwę rozmowy</string>
+    <string name="delete_conversation_title">Usunąć rozmowę?</string>
+    <string name="delete_conversation_text">Usunąć rozmowę \"%1$s\"? Tej operacji nie można cofnąć.</string>
+    <string name="clear_api_key_title">Wyczyścić klucz API?</string>
+    <string name="clear_api_key_text">Będziesz musiał wprowadzić go ponownie, żeby dalej rozmawiać z AI.</string>
+
+    <string name="error_missing_api_key">Nie skonfigurowano klucza API OpenAI.</string>
+    <string name="error_invalid_api_key">Klucz API został odrzucony przez OpenAI.</string>
+    <string name="error_no_connectivity">Brak połączenia z internetem.</string>
+    <string name="error_rate_limited">Przekroczono limit zapytań, spróbuj ponownie za chwilę.</string>
+    <string name="error_server">Błąd serwera OpenAI (%1$d), spróbuj ponownie.</string>
+    <string name="error_unknown">Nie udało się uzyskać odpowiedzi: %1$s</string>
+
+    <string name="api_key_configured">Klucz API: skonfigurowany</string>
+    <string name="api_key_missing">Klucz API: brak</string>
+    <string name="api_key_label">Klucz API</string>
+    <string name="coming_soon">Wkrótce</string>
+    <string name="model_section_title">Model AI</string>
+    <string name="model_label">Model</string>
+
+    <string name="model_gpt41_nano">GPT-4.1 nano - najtańszy ($0.10 / $0.40 za 1M tokenów)</string>
+    <string name="model_gpt56_luna">GPT-5.6 Luna - lepsza jakość ($1.00 / $6.00 za 1M tokenów)</string>
+</resources>

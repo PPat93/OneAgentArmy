@@ -3,9 +3,11 @@ package com.piotrek.oneagentarmy.ui.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.piotrek.oneagentarmy.data.repository.SettingsRepository
-import com.piotrek.oneagentarmy.provider.ai.openai.DEFAULT_OPENAI_MODEL
+import com.piotrek.oneagentarmy.provider.ai.AiProviderRegistry
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -13,19 +15,30 @@ class SettingsViewModel(
     private val repository: SettingsRepository,
 ) : ViewModel() {
 
-    val hasApiKey: StateFlow<Boolean> = repository.observeHasApiKey()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+    val activeProvider: StateFlow<String> = repository.observeActiveProvider()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AiProviderRegistry.OPENAI)
+
+    val apiKeyStates: StateFlow<Map<String, Boolean>> = combine(
+        AiProviderRegistry.providers.map { provider ->
+            repository.observeHasApiKey(provider.id).map { provider.id to it }
+        },
+    ) { pairs -> pairs.toMap() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
 
     val selectedModel: StateFlow<String> = repository.observeSelectedModel()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DEFAULT_OPENAI_MODEL)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AiProviderRegistry.DEFAULT_MODEL)
 
-    fun saveApiKey(key: String) {
+    fun saveApiKey(providerId: String, key: String) {
         if (key.isBlank()) return
-        viewModelScope.launch { repository.saveApiKey(key) }
+        viewModelScope.launch { repository.saveApiKey(providerId, key) }
     }
 
-    fun clearApiKey() {
-        viewModelScope.launch { repository.clearApiKey() }
+    fun clearApiKey(providerId: String) {
+        viewModelScope.launch { repository.clearApiKey(providerId) }
+    }
+
+    fun setActiveProvider(providerId: String) {
+        viewModelScope.launch { repository.setActiveProvider(providerId) }
     }
 
     fun selectModel(modelId: String) {

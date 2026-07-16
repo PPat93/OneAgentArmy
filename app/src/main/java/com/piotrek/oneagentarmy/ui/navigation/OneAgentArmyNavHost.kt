@@ -55,7 +55,9 @@ fun OneAgentArmyNavHost(
             val conversationId = backStackEntry.arguments?.getString(Destinations.CHAT_CONVERSATION_ID_ARG).orEmpty()
             val viewModel: ChatViewModel = viewModel(
                 factory = viewModelFactory {
-                    initializer { ChatViewModel(conversationId, conversationRepository, aiProvider, contextWindowStrategy) }
+                    initializer {
+                        ChatViewModel(conversationId, conversationRepository, settingsRepository, aiProvider, contextWindowStrategy)
+                    }
                 },
             )
             ChatScreen(

@@ -3,10 +3,13 @@ package com.piotrek.oneagentarmy.ui.chat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.piotrek.oneagentarmy.data.repository.ConversationRepository
+import com.piotrek.oneagentarmy.data.repository.SettingsRepository
 import com.piotrek.oneagentarmy.model.Message
 import com.piotrek.oneagentarmy.model.Sender
+import com.piotrek.oneagentarmy.provider.ai.AiModelOption
 import com.piotrek.oneagentarmy.provider.ai.AiProvider
 import com.piotrek.oneagentarmy.provider.ai.AiProviderException
+import com.piotrek.oneagentarmy.provider.ai.AiProviderRegistry
 import com.piotrek.oneagentarmy.provider.ai.ContextWindowStrategy
 import java.time.Instant
 import java.util.UUID
@@ -14,6 +17,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -30,6 +35,7 @@ sealed interface ChatError {
 class ChatViewModel(
     private val conversationId: String,
     private val repository: ConversationRepository,
+    private val settingsRepository: SettingsRepository,
     private val aiProvider: AiProvider,
     private val contextWindowStrategy: ContextWindowStrategy,
 ) : ViewModel() {
@@ -41,11 +47,36 @@ class ChatViewModel(
         .map { it?.title }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
+    // Model chosen in this screen before the conversation exists in the database.
+    // Once the conversation row exists, its persisted modelId wins.
+    private val pendingModel = MutableStateFlow<String?>(null)
+
+    val selectedModel: StateFlow<String?> = combine(
+        repository.observeConversation(conversationId),
+        pendingModel,
+        settingsRepository.observeSelectedModel(),
+    ) { conversation, pending, defaultModel ->
+        conversation?.modelId ?: pending ?: defaultModel
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    val availableModels: StateFlow<List<AiModelOption>> = settingsRepository.observeActiveProvider()
+        .map { AiProviderRegistry.byId(it)?.models.orEmpty() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
     private val _isSending = MutableStateFlow(false)
     val isSending: StateFlow<Boolean> = _isSending.asStateFlow()
 
     private val _error = MutableStateFlow<ChatError?>(null)
     val error: StateFlow<ChatError?> = _error.asStateFlow()
+
+    fun selectModel(modelId: String) {
+        viewModelScope.launch {
+            pendingModel.value = modelId
+            if (repository.observeConversation(conversationId).first() != null) {
+                repository.updateConversationModel(conversationId, modelId)
+            }
+        }
+    }
 
     fun sendMessage(text: String) {
         if (text.isBlank()) return
@@ -53,8 +84,11 @@ class ChatViewModel(
         viewModelScope.launch {
             _error.value = null
 
+            val modelId = selectedModel.value
+                ?: settingsRepository.observeSelectedModel().first()
+
             if (messages.value.isEmpty()) {
-                repository.createConversation(conversationId, deriveTitle(text))
+                repository.createConversation(conversationId, deriveTitle(text), modelId)
             }
 
             val userMessage = Message(
@@ -69,7 +103,7 @@ class ChatViewModel(
             _isSending.value = true
             try {
                 val historyToSend = contextWindowStrategy.apply(messages.value + userMessage)
-                val aiMessage = aiProvider.sendMessage(historyToSend)
+                val aiMessage = aiProvider.sendMessage(historyToSend, modelId)
                 repository.addMessage(conversationId, aiMessage)
             } catch (e: AiProviderException) {
                 _error.value = e.toChatError()

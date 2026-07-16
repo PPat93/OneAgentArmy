@@ -13,11 +13,14 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -36,7 +39,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.piotrek.oneagentarmy.R
+import com.piotrek.oneagentarmy.provider.ai.AiProviderRegistry
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,7 +55,10 @@ fun ChatScreen(
     val isSending by viewModel.isSending.collectAsState()
     val error by viewModel.error.collectAsState()
     val conversationTitle by viewModel.conversationTitle.collectAsState()
+    val selectedModel by viewModel.selectedModel.collectAsState()
+    val availableModels by viewModel.availableModels.collectAsState()
     var inputText by remember { mutableStateOf("") }
+    var modelMenuExpanded by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
 
     LaunchedEffect(messages.size) {
@@ -59,10 +68,39 @@ fun ChatScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(conversationTitle ?: "Nowa rozmowa") },
+                title = { Text(conversationTitle ?: stringResource(R.string.new_conversation)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Wstecz")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
+                    }
+                },
+                actions = {
+                    Box {
+                        TextButton(onClick = { modelMenuExpanded = true }) {
+                            Text(
+                                text = selectedModel?.let { AiProviderRegistry.shortLabelFor(it) } ?: "",
+                                color = MaterialTheme.colorScheme.primary,
+                            )
+                            Icon(
+                                Icons.Default.ArrowDropDown,
+                                contentDescription = stringResource(R.string.model_label),
+                                tint = MaterialTheme.colorScheme.primary,
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = modelMenuExpanded,
+                            onDismissRequest = { modelMenuExpanded = false },
+                        ) {
+                            availableModels.forEach { option ->
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(option.labelRes)) },
+                                    onClick = {
+                                        viewModel.selectModel(option.id)
+                                        modelMenuExpanded = false
+                                    },
+                                )
+                            }
+                        }
                     }
                 },
             )
@@ -80,7 +118,7 @@ fun ChatScreen(
                         .fillMaxWidth(),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text("Napisz wiadomość, aby rozpocząć rozmowę")
+                    Text(stringResource(R.string.empty_chat))
                 }
             } else {
                 LazyColumn(
@@ -115,7 +153,7 @@ fun ChatScreen(
                     value = inputText,
                     onValueChange = { inputText = it },
                     modifier = Modifier.weight(1f),
-                    placeholder = { Text("Napisz wiadomość...") },
+                    placeholder = { Text(stringResource(R.string.message_placeholder)) },
                     enabled = !isSending,
                 )
                 if (isSending) {
@@ -129,7 +167,7 @@ fun ChatScreen(
                     ) {
                         Icon(
                             Icons.Default.Send,
-                            contentDescription = "Wyślij",
+                            contentDescription = stringResource(R.string.send),
                             tint = MaterialTheme.colorScheme.primary,
                         )
                     }
@@ -146,15 +184,15 @@ private fun ChatErrorBanner(
     onNavigateToSettings: () -> Unit,
 ) {
     val (message, showSettingsAction) = when (error) {
-        ChatError.MissingApiKey -> "Nie skonfigurowano klucza API OpenAI." to true
+        ChatError.MissingApiKey -> stringResource(R.string.error_missing_api_key) to true
         is ChatError.InvalidApiKey ->
-            "Klucz API został odrzucony przez OpenAI.".withDetail(error.detail) to true
-        ChatError.NoConnectivity -> "Brak połączenia z internetem." to false
+            stringResource(R.string.error_invalid_api_key).withDetail(error.detail) to true
+        ChatError.NoConnectivity -> stringResource(R.string.error_no_connectivity) to false
         is ChatError.RateLimited ->
-            "Przekroczono limit zapytań, spróbuj ponownie za chwilę.".withDetail(error.detail) to false
+            stringResource(R.string.error_rate_limited).withDetail(error.detail) to false
         is ChatError.ServerError ->
-            "Błąd serwera OpenAI (${error.statusCode}), spróbuj ponownie.".withDetail(error.detail) to false
-        is ChatError.Unknown -> "Nie udało się uzyskać odpowiedzi: ${error.detail}" to false
+            stringResource(R.string.error_server, error.statusCode).withDetail(error.detail) to false
+        is ChatError.Unknown -> stringResource(R.string.error_unknown, error.detail) to false
     }
 
     Card(
@@ -168,11 +206,11 @@ private fun ChatErrorBanner(
             Row(modifier = Modifier.padding(top = 8.dp)) {
                 if (showSettingsAction) {
                     Button(onClick = onNavigateToSettings) {
-                        Text("Ustawienia")
+                        Text(stringResource(R.string.settings))
                     }
                 }
                 TextButton(onClick = onDismiss) {
-                    Text("Zamknij")
+                    Text(stringResource(R.string.dismiss))
                 }
             }
         }

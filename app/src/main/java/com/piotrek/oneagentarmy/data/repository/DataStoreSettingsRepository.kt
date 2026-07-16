@@ -6,7 +6,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.piotrek.oneagentarmy.data.local.crypto.ApiKeyCipher
 import com.piotrek.oneagentarmy.data.local.crypto.EncryptedBlob
-import com.piotrek.oneagentarmy.provider.ai.openai.DEFAULT_OPENAI_MODEL
+import com.piotrek.oneagentarmy.provider.ai.AiProviderRegistry
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -16,41 +16,50 @@ class DataStoreSettingsRepository(
     private val cipher: ApiKeyCipher,
 ) : SettingsRepository {
 
-    override fun observeHasApiKey(): Flow<Boolean> =
-        dataStore.data.map { prefs -> !prefs[API_KEY_CIPHERTEXT].isNullOrEmpty() }
+    private fun ivKey(providerId: String) = stringPreferencesKey("api_key_iv_$providerId")
+    private fun ciphertextKey(providerId: String) = stringPreferencesKey("api_key_ciphertext_$providerId")
 
-    override suspend fun getApiKey(): String? {
+    override fun observeHasApiKey(providerId: String): Flow<Boolean> =
+        dataStore.data.map { prefs -> !prefs[ciphertextKey(providerId)].isNullOrEmpty() }
+
+    override suspend fun getApiKey(providerId: String): String? {
         val prefs = dataStore.data.first()
-        val iv = prefs[API_KEY_IV] ?: return null
-        val ciphertext = prefs[API_KEY_CIPHERTEXT] ?: return null
+        val iv = prefs[ivKey(providerId)] ?: return null
+        val ciphertext = prefs[ciphertextKey(providerId)] ?: return null
         return cipher.decrypt(EncryptedBlob(iv, ciphertext))
     }
 
-    override suspend fun saveApiKey(key: String) {
+    override suspend fun saveApiKey(providerId: String, key: String) {
         val blob = cipher.encrypt(key)
         dataStore.edit { prefs ->
-            prefs[API_KEY_IV] = blob.iv
-            prefs[API_KEY_CIPHERTEXT] = blob.ciphertext
+            prefs[ivKey(providerId)] = blob.iv
+            prefs[ciphertextKey(providerId)] = blob.ciphertext
         }
     }
 
-    override suspend fun clearApiKey() {
+    override suspend fun clearApiKey(providerId: String) {
         dataStore.edit { prefs ->
-            prefs.remove(API_KEY_IV)
-            prefs.remove(API_KEY_CIPHERTEXT)
+            prefs.remove(ivKey(providerId))
+            prefs.remove(ciphertextKey(providerId))
         }
+    }
+
+    override fun observeActiveProvider(): Flow<String> =
+        dataStore.data.map { prefs -> prefs[ACTIVE_PROVIDER] ?: AiProviderRegistry.OPENAI }
+
+    override suspend fun setActiveProvider(providerId: String) {
+        dataStore.edit { prefs -> prefs[ACTIVE_PROVIDER] = providerId }
     }
 
     override fun observeSelectedModel(): Flow<String> =
-        dataStore.data.map { prefs -> prefs[SELECTED_MODEL] ?: DEFAULT_OPENAI_MODEL }
+        dataStore.data.map { prefs -> prefs[SELECTED_MODEL] ?: AiProviderRegistry.DEFAULT_MODEL }
 
     override suspend fun setSelectedModel(modelId: String) {
         dataStore.edit { prefs -> prefs[SELECTED_MODEL] = modelId }
     }
 
     private companion object {
-        val API_KEY_IV = stringPreferencesKey("api_key_iv")
-        val API_KEY_CIPHERTEXT = stringPreferencesKey("api_key_ciphertext")
+        val ACTIVE_PROVIDER = stringPreferencesKey("active_provider")
         val SELECTED_MODEL = stringPreferencesKey("selected_model")
     }
 }
