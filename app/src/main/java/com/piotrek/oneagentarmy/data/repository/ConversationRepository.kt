@@ -6,7 +6,10 @@ import kotlinx.coroutines.flow.Flow
 
 interface ConversationRepository {
     fun observeConversations(): Flow<List<Conversation>>
+    fun observeConversation(conversationId: String): Flow<Conversation?>
     fun observeMessages(conversationId: String): Flow<List<Message>>
-    suspend fun createConversation(title: String): Conversation
+    suspend fun createConversation(id: String, title: String)
     suspend fun addMessage(conversationId: String, message: Message)
+    suspend fun deleteConversation(conversationId: String)
+    suspend fun renameConversation(conversationId: String, title: String)
 }

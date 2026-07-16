@@ -10,6 +10,9 @@ interface ConversationDao {
     @Query("SELECT * FROM conversations ORDER BY createdAt DESC")
     fun observeConversations(): Flow<List<ConversationEntity>>
 
+    @Query("SELECT * FROM conversations WHERE id = :id")
+    fun observeConversation(id: String): Flow<ConversationEntity?>
+
     @Query("SELECT * FROM messages WHERE conversationId = :conversationId ORDER BY timestamp ASC")
     fun observeMessages(conversationId: String): Flow<List<MessageEntity>>
 
@@ -18,4 +21,10 @@ interface ConversationDao {
 
     @Insert
     suspend fun insertMessage(entity: MessageEntity)
+
+    @Query("DELETE FROM conversations WHERE id = :id")
+    suspend fun deleteConversation(id: String)
+
+    @Query("UPDATE conversations SET title = :title WHERE id = :id")
+    suspend fun renameConversation(id: String, title: String)
 }

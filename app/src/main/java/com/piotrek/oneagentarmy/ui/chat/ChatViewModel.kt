@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -36,6 +37,10 @@ class ChatViewModel(
     val messages: StateFlow<List<Message>> = repository.observeMessages(conversationId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    val conversationTitle: StateFlow<String?> = repository.observeConversation(conversationId)
+        .map { it?.title }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
     private val _isSending = MutableStateFlow(false)
     val isSending: StateFlow<Boolean> = _isSending.asStateFlow()
 
@@ -47,6 +52,10 @@ class ChatViewModel(
 
         viewModelScope.launch {
             _error.value = null
+
+            if (messages.value.isEmpty()) {
+                repository.createConversation(conversationId, deriveTitle(text))
+            }
 
             val userMessage = Message(
                 id = UUID.randomUUID().toString(),
@@ -73,6 +82,11 @@ class ChatViewModel(
     fun dismissError() {
         _error.value = null
     }
+}
+
+private fun deriveTitle(messageText: String): String {
+    val singleLine = messageText.replace('\n', ' ').trim()
+    return if (singleLine.length <= 50) singleLine else singleLine.take(50) + "…"
 }
 
 private fun AiProviderException.toChatError(): ChatError = when (this) {
