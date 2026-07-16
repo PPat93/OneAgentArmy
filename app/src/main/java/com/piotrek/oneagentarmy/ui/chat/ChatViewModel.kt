@@ -24,20 +24,20 @@ class ChatViewModel(
     fun sendMessage(text: String) {
         if (text.isBlank()) return
 
-        repository.addMessage(
-            conversationId,
-            Message(
-                id = UUID.randomUUID().toString(),
-                conversationId = conversationId,
-                sender = Sender.USER,
-                text = text,
-                timestamp = Instant.now(),
-            ),
-        )
-
         // Stage 1 has no real AiProvider wired in yet - this canned echo marks the seam
         // where a real OpenAI call will replace it in a later stage.
         viewModelScope.launch {
+            repository.addMessage(
+                conversationId,
+                Message(
+                    id = UUID.randomUUID().toString(),
+                    conversationId = conversationId,
+                    sender = Sender.USER,
+                    text = text,
+                    timestamp = Instant.now(),
+                ),
+            )
+
             delay(500)
             repository.addMessage(
                 conversationId,
