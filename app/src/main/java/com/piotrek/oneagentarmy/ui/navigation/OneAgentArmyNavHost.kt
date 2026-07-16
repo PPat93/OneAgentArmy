@@ -12,15 +12,23 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.piotrek.oneagentarmy.data.repository.ConversationRepository
+import com.piotrek.oneagentarmy.data.repository.SettingsRepository
+import com.piotrek.oneagentarmy.provider.ai.AiProvider
+import com.piotrek.oneagentarmy.provider.ai.ContextWindowStrategy
 import com.piotrek.oneagentarmy.ui.chat.ChatScreen
 import com.piotrek.oneagentarmy.ui.chat.ChatViewModel
 import com.piotrek.oneagentarmy.ui.conversationlist.ConversationListScreen
 import com.piotrek.oneagentarmy.ui.conversationlist.ConversationListViewModel
+import com.piotrek.oneagentarmy.ui.settings.SettingsScreen
+import com.piotrek.oneagentarmy.ui.settings.SettingsViewModel
 import kotlinx.coroutines.launch
 
 @Composable
 fun OneAgentArmyNavHost(
     conversationRepository: ConversationRepository,
+    settingsRepository: SettingsRepository,
+    aiProvider: AiProvider,
+    contextWindowStrategy: ContextWindowStrategy,
     navController: NavHostController = rememberNavController(),
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -43,6 +51,7 @@ fun OneAgentArmyNavHost(
                         navController.navigate(Destinations.chatRoute(conversation.id))
                     }
                 },
+                onNavigateToSettings = { navController.navigate(Destinations.SETTINGS) },
             )
         }
         composable(
@@ -52,10 +61,22 @@ fun OneAgentArmyNavHost(
             val conversationId = backStackEntry.arguments?.getString(Destinations.CHAT_CONVERSATION_ID_ARG).orEmpty()
             val viewModel: ChatViewModel = viewModel(
                 factory = viewModelFactory {
-                    initializer { ChatViewModel(conversationId, conversationRepository) }
+                    initializer { ChatViewModel(conversationId, conversationRepository, aiProvider, contextWindowStrategy) }
                 },
             )
             ChatScreen(
+                viewModel = viewModel,
+                onBack = { navController.popBackStack() },
+                onNavigateToSettings = { navController.navigate(Destinations.SETTINGS) },
+            )
+        }
+        composable(Destinations.SETTINGS) {
+            val viewModel: SettingsViewModel = viewModel(
+                factory = viewModelFactory {
+                    initializer { SettingsViewModel(settingsRepository) }
+                },
+            )
+            SettingsScreen(
                 viewModel = viewModel,
                 onBack = { navController.popBackStack() },
             )

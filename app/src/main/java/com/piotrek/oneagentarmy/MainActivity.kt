@@ -18,7 +18,12 @@ class MainActivity : ComponentActivity() {
         setContent {
             OneAgentArmyTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    OneAgentArmyNavHost(conversationRepository = container.conversationRepository)
+                    OneAgentArmyNavHost(
+                        conversationRepository = container.conversationRepository,
+                        settingsRepository = container.settingsRepository,
+                        aiProvider = container.aiProvider,
+                        contextWindowStrategy = container.contextWindowStrategy,
+                    )
                 }
             }
         }
