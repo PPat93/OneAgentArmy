@@ -13,12 +13,18 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Send
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -36,8 +42,11 @@ import androidx.compose.ui.unit.dp
 fun ChatScreen(
     viewModel: ChatViewModel,
     onBack: () -> Unit,
+    onNavigateToSettings: () -> Unit,
 ) {
     val messages by viewModel.messages.collectAsState()
+    val isSending by viewModel.isSending.collectAsState()
+    val error by viewModel.error.collectAsState()
     var inputText by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
 
@@ -74,6 +83,15 @@ fun ChatScreen(
                     ChatBubble(message = message)
                 }
             }
+
+            error?.let { chatError ->
+                ChatErrorBanner(
+                    error = chatError,
+                    onDismiss = viewModel::dismissError,
+                    onNavigateToSettings = onNavigateToSettings,
+                )
+            }
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -85,16 +103,64 @@ fun ChatScreen(
                     onValueChange = { inputText = it },
                     modifier = Modifier.weight(1f),
                     placeholder = { Text("Napisz wiadomość...") },
+                    enabled = !isSending,
                 )
-                IconButton(
-                    onClick = {
-                        viewModel.sendMessage(inputText)
-                        inputText = ""
-                    },
-                ) {
-                    Icon(Icons.Default.Send, contentDescription = "Wyślij")
+                if (isSending) {
+                    CircularProgressIndicator(modifier = Modifier.padding(12.dp))
+                } else {
+                    IconButton(
+                        onClick = {
+                            viewModel.sendMessage(inputText)
+                            inputText = ""
+                        },
+                    ) {
+                        Icon(Icons.Default.Send, contentDescription = "Wyślij")
+                    }
                 }
             }
         }
     }
 }
+
+@Composable
+private fun ChatErrorBanner(
+    error: ChatError,
+    onDismiss: () -> Unit,
+    onNavigateToSettings: () -> Unit,
+) {
+    val (message, showSettingsAction) = when (error) {
+        ChatError.MissingApiKey -> "Nie skonfigurowano klucza API OpenAI." to true
+        is ChatError.InvalidApiKey ->
+            "Klucz API został odrzucony przez OpenAI.".withDetail(error.detail) to true
+        ChatError.NoConnectivity -> "Brak połączenia z internetem." to false
+        is ChatError.RateLimited ->
+            "Przekroczono limit zapytań, spróbuj ponownie za chwilę.".withDetail(error.detail) to false
+        is ChatError.ServerError ->
+            "Błąd serwera OpenAI (${error.statusCode}), spróbuj ponownie.".withDetail(error.detail) to false
+        is ChatError.Unknown -> "Nie udało się uzyskać odpowiedzi: ${error.detail}" to false
+    }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text(text = message, color = MaterialTheme.colorScheme.onErrorContainer)
+            Row(modifier = Modifier.padding(top = 8.dp)) {
+                if (showSettingsAction) {
+                    Button(onClick = onNavigateToSettings) {
+                        Text("Ustawienia")
+                    }
+                }
+                TextButton(onClick = onDismiss) {
+                    Text("Zamknij")
+                }
+            }
+        }
+    }
+}
+
+private fun String.withDetail(detail: String?): String =
+    if (detail.isNullOrBlank()) this else "$this\n$detail"
