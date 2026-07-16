@@ -27,14 +27,14 @@ fun ChatBubble(message: Message, modifier: Modifier = Modifier) {
             modifier = Modifier
                 .widthIn(max = 280.dp)
                 .background(
-                    color = if (isUser) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+                    color = if (isUser) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.tertiaryContainer,
                     shape = RoundedCornerShape(16.dp),
                 )
                 .padding(horizontal = 12.dp, vertical = 8.dp),
         ) {
             Text(
                 text = message.text,
-                color = if (isUser) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                color = if (isUser) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onTertiaryContainer,
             )
         }
     }

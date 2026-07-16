@@ -1,6 +1,7 @@
 package com.piotrek.oneagentarmy.ui.settings
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,11 +11,14 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -60,63 +64,77 @@ fun SettingsScreen(
                 .fillMaxWidth()
                 .padding(innerPadding)
                 .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Text(if (hasApiKey) "Klucz API: skonfigurowany" else "Klucz API: brak")
+            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = if (hasApiKey) "Klucz API: skonfigurowany" else "Klucz API: brak",
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    )
 
-            OutlinedTextField(
-                value = apiKeyInput,
-                onValueChange = { apiKeyInput = it },
-                label = { Text("Klucz API OpenAI") },
-                visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp),
-            )
+                    OutlinedTextField(
+                        value = apiKeyInput,
+                        onValueChange = { apiKeyInput = it },
+                        label = { Text("Klucz API OpenAI") },
+                        visualTransformation = PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp),
+                    )
 
-            Row(modifier = Modifier.padding(top = 8.dp)) {
-                Button(
-                    onClick = {
-                        viewModel.saveApiKey(apiKeyInput)
-                        apiKeyInput = ""
-                    },
-                ) {
-                    Text("Zapisz")
-                }
-                TextButton(onClick = { viewModel.clearApiKey() }) {
-                    Text("Wyczyść")
+                    Row(modifier = Modifier.padding(top = 8.dp)) {
+                        Button(
+                            onClick = {
+                                viewModel.saveApiKey(apiKeyInput)
+                                apiKeyInput = ""
+                            },
+                        ) {
+                            Text("Zapisz")
+                        }
+                        TextButton(onClick = { viewModel.clearApiKey() }) {
+                            Text("Wyczyść")
+                        }
+                    }
                 }
             }
 
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 24.dp),
-            ) {
-                OutlinedTextField(
-                    value = OPENAI_MODEL_OPTIONS.firstOrNull { it.id == selectedModel }?.label ?: selectedModel,
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("Model") },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                Box(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .clickable { modelMenuExpanded = true },
-                )
-                DropdownMenu(
-                    expanded = modelMenuExpanded,
-                    onDismissRequest = { modelMenuExpanded = false },
-                ) {
-                    OPENAI_MODEL_OPTIONS.forEach { option ->
-                        DropdownMenuItem(
-                            text = { Text(option.label) },
-                            onClick = {
-                                viewModel.selectModel(option.id)
-                                modelMenuExpanded = false
-                            },
+            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text("Model AI", color = MaterialTheme.colorScheme.onTertiaryContainer)
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp),
+                    ) {
+                        OutlinedTextField(
+                            value = OPENAI_MODEL_OPTIONS.firstOrNull { it.id == selectedModel }?.label ?: selectedModel,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Model") },
+                            modifier = Modifier.fillMaxWidth(),
                         )
+                        Box(
+                            modifier = Modifier
+                                .matchParentSize()
+                                .clickable { modelMenuExpanded = true },
+                        )
+                        DropdownMenu(
+                            expanded = modelMenuExpanded,
+                            onDismissRequest = { modelMenuExpanded = false },
+                        ) {
+                            OPENAI_MODEL_OPTIONS.forEach { option ->
+                                DropdownMenuItem(
+                                    text = { Text(option.label) },
+                                    onClick = {
+                                        viewModel.selectModel(option.id)
+                                        modelMenuExpanded = false
+                                    },
+                                )
+                            }
+                        }
                     }
                 }
             }

@@ -1,6 +1,7 @@
 package com.piotrek.oneagentarmy.ui.chat
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -47,6 +48,7 @@ fun ChatScreen(
     val messages by viewModel.messages.collectAsState()
     val isSending by viewModel.isSending.collectAsState()
     val error by viewModel.error.collectAsState()
+    val conversationTitle by viewModel.conversationTitle.collectAsState()
     var inputText by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
 
@@ -57,7 +59,7 @@ fun ChatScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Czat") },
+                title = { Text(conversationTitle ?: "Nowa rozmowa") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Wstecz")
@@ -71,16 +73,27 @@ fun ChatScreen(
                 .fillMaxSize()
                 .padding(innerPadding),
         ) {
-            LazyColumn(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
-                state = listState,
-                contentPadding = PaddingValues(12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                items(messages, key = { it.id }) { message ->
-                    ChatBubble(message = message)
+            if (messages.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text("Napisz wiadomość, aby rozpocząć rozmowę")
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                    state = listState,
+                    contentPadding = PaddingValues(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    items(messages, key = { it.id }) { message ->
+                        ChatBubble(message = message)
+                    }
                 }
             }
 
@@ -114,7 +127,11 @@ fun ChatScreen(
                             inputText = ""
                         },
                     ) {
-                        Icon(Icons.Default.Send, contentDescription = "Wyślij")
+                        Icon(
+                            Icons.Default.Send,
+                            contentDescription = "Wyślij",
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
                     }
                 }
             }

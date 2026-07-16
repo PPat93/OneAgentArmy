@@ -6,7 +6,6 @@ import com.piotrek.oneagentarmy.data.local.toEntity
 import com.piotrek.oneagentarmy.model.Conversation
 import com.piotrek.oneagentarmy.model.Message
 import java.time.Instant
-import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -17,20 +16,26 @@ class RoomConversationRepository(
     override fun observeConversations(): Flow<List<Conversation>> =
         dao.observeConversations().map { entities -> entities.map { it.toDomain() } }
 
+    override fun observeConversation(conversationId: String): Flow<Conversation?> =
+        dao.observeConversation(conversationId).map { it?.toDomain() }
+
     override fun observeMessages(conversationId: String): Flow<List<Message>> =
         dao.observeMessages(conversationId).map { entities -> entities.map { it.toDomain() } }
 
-    override suspend fun createConversation(title: String): Conversation {
-        val conversation = Conversation(
-            id = UUID.randomUUID().toString(),
-            title = title,
-            createdAt = Instant.now(),
-        )
+    override suspend fun createConversation(id: String, title: String) {
+        val conversation = Conversation(id = id, title = title, createdAt = Instant.now())
         dao.insertConversation(conversation.toEntity())
-        return conversation
     }
 
     override suspend fun addMessage(conversationId: String, message: Message) {
         dao.insertMessage(message.toEntity())
+    }
+
+    override suspend fun deleteConversation(conversationId: String) {
+        dao.deleteConversation(conversationId)
+    }
+
+    override suspend fun renameConversation(conversationId: String, title: String) {
+        dao.renameConversation(conversationId, title)
     }
 }
