@@ -10,6 +10,8 @@
     <string name="send">Send</string>
     <string name="rename">Rename</string>
     <string name="delete">Delete</string>
+    <string name="copy_message">Copy message</string>
+    <string name="resend_message">Resend message</string>
     <string name="save">Save</string>
     <string name="cancel">Cancel</string>
     <string name="clear">Clear</string>

@@ -10,6 +10,8 @@
     <string name="send">Wyślij</string>
     <string name="rename">Zmień nazwę</string>
     <string name="delete">Usuń</string>
+    <string name="copy_message">Kopiuj wiadomość</string>
+    <string name="resend_message">Wyślij ponownie</string>
     <string name="save">Zapisz</string>
     <string name="cancel">Anuluj</string>
     <string name="clear">Wyczyść</string>

@@ -26,7 +26,7 @@ import kotlinx.coroutines.launch
 sealed interface ChatError {
     data object MissingApiKey : ChatError
     data class InvalidApiKey(val detail: String?) : ChatError
-    data object NoConnectivity : ChatError
+    data class NoConnectivity(val detail: String?) : ChatError
     data class RateLimited(val retryAfterSeconds: Int?, val detail: String?) : ChatError
     data class ServerError(val statusCode: Int, val detail: String?) : ChatError
     data class Unknown(val detail: String) : ChatError
@@ -84,8 +84,7 @@ class ChatViewModel(
         viewModelScope.launch {
             _error.value = null
 
-            val modelId = selectedModel.value
-                ?: settingsRepository.observeSelectedModel().first()
+            val modelId = currentModelId()
 
             if (messages.value.isEmpty()) {
                 repository.createConversation(conversationId, deriveTitle(text), modelId)
@@ -100,21 +99,47 @@ class ChatViewModel(
             )
             repository.addMessage(conversationId, userMessage)
 
-            _isSending.value = true
-            try {
-                val historyToSend = contextWindowStrategy.apply(messages.value + userMessage)
-                val aiMessage = aiProvider.sendMessage(historyToSend, modelId)
-                repository.addMessage(conversationId, aiMessage)
-            } catch (e: AiProviderException) {
-                _error.value = e.toChatError()
-            } finally {
-                _isSending.value = false
+            requestAiReply(messages.value + userMessage, modelId)
+        }
+    }
+
+    // Retry semantics: if the message is the last one in the conversation (its AI reply
+    // never arrived), just re-request the reply; otherwise re-send it as a new message.
+    fun resendMessage(message: Message) {
+        viewModelScope.launch {
+            _error.value = null
+
+            val modelId = currentModelId()
+            val current = messages.value
+
+            if (current.lastOrNull()?.id == message.id) {
+                requestAiReply(current, modelId)
+            } else {
+                val copy = message.copy(id = UUID.randomUUID().toString(), timestamp = Instant.now())
+                repository.addMessage(conversationId, copy)
+                requestAiReply(current + copy, modelId)
             }
         }
     }
 
     fun dismissError() {
         _error.value = null
+    }
+
+    private suspend fun currentModelId(): String =
+        selectedModel.value ?: settingsRepository.observeSelectedModel().first()
+
+    private suspend fun requestAiReply(history: List<Message>, modelId: String) {
+        _isSending.value = true
+        try {
+            val historyToSend = contextWindowStrategy.apply(history)
+            val aiMessage = aiProvider.sendMessage(historyToSend, modelId)
+            repository.addMessage(conversationId, aiMessage)
+        } catch (e: AiProviderException) {
+            _error.value = e.toChatError()
+        } finally {
+            _isSending.value = false
+        }
     }
 }
 
@@ -126,7 +151,7 @@ private fun deriveTitle(messageText: String): String {
 private fun AiProviderException.toChatError(): ChatError = when (this) {
     is AiProviderException.MissingApiKey -> ChatError.MissingApiKey
     is AiProviderException.InvalidApiKey -> ChatError.InvalidApiKey(detail)
-    is AiProviderException.NoConnectivity -> ChatError.NoConnectivity
+    is AiProviderException.NoConnectivity -> ChatError.NoConnectivity(detail)
     is AiProviderException.RateLimited -> ChatError.RateLimited(retryAfterSeconds, detail)
     is AiProviderException.ServerError -> ChatError.ServerError(statusCode, detail)
     is AiProviderException.Unknown -> ChatError.Unknown(detail)

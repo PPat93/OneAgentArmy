@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Settings
@@ -44,6 +45,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import com.piotrek.oneagentarmy.R
 import com.piotrek.oneagentarmy.model.Conversation
@@ -210,7 +212,12 @@ private fun RenameConversationDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.rename_conversation_title)) },
         text = {
-            OutlinedTextField(value = text, onValueChange = { text = it }, singleLine = true)
+            OutlinedTextField(
+                value = text,
+                onValueChange = { text = it },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+            )
         },
         confirmButton = {
             TextButton(onClick = { onConfirm(text) }) { Text(stringResource(R.string.save)) }
