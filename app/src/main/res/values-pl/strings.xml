@@ -12,6 +12,9 @@
     <string name="delete">Usuń</string>
     <string name="copy_message">Kopiuj wiadomość</string>
     <string name="resend_message">Wyślij ponownie</string>
+    <string name="search">Szukaj</string>
+    <string name="search_hint">Szukaj w wiadomościach…</string>
+    <string name="search_no_results">Brak wyników</string>
     <string name="save">Zapisz</string>
     <string name="cancel">Anuluj</string>
     <string name="clear">Wyczyść</string>

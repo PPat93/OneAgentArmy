@@ -30,4 +30,16 @@ interface ConversationDao {
 
     @Query("UPDATE conversations SET modelId = :modelId WHERE id = :id")
     suspend fun updateConversationModel(id: String, modelId: String)
+
+    // Caller is responsible for escaping %, _ and \ in the query (see RoomConversationRepository).
+    @Query(
+        """
+        SELECT messages.*, conversations.title AS conversationTitle
+        FROM messages
+        JOIN conversations ON conversations.id = messages.conversationId
+        WHERE messages.text LIKE '%' || :escapedQuery || '%' ESCAPE '\'
+        ORDER BY messages.timestamp DESC
+        """,
+    )
+    fun searchMessages(escapedQuery: String): Flow<List<MessageSearchRow>>
 }

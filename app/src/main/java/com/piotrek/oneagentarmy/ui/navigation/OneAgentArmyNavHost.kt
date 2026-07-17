@@ -18,6 +18,8 @@ import com.piotrek.oneagentarmy.ui.chat.ChatScreen
 import com.piotrek.oneagentarmy.ui.chat.ChatViewModel
 import com.piotrek.oneagentarmy.ui.conversationlist.ConversationListScreen
 import com.piotrek.oneagentarmy.ui.conversationlist.ConversationListViewModel
+import com.piotrek.oneagentarmy.ui.search.SearchScreen
+import com.piotrek.oneagentarmy.ui.search.SearchViewModel
 import com.piotrek.oneagentarmy.ui.settings.SettingsScreen
 import com.piotrek.oneagentarmy.ui.settings.SettingsViewModel
 import java.util.UUID
@@ -46,13 +48,22 @@ fun OneAgentArmyNavHost(
                     navController.navigate(Destinations.chatRoute(UUID.randomUUID().toString()))
                 },
                 onNavigateToSettings = { navController.navigate(Destinations.SETTINGS) },
+                onNavigateToSearch = { navController.navigate(Destinations.SEARCH) },
             )
         }
         composable(
             route = Destinations.CHAT,
-            arguments = listOf(navArgument(Destinations.CHAT_CONVERSATION_ID_ARG) { type = NavType.StringType }),
+            arguments = listOf(
+                navArgument(Destinations.CHAT_CONVERSATION_ID_ARG) { type = NavType.StringType },
+                navArgument(Destinations.CHAT_FOCUS_MESSAGE_ID_ARG) {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+            ),
         ) { backStackEntry ->
             val conversationId = backStackEntry.arguments?.getString(Destinations.CHAT_CONVERSATION_ID_ARG).orEmpty()
+            val focusMessageId = backStackEntry.arguments?.getString(Destinations.CHAT_FOCUS_MESSAGE_ID_ARG)
             val viewModel: ChatViewModel = viewModel(
                 factory = viewModelFactory {
                     initializer {
@@ -62,8 +73,23 @@ fun OneAgentArmyNavHost(
             )
             ChatScreen(
                 viewModel = viewModel,
+                focusMessageId = focusMessageId,
                 onBack = { navController.popBackStack() },
                 onNavigateToSettings = { navController.navigate(Destinations.SETTINGS) },
+            )
+        }
+        composable(Destinations.SEARCH) {
+            val viewModel: SearchViewModel = viewModel(
+                factory = viewModelFactory {
+                    initializer { SearchViewModel(conversationRepository) }
+                },
+            )
+            SearchScreen(
+                viewModel = viewModel,
+                onBack = { navController.popBackStack() },
+                onResultClick = { conversationId, messageId ->
+                    navController.navigate(Destinations.chatRoute(conversationId, focusMessageId = messageId))
+                },
             )
         }
         composable(Destinations.SETTINGS) {

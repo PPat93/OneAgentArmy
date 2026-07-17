@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -46,6 +47,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.piotrek.oneagentarmy.R
 import com.piotrek.oneagentarmy.model.Conversation
@@ -60,6 +62,7 @@ fun ConversationListScreen(
     onConversationClick: (String) -> Unit,
     onNewConversation: () -> Unit,
     onNavigateToSettings: () -> Unit,
+    onNavigateToSearch: () -> Unit,
 ) {
     val conversations by viewModel.conversations.collectAsState()
     var renameDialogFor by remember { mutableStateOf<Conversation?>(null) }
@@ -80,6 +83,9 @@ fun ConversationListScreen(
                     )
                 },
                 actions = {
+                    IconButton(onClick = onNavigateToSearch) {
+                        Icon(Icons.Default.Search, contentDescription = stringResource(R.string.search))
+                    }
                     IconButton(onClick = onNavigateToSettings) {
                         Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.settings))
                     }
@@ -171,7 +177,14 @@ private fun ConversationRow(
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
         ) {
             ListItem(
-                headlineContent = { Text(conversation.title, color = MaterialTheme.colorScheme.onPrimaryContainer) },
+                headlineContent = {
+                    Text(
+                        conversation.title,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                },
                 supportingContent = {
                     Text(
                         formatter.format(conversation.createdAt),

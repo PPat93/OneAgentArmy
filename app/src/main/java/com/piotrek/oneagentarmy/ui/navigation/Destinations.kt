@@ -3,8 +3,15 @@ package com.piotrek.oneagentarmy.ui.navigation
 object Destinations {
     const val CONVERSATION_LIST = "conversationList"
     const val CHAT_CONVERSATION_ID_ARG = "conversationId"
-    const val CHAT = "chat/{$CHAT_CONVERSATION_ID_ARG}"
+    const val CHAT_FOCUS_MESSAGE_ID_ARG = "focusMessageId"
+    const val CHAT = "chat/{$CHAT_CONVERSATION_ID_ARG}?$CHAT_FOCUS_MESSAGE_ID_ARG={$CHAT_FOCUS_MESSAGE_ID_ARG}"
     const val SETTINGS = "settings"
+    const val SEARCH = "search"
 
-    fun chatRoute(conversationId: String) = "chat/$conversationId"
+    fun chatRoute(conversationId: String, focusMessageId: String? = null): String =
+        if (focusMessageId != null) {
+            "chat/$conversationId?$CHAT_FOCUS_MESSAGE_ID_ARG=$focusMessageId"
+        } else {
+            "chat/$conversationId"
+        }
 }

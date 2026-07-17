@@ -5,6 +5,7 @@ import com.piotrek.oneagentarmy.data.local.toDomain
 import com.piotrek.oneagentarmy.data.local.toEntity
 import com.piotrek.oneagentarmy.model.Conversation
 import com.piotrek.oneagentarmy.model.Message
+import com.piotrek.oneagentarmy.model.MessageSearchResult
 import java.time.Instant
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -41,5 +42,15 @@ class RoomConversationRepository(
 
     override suspend fun updateConversationModel(conversationId: String, modelId: String) {
         dao.updateConversationModel(conversationId, modelId)
+    }
+
+    override fun searchMessages(query: String): Flow<List<MessageSearchResult>> {
+        val escaped = query
+            .replace("\\", "\\\\")
+            .replace("%", "\\%")
+            .replace("_", "\\_")
+        return dao.searchMessages(escaped).map { rows ->
+            rows.map { MessageSearchResult(message = it.message.toDomain(), conversationTitle = it.conversationTitle) }
+        }
     }
 }

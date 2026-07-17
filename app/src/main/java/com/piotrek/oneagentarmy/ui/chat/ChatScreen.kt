@@ -42,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.piotrek.oneagentarmy.R
 import com.piotrek.oneagentarmy.model.Sender
@@ -51,6 +52,7 @@ import com.piotrek.oneagentarmy.provider.ai.AiProviderRegistry
 @Composable
 fun ChatScreen(
     viewModel: ChatViewModel,
+    focusMessageId: String?,
     onBack: () -> Unit,
     onNavigateToSettings: () -> Unit,
 ) {
@@ -64,14 +66,33 @@ fun ChatScreen(
     var modelMenuExpanded by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
 
+    // With reverseLayout, index 0 is the newest message and the list is anchored to the
+    // bottom natively - immune to bubbles growing after async markdown parsing finishes.
+    val reversedMessages = remember(messages) { messages.asReversed() }
+
+    var initialScrollHandled by remember { mutableStateOf(false) }
     LaunchedEffect(messages.size) {
-        if (messages.isNotEmpty()) listState.animateScrollToItem(messages.lastIndex)
+        if (messages.isEmpty()) return@LaunchedEffect
+        if (!initialScrollHandled && focusMessageId != null) {
+            // Opened from a search result - land on the matched message instead of the bottom.
+            val index = reversedMessages.indexOfFirst { it.id == focusMessageId }
+            listState.scrollToItem(index.coerceAtLeast(0))
+        } else {
+            listState.animateScrollToItem(0)
+        }
+        initialScrollHandled = true
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(conversationTitle ?: stringResource(R.string.new_conversation)) },
+                title = {
+                    Text(
+                        conversationTitle ?: stringResource(R.string.new_conversation),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
@@ -129,10 +150,11 @@ fun ChatScreen(
                         .weight(1f)
                         .fillMaxWidth(),
                     state = listState,
+                    reverseLayout = true,
                     contentPadding = PaddingValues(12.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    items(messages, key = { it.id }) { message ->
+                    items(reversedMessages, key = { it.id }) { message ->
                         ChatBubble(
                             message = message,
                             onResend = if (message.sender == Sender.USER) {
