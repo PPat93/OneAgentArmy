@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -40,14 +41,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.piotrek.oneagentarmy.R
+import com.piotrek.oneagentarmy.model.Sender
 import com.piotrek.oneagentarmy.provider.ai.AiProviderRegistry
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(
     viewModel: ChatViewModel,
+    focusMessageId: String?,
     onBack: () -> Unit,
     onNavigateToSettings: () -> Unit,
 ) {
@@ -61,14 +66,33 @@ fun ChatScreen(
     var modelMenuExpanded by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
 
+    // With reverseLayout, index 0 is the newest message and the list is anchored to the
+    // bottom natively - immune to bubbles growing after async markdown parsing finishes.
+    val reversedMessages = remember(messages) { messages.asReversed() }
+
+    var initialScrollHandled by remember { mutableStateOf(false) }
     LaunchedEffect(messages.size) {
-        if (messages.isNotEmpty()) listState.animateScrollToItem(messages.lastIndex)
+        if (messages.isEmpty()) return@LaunchedEffect
+        if (!initialScrollHandled && focusMessageId != null) {
+            // Opened from a search result - land on the matched message instead of the bottom.
+            val index = reversedMessages.indexOfFirst { it.id == focusMessageId }
+            listState.scrollToItem(index.coerceAtLeast(0))
+        } else {
+            listState.animateScrollToItem(0)
+        }
+        initialScrollHandled = true
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(conversationTitle ?: stringResource(R.string.new_conversation)) },
+                title = {
+                    Text(
+                        conversationTitle ?: stringResource(R.string.new_conversation),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
@@ -126,11 +150,19 @@ fun ChatScreen(
                         .weight(1f)
                         .fillMaxWidth(),
                     state = listState,
+                    reverseLayout = true,
                     contentPadding = PaddingValues(12.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    items(messages, key = { it.id }) { message ->
-                        ChatBubble(message = message)
+                    items(reversedMessages, key = { it.id }) { message ->
+                        ChatBubble(
+                            message = message,
+                            onResend = if (message.sender == Sender.USER) {
+                                { viewModel.resendMessage(message) }
+                            } else {
+                                null
+                            },
+                        )
                     }
                 }
             }
@@ -155,6 +187,7 @@ fun ChatScreen(
                     modifier = Modifier.weight(1f),
                     placeholder = { Text(stringResource(R.string.message_placeholder)) },
                     enabled = !isSending,
+                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                 )
                 if (isSending) {
                     CircularProgressIndicator(modifier = Modifier.padding(12.dp))
@@ -187,7 +220,8 @@ private fun ChatErrorBanner(
         ChatError.MissingApiKey -> stringResource(R.string.error_missing_api_key) to true
         is ChatError.InvalidApiKey ->
             stringResource(R.string.error_invalid_api_key).withDetail(error.detail) to true
-        ChatError.NoConnectivity -> stringResource(R.string.error_no_connectivity) to false
+        is ChatError.NoConnectivity ->
+            stringResource(R.string.error_no_connectivity).withDetail(error.detail) to false
         is ChatError.RateLimited ->
             stringResource(R.string.error_rate_limited).withDetail(error.detail) to false
         is ChatError.ServerError ->

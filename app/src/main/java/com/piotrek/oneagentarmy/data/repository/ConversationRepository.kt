@@ -2,6 +2,7 @@ package com.piotrek.oneagentarmy.data.repository
 
 import com.piotrek.oneagentarmy.model.Conversation
 import com.piotrek.oneagentarmy.model.Message
+import com.piotrek.oneagentarmy.model.MessageSearchResult
 import kotlinx.coroutines.flow.Flow
 
 interface ConversationRepository {
@@ -13,4 +14,5 @@ interface ConversationRepository {
     suspend fun deleteConversation(conversationId: String)
     suspend fun renameConversation(conversationId: String, title: String)
     suspend fun updateConversationModel(conversationId: String, modelId: String)
+    fun searchMessages(query: String): Flow<List<MessageSearchResult>>
 }
