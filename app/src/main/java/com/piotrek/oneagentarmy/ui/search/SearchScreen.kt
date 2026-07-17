@@ -37,6 +37,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.piotrek.oneagentarmy.R
+import com.piotrek.oneagentarmy.data.local.normalizeForSearch
 import com.piotrek.oneagentarmy.model.MessageSearchResult
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -141,9 +142,12 @@ private fun SearchResultRow(
 }
 
 // Trims long messages so the matched fragment is actually visible in the two-line preview.
+// The match position is located on normalized text (diacritic/case-insensitive, same as the
+// SQL query); for our alphabets normalization is 1:1 in length, so indices line up with the
+// original string - bounds are coerced anyway in case an exotic character shifts them.
 private fun snippetAround(text: String, query: String, contextChars: Int = 30): String {
     val singleLine = text.replace('\n', ' ')
-    val matchIndex = singleLine.indexOf(query.trim(), ignoreCase = true)
+    val matchIndex = normalizeForSearch(singleLine).indexOf(normalizeForSearch(query.trim()))
     if (matchIndex <= contextChars) return singleLine
-    return "…" + singleLine.substring(matchIndex - contextChars)
+    return "…" + singleLine.substring((matchIndex - contextChars).coerceIn(0, singleLine.length))
 }

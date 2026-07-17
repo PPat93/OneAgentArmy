@@ -22,5 +22,6 @@ data class MessageEntity(
     val conversationId: String,
     val sender: String,
     val text: String,
+    val textNormalized: String,
     val timestamp: Long,
 )

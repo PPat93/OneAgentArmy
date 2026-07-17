@@ -1,6 +1,7 @@
 package com.piotrek.oneagentarmy.data.repository
 
 import com.piotrek.oneagentarmy.data.local.ConversationDao
+import com.piotrek.oneagentarmy.data.local.normalizeForSearch
 import com.piotrek.oneagentarmy.data.local.toDomain
 import com.piotrek.oneagentarmy.data.local.toEntity
 import com.piotrek.oneagentarmy.model.Conversation
@@ -45,11 +46,11 @@ class RoomConversationRepository(
     }
 
     override fun searchMessages(query: String): Flow<List<MessageSearchResult>> {
-        val escaped = query
+        val normalizedEscaped = normalizeForSearch(query)
             .replace("\\", "\\\\")
             .replace("%", "\\%")
             .replace("_", "\\_")
-        return dao.searchMessages(escaped).map { rows ->
+        return dao.searchMessages(normalizedEscaped).map { rows ->
             rows.map { MessageSearchResult(message = it.message.toDomain(), conversationTitle = it.conversationTitle) }
         }
     }

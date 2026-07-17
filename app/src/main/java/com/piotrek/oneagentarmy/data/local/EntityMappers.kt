@@ -32,5 +32,6 @@ fun Message.toEntity() = MessageEntity(
     conversationId = conversationId,
     sender = sender.name,
     text = text,
+    textNormalized = normalizeForSearch(text),
     timestamp = timestamp.toEpochMilli(),
 )
