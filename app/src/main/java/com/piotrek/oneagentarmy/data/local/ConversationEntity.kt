@@ -8,4 +8,5 @@ data class ConversationEntity(
     @PrimaryKey val id: String,
     val title: String,
     val createdAt: Long,
+    val modelId: String,
 )

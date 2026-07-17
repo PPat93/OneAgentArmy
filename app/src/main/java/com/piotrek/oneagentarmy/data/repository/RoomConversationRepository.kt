@@ -22,8 +22,8 @@ class RoomConversationRepository(
     override fun observeMessages(conversationId: String): Flow<List<Message>> =
         dao.observeMessages(conversationId).map { entities -> entities.map { it.toDomain() } }
 
-    override suspend fun createConversation(id: String, title: String) {
-        val conversation = Conversation(id = id, title = title, createdAt = Instant.now())
+    override suspend fun createConversation(id: String, title: String, modelId: String) {
+        val conversation = Conversation(id = id, title = title, createdAt = Instant.now(), modelId = modelId)
         dao.insertConversation(conversation.toEntity())
     }
 
@@ -37,5 +37,9 @@ class RoomConversationRepository(
 
     override suspend fun renameConversation(conversationId: String, title: String) {
         dao.renameConversation(conversationId, title)
+    }
+
+    override suspend fun updateConversationModel(conversationId: String, modelId: String) {
+        dao.updateConversationModel(conversationId, modelId)
     }
 }

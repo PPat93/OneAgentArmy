@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,10 +33,12 @@ fun ChatBubble(message: Message, modifier: Modifier = Modifier) {
                 )
                 .padding(horizontal = 12.dp, vertical = 8.dp),
         ) {
-            Text(
-                text = message.text,
-                color = if (isUser) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onTertiaryContainer,
-            )
+            SelectionContainer {
+                Text(
+                    text = message.text,
+                    color = if (isUser) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onTertiaryContainer,
+                )
+            }
         }
     }
 }

@@ -21,7 +21,7 @@ import okhttp3.OkHttpClient
 
 class AppContainer(context: Context) {
     private val database = Room.databaseBuilder(context, AppDatabase::class.java, "oneagentarmy.db")
-        .fallbackToDestructiveMigration(dropAllTables = true)
+        .addMigrations(AppDatabase.MIGRATION_1_2)
         .build()
 
     val conversationRepository: ConversationRepository = RoomConversationRepository(database.conversationDao())

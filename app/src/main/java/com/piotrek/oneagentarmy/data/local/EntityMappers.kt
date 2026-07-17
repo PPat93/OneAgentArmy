@@ -9,12 +9,14 @@ fun ConversationEntity.toDomain() = Conversation(
     id = id,
     title = title,
     createdAt = Instant.ofEpochMilli(createdAt),
+    modelId = modelId,
 )
 
 fun Conversation.toEntity() = ConversationEntity(
     id = id,
     title = title,
     createdAt = createdAt.toEpochMilli(),
+    modelId = modelId,
 )
 
 fun MessageEntity.toDomain() = Message(

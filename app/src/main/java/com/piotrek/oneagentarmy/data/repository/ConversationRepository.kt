@@ -8,8 +8,9 @@ interface ConversationRepository {
     fun observeConversations(): Flow<List<Conversation>>
     fun observeConversation(conversationId: String): Flow<Conversation?>
     fun observeMessages(conversationId: String): Flow<List<Message>>
-    suspend fun createConversation(id: String, title: String)
+    suspend fun createConversation(id: String, title: String, modelId: String)
     suspend fun addMessage(conversationId: String, message: Message)
     suspend fun deleteConversation(conversationId: String)
     suspend fun renameConversation(conversationId: String, title: String)
+    suspend fun updateConversationModel(conversationId: String, modelId: String)
 }

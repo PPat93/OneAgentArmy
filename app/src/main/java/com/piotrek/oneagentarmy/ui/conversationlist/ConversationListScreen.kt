@@ -43,6 +43,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.piotrek.oneagentarmy.R
 import com.piotrek.oneagentarmy.model.Conversation
@@ -65,7 +66,7 @@ fun ConversationListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("OneAgentArmy") },
+                title = { Text(stringResource(R.string.app_name)) },
                 navigationIcon = {
                     Image(
                         painter = painterResource(R.drawable.logo_parrot),
@@ -78,14 +79,14 @@ fun ConversationListScreen(
                 },
                 actions = {
                     IconButton(onClick = onNavigateToSettings) {
-                        Icon(Icons.Default.Settings, contentDescription = "Ustawienia")
+                        Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.settings))
                     }
                 },
             )
         },
         floatingActionButton = {
             FloatingActionButton(onClick = onNewConversation) {
-                Icon(Icons.Default.Add, contentDescription = "Nowa rozmowa")
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.new_conversation))
             }
         },
     ) { innerPadding ->
@@ -96,7 +97,7 @@ fun ConversationListScreen(
                     .padding(innerPadding),
                 contentAlignment = Alignment.Center,
             ) {
-                Text("Brak rozmów - kliknij +, żeby zacząć")
+                Text(stringResource(R.string.empty_conversation_list))
             }
         } else {
             LazyColumn(
@@ -180,14 +181,14 @@ private fun ConversationRow(
         }
         DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
             DropdownMenuItem(
-                text = { Text("Zmień nazwę") },
+                text = { Text(stringResource(R.string.rename)) },
                 onClick = {
                     menuExpanded = false
                     onRenameRequest()
                 },
             )
             DropdownMenuItem(
-                text = { Text("Usuń", color = MaterialTheme.colorScheme.error) },
+                text = { Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error) },
                 onClick = {
                     menuExpanded = false
                     onDeleteRequest()
@@ -207,15 +208,15 @@ private fun RenameConversationDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Zmień nazwę rozmowy") },
+        title = { Text(stringResource(R.string.rename_conversation_title)) },
         text = {
             OutlinedTextField(value = text, onValueChange = { text = it }, singleLine = true)
         },
         confirmButton = {
-            TextButton(onClick = { onConfirm(text) }) { Text("Zapisz") }
+            TextButton(onClick = { onConfirm(text) }) { Text(stringResource(R.string.save)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Anuluj") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
         },
     )
 }
@@ -228,13 +229,13 @@ private fun DeleteConversationDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Usunąć rozmowę?") },
-        text = { Text("Usunąć rozmowę \"${conversation.title}\"? Tej operacji nie można cofnąć.") },
+        title = { Text(stringResource(R.string.delete_conversation_title)) },
+        text = { Text(stringResource(R.string.delete_conversation_text, conversation.title)) },
         confirmButton = {
-            TextButton(onClick = onConfirm) { Text("Usuń", color = MaterialTheme.colorScheme.error) }
+            TextButton(onClick = onConfirm) { Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Anuluj") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
         },
     )
 }
