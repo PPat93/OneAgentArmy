@@ -42,4 +42,15 @@
 
     <string name="model_gpt41_nano">GPT-4.1 nano - najtańszy ($0.10 / $0.40 za 1M tokenów)</string>
     <string name="model_gpt56_luna">GPT-5.6 Luna - lepsza jakość ($1.00 / $6.00 za 1M tokenów)</string>
+
+    <string name="pending_calendar_title">Dodać wydarzenie do kalendarza?</string>
+    <string name="pending_confirm">Dodaj</string>
+    <string name="pending_cancel">Anuluj</string>
+    <string name="pending_calendar_location">Miejsce: %1$s</string>
+    <string name="pending_calendar_attendees">Goście: %1$s</string>
+    <string name="pending_calendar_all_day">Cały dzień</string>
+    <string name="chat_calendar_summary">📅 Wydarzenie: %1$s, %2$s – %3$s</string>
+    <string name="chat_calendar_cancelled">Anulowano tworzenie wydarzenia.</string>
+    <string name="error_no_calendar_app">Nie znaleziono aplikacji kalendarza na tym urządzeniu.</string>
+    <string name="error_tool_arguments">Nie udało się odczytać szczegółów wydarzenia. Spróbuj ponownie.</string>
 </resources>

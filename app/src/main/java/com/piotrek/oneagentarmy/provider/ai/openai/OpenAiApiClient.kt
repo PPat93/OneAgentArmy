@@ -16,7 +16,13 @@ import okhttp3.RequestBody.Companion.toRequestBody
 class OpenAiApiClient(
     private val okHttpClient: OkHttpClient,
 ) {
-    private val json = Json { ignoreUnknownKeys = true }
+    // encodeDefaults so ToolDto.type/FunctionDto.strict are serialized;
+    // explicitNulls=false so null fields (content on tool turns, unused tools) are omitted.
+    private val json = Json {
+        ignoreUnknownKeys = true
+        encodeDefaults = true
+        explicitNulls = false
+    }
 
     suspend fun chatCompletion(apiKey: String, request: ChatCompletionRequest): ChatCompletionResponse =
         withContext(Dispatchers.IO) {
