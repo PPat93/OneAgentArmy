@@ -10,6 +10,9 @@ data class ChatMessageDto(
     // Null on tool-call turns - the model returns tool_calls instead of text content.
     val content: String? = null,
     @SerialName("tool_calls") val toolCalls: List<ToolCallDto>? = null,
+    // Only set on outgoing role:"tool" messages - the result of a tool call, keyed by
+    // the id from the assistant's tool_calls entry it answers.
+    @SerialName("tool_call_id") val toolCallId: String? = null,
 )
 
 @Serializable
@@ -20,6 +23,9 @@ data class ChatCompletionRequest(
     // gpt-4.1-nano may emit duplicate tool calls with parallel calls enabled -
     // explicitly disabled whenever tools are attached.
     @SerialName("parallel_tool_calls") val parallelToolCalls: Boolean? = null,
+    // Reasoning models (e.g. gpt-5.6-luna) reject function tools in Chat Completions
+    // unless this is "none"; sent only for models flagged in AiProviderRegistry.
+    @SerialName("reasoning_effort") val reasoningEffort: String? = null,
 )
 
 @Serializable

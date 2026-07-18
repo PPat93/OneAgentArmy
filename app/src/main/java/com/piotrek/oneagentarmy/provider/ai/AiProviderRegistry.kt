@@ -7,6 +7,9 @@ data class AiModelOption(
     val id: String,
     @StringRes val labelRes: Int,
     val shortLabel: String,
+    // Reasoning models reject function tools in Chat Completions unless
+    // reasoning_effort is explicitly set to "none" - declare it per model here.
+    val disableReasoningForTools: Boolean = false,
 )
 
 data class AiProviderInfo(
@@ -29,7 +32,7 @@ object AiProviderRegistry {
             displayName = "OpenAI",
             models = listOf(
                 AiModelOption("gpt-4.1-nano", R.string.model_gpt41_nano, "4.1 nano"),
-                AiModelOption("gpt-5.6-luna", R.string.model_gpt56_luna, "5.6 Luna"),
+                AiModelOption("gpt-5.6-luna", R.string.model_gpt56_luna, "5.6 Luna", disableReasoningForTools = true),
             ),
             isAvailable = true,
         ),
@@ -41,6 +44,9 @@ object AiProviderRegistry {
 
     fun byId(id: String): AiProviderInfo? = providers.firstOrNull { it.id == id }
 
+    fun modelOptionFor(modelId: String): AiModelOption? =
+        providers.asSequence().flatMap { it.models }.firstOrNull { it.id == modelId }
+
     fun shortLabelFor(modelId: String): String =
-        providers.asSequence().flatMap { it.models }.firstOrNull { it.id == modelId }?.shortLabel ?: modelId
+        modelOptionFor(modelId)?.shortLabel ?: modelId
 }

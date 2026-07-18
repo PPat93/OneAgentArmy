@@ -53,4 +53,7 @@
     <string name="chat_calendar_cancelled">Event creation cancelled.</string>
     <string name="error_no_calendar_app">No calendar app found on this device.</string>
     <string name="error_tool_arguments">Couldn\'t read the event details. Please try again.</string>
+
+    <string name="tools_section_title">Tools</string>
+    <string name="tavily_api_key_label">Web search API key (Tavily)</string>
 </resources>

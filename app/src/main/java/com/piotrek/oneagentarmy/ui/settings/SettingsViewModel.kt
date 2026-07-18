@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.piotrek.oneagentarmy.data.repository.SettingsRepository
 import com.piotrek.oneagentarmy.provider.ai.AiProviderRegistry
+import com.piotrek.oneagentarmy.provider.ai.tools.websearch.TAVILY_KEY_ID
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -27,6 +28,9 @@ class SettingsViewModel(
 
     val selectedModel: StateFlow<String> = repository.observeSelectedModel()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AiProviderRegistry.DEFAULT_MODEL)
+
+    val tavilyHasKey: StateFlow<Boolean> = repository.observeHasApiKey(TAVILY_KEY_ID)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
     fun saveApiKey(providerId: String, key: String) {
         if (key.isBlank()) return
