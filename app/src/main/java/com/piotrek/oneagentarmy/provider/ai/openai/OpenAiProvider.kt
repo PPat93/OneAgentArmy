@@ -11,13 +11,9 @@ import com.piotrek.oneagentarmy.provider.ai.openai.dto.ChatCompletionRequest
 import com.piotrek.oneagentarmy.provider.ai.openai.dto.ChatMessageDto
 import com.piotrek.oneagentarmy.provider.ai.openai.dto.FunctionDto
 import com.piotrek.oneagentarmy.provider.ai.openai.dto.ToolDto
+import com.piotrek.oneagentarmy.provider.ai.tools.RoundTripToolExecutor
 import com.piotrek.oneagentarmy.provider.ai.tools.ToolCallRequest
 import com.piotrek.oneagentarmy.provider.ai.tools.ToolRegistry
-import com.piotrek.oneagentarmy.provider.ai.tools.websearch.TAVILY_KEY_ID
-import com.piotrek.oneagentarmy.provider.ai.tools.websearch.WEB_SEARCH_TOOL
-import com.piotrek.oneagentarmy.provider.ai.tools.websearch.WebSearchArgumentsParser
-import com.piotrek.oneagentarmy.provider.ai.tools.websearch.WebSearchClient
-import com.piotrek.oneagentarmy.provider.ai.tools.websearch.WebSearchResult
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDateTime
@@ -30,19 +26,20 @@ class OpenAiProvider(
     private val apiClient: OpenAiApiClient,
     private val settingsRepository: SettingsRepository,
     private val toolRegistry: ToolRegistry,
-    private val webSearchClient: WebSearchClient,
+    executors: List<RoundTripToolExecutor>,
     private val clock: Clock = Clock.systemDefaultZone(),
 ) : AiProvider {
+
+    private val executorsByName = executors.associateBy { it.toolName }
 
     override suspend fun sendMessage(history: List<Message>, modelId: String): AiReply {
         val apiKey = settingsRepository.getApiKey(AiProviderRegistry.OPENAI)
         if (apiKey.isNullOrBlank()) throw AiProviderException.MissingApiKey
 
         val conversationId = history.last().conversationId
-        val tavilyApiKey = settingsRepository.getApiKey(TAVILY_KEY_ID)
 
         val tools = toolRegistry.definitions
-            .filter { it.name != WEB_SEARCH_TOOL || tavilyApiKey != null }
+            .filter { it.requiredKeyId == null || settingsRepository.getApiKey(it.requiredKeyId) != null }
             .map { definition ->
                 ToolDto(
                     function = FunctionDto(
@@ -55,14 +52,14 @@ class OpenAiProvider(
             }
 
         var messages = listOf(systemMessage()) + history.map { it.toDto() }
-        var searchesUsed = 0
+        var roundTripsUsed = 0
         val disableReasoningForTools =
             AiProviderRegistry.modelOptionFor(modelId)?.disableReasoningForTools == true
 
         while (true) {
-            // Hard cap of a few search round-trips per message: once used up, the next
-            // request omits tools entirely, forcing the model to answer with what it has.
-            val toolsForThisRequest = if (searchesUsed >= MAX_SEARCHES_PER_MESSAGE) null else tools.ifEmpty { null }
+            // Hard cap on provider-executed tool round-trips per message: once used up,
+            // the next request omits tools entirely, forcing a text answer.
+            val toolsForThisRequest = if (roundTripsUsed >= MAX_TOOL_ROUND_TRIPS) null else tools.ifEmpty { null }
 
             val request = ChatCompletionRequest(
                 model = modelId,
@@ -90,30 +87,21 @@ class OpenAiProvider(
                 )
             }
 
-            if (toolCall.function.name == WEB_SEARCH_TOOL && tavilyApiKey != null && searchesUsed < MAX_SEARCHES_PER_MESSAGE) {
-                searchesUsed++
-                val query = WebSearchArgumentsParser.parse(toolCall.function.arguments)
-                val results = webSearchClient.search(query, tavilyApiKey)
+            val executor = executorsByName[toolCall.function.name]
+            if (executor != null && roundTripsUsed < MAX_TOOL_ROUND_TRIPS) {
+                roundTripsUsed++
+                val result = executor.execute(toolCall.function.arguments)
                 messages = messages +
                     ChatMessageDto(role = "assistant", toolCalls = listOf(toolCall)) +
-                    ChatMessageDto(role = "tool", toolCallId = toolCall.id, content = formatSearchResults(results))
+                    ChatMessageDto(role = "tool", toolCallId = toolCall.id, content = result)
                 continue
             }
 
-            // Any other tool (e.g. the calendar) has a client-side effect the ViewModel
-            // must confirm with the user - handed back unresolved, exactly as in Stage 7.
+            // Tools without an executor (calendar, alarms, SMS...) have a client-side
+            // effect the ViewModel must confirm with the user - handed back unresolved.
             return AiReply.ToolCall(ToolCallRequest(toolCall.function.name, toolCall.function.arguments))
         }
     }
-
-    private fun formatSearchResults(results: List<WebSearchResult>): String =
-        if (results.isEmpty()) {
-            "No results found."
-        } else {
-            results.withIndex().joinToString("\n\n") { (index, result) ->
-                "${index + 1}. ${result.title} (${result.url})\n${result.content}"
-            }
-        }
 
     private fun systemMessage(): ChatMessageDto {
         val now = LocalDateTime.now(clock)
@@ -126,6 +114,8 @@ class OpenAiProvider(
                 "When the user asks to schedule a calendar event, call create_calendar_event. " +
                 "Only include attendee emails the user explicitly provided; if they name a person " +
                 "without an email address, ask for the address instead of calling the tool. " +
+                "Use the other tools when the user asks for those actions: alarms, timers, " +
+                "SMS drafts, navigation, opening the calendar at a date, weather forecasts. " +
                 "Use web_search only when the question genuinely needs current, real-time, or " +
                 "recent information - answer from your own knowledge otherwise. You may call " +
                 "web_search more than once per message: if the first results are too shallow, " +
@@ -136,6 +126,6 @@ class OpenAiProvider(
     }
 
     private companion object {
-        const val MAX_SEARCHES_PER_MESSAGE = 4
+        const val MAX_TOOL_ROUND_TRIPS = 4
     }
 }

@@ -37,6 +37,10 @@ class RoomConversationRepository(
         dao.deleteConversation(conversationId)
     }
 
+    override suspend fun deleteConversations(conversationIds: List<String>) {
+        if (conversationIds.isNotEmpty()) dao.deleteConversations(conversationIds)
+    }
+
     override suspend fun renameConversation(conversationId: String, title: String) {
         dao.renameConversation(conversationId, title)
     }

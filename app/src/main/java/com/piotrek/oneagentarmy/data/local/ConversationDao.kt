@@ -25,6 +25,9 @@ interface ConversationDao {
     @Query("DELETE FROM conversations WHERE id = :id")
     suspend fun deleteConversation(id: String)
 
+    @Query("DELETE FROM conversations WHERE id IN (:ids)")
+    suspend fun deleteConversations(ids: List<String>)
+
     @Query("UPDATE conversations SET title = :title WHERE id = :id")
     suspend fun renameConversation(id: String, title: String)
 

@@ -49,8 +49,12 @@ import androidx.compose.ui.unit.dp
 import com.piotrek.oneagentarmy.R
 import com.piotrek.oneagentarmy.model.Sender
 import com.piotrek.oneagentarmy.provider.ai.AiProviderRegistry
-import com.piotrek.oneagentarmy.tools.calendar.CalendarEventDraft
 import com.piotrek.oneagentarmy.tools.calendar.CalendarIntentBuilder
+import com.piotrek.oneagentarmy.tools.calendar.buildOpenCalendarIntent
+import com.piotrek.oneagentarmy.tools.clock.buildAlarmIntent
+import com.piotrek.oneagentarmy.tools.clock.buildTimerIntent
+import com.piotrek.oneagentarmy.tools.navigation.buildNavigationIntent
+import com.piotrek.oneagentarmy.tools.sms.buildSmsIntent
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -183,12 +187,8 @@ fun ChatScreen(
                 )
             }
 
-            when (val action = pendingAction) {
-                is PendingAction.CreateCalendarEvent -> PendingCalendarCard(
-                    draft = action.draft,
-                    viewModel = viewModel,
-                )
-                null -> Unit
+            pendingAction?.let { action ->
+                PendingActionCard(action = action, viewModel = viewModel)
             }
 
             Row(
@@ -226,20 +226,108 @@ fun ChatScreen(
     }
 }
 
+private data class PendingActionUi(
+    val title: String,
+    val lines: List<String>,
+    val intent: android.content.Intent,
+    val summary: String,
+)
+
 @Composable
-private fun PendingCalendarCard(
-    draft: CalendarEventDraft,
+private fun PendingActionCard(
+    action: PendingAction,
     viewModel: ChatViewModel,
 ) {
     val context = LocalContext.current
-    val formatter = remember {
+    val dateTimeFormatter = remember {
         DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm").withZone(ZoneId.systemDefault())
     }
-    val startFormatted = formatter.format(Instant.ofEpochMilli(draft.startEpochMillis))
-    val endFormatted = formatter.format(Instant.ofEpochMilli(draft.endEpochMillis))
-    val summaryText = stringResource(R.string.chat_calendar_summary, draft.title, startFormatted, endFormatted)
-    val cancelNote = stringResource(R.string.chat_calendar_cancelled)
+    val cancelNote = stringResource(R.string.chat_action_cancelled)
 
+    val ui = when (action) {
+        is PendingAction.CreateCalendarEvent -> {
+            val draft = action.draft
+            val start = dateTimeFormatter.format(Instant.ofEpochMilli(draft.startEpochMillis))
+            val end = dateTimeFormatter.format(Instant.ofEpochMilli(draft.endEpochMillis))
+            PendingActionUi(
+                title = stringResource(R.string.pending_calendar_title),
+                lines = buildList {
+                    add(draft.title)
+                    add("$start – $end")
+                    if (draft.allDay) add(stringResource(R.string.pending_calendar_all_day))
+                    draft.location?.let { add(stringResource(R.string.pending_calendar_location, it)) }
+                    draft.description?.let { add(it) }
+                    if (draft.attendees.isNotEmpty()) {
+                        add(stringResource(R.string.pending_calendar_attendees, draft.attendees.joinToString(", ")))
+                    }
+                },
+                intent = CalendarIntentBuilder.build(draft),
+                summary = stringResource(R.string.chat_calendar_summary, draft.title, start, end),
+            )
+        }
+        is PendingAction.SetAlarm -> {
+            val time = "%02d:%02d".format(action.draft.hour, action.draft.minute)
+            PendingActionUi(
+                title = stringResource(R.string.pending_alarm_title),
+                lines = listOfNotNull(time, action.draft.label),
+                intent = buildAlarmIntent(action.draft),
+                summary = stringResource(R.string.chat_alarm_summary, time),
+            )
+        }
+        is PendingAction.SetTimer -> {
+            val duration = stringResource(R.string.timer_minutes, action.draft.durationMinutes)
+            PendingActionUi(
+                title = stringResource(R.string.pending_timer_title),
+                lines = listOfNotNull(duration, action.draft.label),
+                intent = buildTimerIntent(action.draft),
+                summary = stringResource(R.string.chat_timer_summary, duration),
+            )
+        }
+        is PendingAction.DraftSms -> PendingActionUi(
+            title = stringResource(R.string.pending_sms_title),
+            lines = listOfNotNull(action.draft.phoneNumber, action.draft.message),
+            intent = buildSmsIntent(action.draft),
+            summary = stringResource(R.string.chat_sms_summary, action.draft.message),
+        )
+        is PendingAction.Navigate -> PendingActionUi(
+            title = stringResource(R.string.pending_navigation_title),
+            lines = listOf(action.draft.destination),
+            intent = buildNavigationIntent(action.draft),
+            summary = stringResource(R.string.chat_navigation_summary, action.draft.destination),
+        )
+        is PendingAction.OpenCalendarDate -> {
+            val date = action.draft.date.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))
+            PendingActionUi(
+                title = stringResource(R.string.pending_open_calendar_title),
+                lines = listOf(date),
+                intent = buildOpenCalendarIntent(action.draft),
+                summary = stringResource(R.string.chat_open_calendar_summary, date),
+            )
+        }
+    }
+
+    ConfirmActionCard(
+        title = ui.title,
+        lines = ui.lines,
+        onConfirm = {
+            try {
+                context.startActivity(ui.intent)
+                viewModel.confirmPendingAction(ui.summary)
+            } catch (e: ActivityNotFoundException) {
+                viewModel.reportNoAppForAction()
+            }
+        },
+        onCancel = { viewModel.cancelPendingAction(cancelNote) },
+    )
+}
+
+@Composable
+private fun ConfirmActionCard(
+    title: String,
+    lines: List<String>,
+    onConfirm: () -> Unit,
+    onCancel: () -> Unit,
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -248,47 +336,18 @@ private fun PendingCalendarCard(
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             Text(
-                text = stringResource(R.string.pending_calendar_title),
+                text = title,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
                 style = MaterialTheme.typography.titleMedium,
             )
-            Text(draft.title, color = MaterialTheme.colorScheme.onPrimaryContainer)
-            Text("$startFormatted – $endFormatted", color = MaterialTheme.colorScheme.onPrimaryContainer)
-            if (draft.allDay) {
-                Text(
-                    stringResource(R.string.pending_calendar_all_day),
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
-            }
-            draft.location?.let {
-                Text(
-                    stringResource(R.string.pending_calendar_location, it),
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
-            }
-            draft.description?.let {
-                Text(it, color = MaterialTheme.colorScheme.onPrimaryContainer)
-            }
-            if (draft.attendees.isNotEmpty()) {
-                Text(
-                    stringResource(R.string.pending_calendar_attendees, draft.attendees.joinToString(", ")),
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
+            lines.forEach { line ->
+                Text(line, color = MaterialTheme.colorScheme.onPrimaryContainer)
             }
             Row(modifier = Modifier.padding(top = 8.dp)) {
-                Button(
-                    onClick = {
-                        try {
-                            context.startActivity(CalendarIntentBuilder.build(draft))
-                            viewModel.confirmPendingAction(summaryText)
-                        } catch (e: ActivityNotFoundException) {
-                            viewModel.reportCalendarAppMissing()
-                        }
-                    },
-                ) {
+                Button(onClick = onConfirm) {
                     Text(stringResource(R.string.pending_confirm))
                 }
-                TextButton(onClick = { viewModel.cancelPendingAction(cancelNote) }) {
+                TextButton(onClick = onCancel) {
                     Text(stringResource(R.string.pending_cancel))
                 }
             }
@@ -314,7 +373,7 @@ private fun ChatErrorBanner(
             stringResource(R.string.error_server, error.statusCode).withDetail(error.detail) to false
         is ChatError.Unknown -> stringResource(R.string.error_unknown, error.detail) to false
         ChatError.ToolArguments -> stringResource(R.string.error_tool_arguments) to false
-        ChatError.NoCalendarApp -> stringResource(R.string.error_no_calendar_app) to false
+        ChatError.NoAppForAction -> stringResource(R.string.error_no_app_for_action) to false
     }
 
     Card(

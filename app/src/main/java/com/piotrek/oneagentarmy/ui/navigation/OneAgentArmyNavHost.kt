@@ -20,7 +20,9 @@ import com.piotrek.oneagentarmy.ui.conversationlist.ConversationListScreen
 import com.piotrek.oneagentarmy.ui.conversationlist.ConversationListViewModel
 import com.piotrek.oneagentarmy.ui.search.SearchScreen
 import com.piotrek.oneagentarmy.ui.search.SearchViewModel
+import com.piotrek.oneagentarmy.ui.settings.SettingsProvidersScreen
 import com.piotrek.oneagentarmy.ui.settings.SettingsScreen
+import com.piotrek.oneagentarmy.ui.settings.SettingsToolsScreen
 import com.piotrek.oneagentarmy.ui.settings.SettingsViewModel
 import java.util.UUID
 
@@ -93,12 +95,30 @@ fun OneAgentArmyNavHost(
             )
         }
         composable(Destinations.SETTINGS) {
+            SettingsScreen(
+                onBack = { navController.popBackStack() },
+                onNavigateToProviders = { navController.navigate(Destinations.SETTINGS_PROVIDERS) },
+                onNavigateToTools = { navController.navigate(Destinations.SETTINGS_TOOLS) },
+            )
+        }
+        composable(Destinations.SETTINGS_PROVIDERS) {
             val viewModel: SettingsViewModel = viewModel(
                 factory = viewModelFactory {
                     initializer { SettingsViewModel(settingsRepository) }
                 },
             )
-            SettingsScreen(
+            SettingsProvidersScreen(
+                viewModel = viewModel,
+                onBack = { navController.popBackStack() },
+            )
+        }
+        composable(Destinations.SETTINGS_TOOLS) {
+            val viewModel: SettingsViewModel = viewModel(
+                factory = viewModelFactory {
+                    initializer { SettingsViewModel(settingsRepository) }
+                },
+            )
+            SettingsToolsScreen(
                 viewModel = viewModel,
                 onBack = { navController.popBackStack() },
             )

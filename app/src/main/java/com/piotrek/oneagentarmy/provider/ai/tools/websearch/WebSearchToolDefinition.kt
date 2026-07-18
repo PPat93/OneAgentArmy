@@ -27,7 +27,9 @@ private val PARAMETERS_SCHEMA = Json.parseToJsonElement(
 val WebSearchToolDefinition = ToolDefinition(
     name = WEB_SEARCH_TOOL,
     description = "Search the web for current, real-time, or recent information (news, prices, " +
-        "weather, sports results, anything likely beyond your training data). Only call this when " +
-        "the answer genuinely requires up-to-date information - answer from your own knowledge otherwise.",
+        "sports results, anything likely beyond your training data). Only call this when " +
+        "the answer genuinely requires up-to-date information - answer from your own knowledge " +
+        "otherwise. For weather forecasts prefer the get_weather tool.",
     parametersSchema = PARAMETERS_SCHEMA,
+    requiredKeyId = TAVILY_KEY_ID,
 )
