@@ -3,7 +3,9 @@ package com.piotrek.oneagentarmy.ui.chat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.piotrek.oneagentarmy.data.repository.ConversationRepository
+import com.piotrek.oneagentarmy.data.repository.FactRepository
 import com.piotrek.oneagentarmy.data.repository.SettingsRepository
+import com.piotrek.oneagentarmy.model.Fact
 import com.piotrek.oneagentarmy.model.Message
 import com.piotrek.oneagentarmy.model.Sender
 import com.piotrek.oneagentarmy.provider.ai.AiModelOption
@@ -68,6 +70,7 @@ class ChatViewModel(
     private val conversationId: String,
     private val repository: ConversationRepository,
     private val settingsRepository: SettingsRepository,
+    private val factRepository: FactRepository,
     private val aiProvider: AiProvider,
     private val contextWindowStrategy: ContextWindowStrategy,
 ) : ViewModel() {
@@ -94,6 +97,34 @@ class ChatViewModel(
     val availableModels: StateFlow<List<AiModelOption>> = settingsRepository.observeActiveProvider()
         .map { AiProviderRegistry.byId(it)?.models.orEmpty() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    // Selectable (non-global) facts shown in the chat's fact picker.
+    val selectableFacts: StateFlow<List<Fact>> = factRepository.observeFacts()
+        .map { facts -> facts.filter { !it.isGlobal } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    // Facts toggled before the conversation exists in the database - same trick as pendingModel.
+    private val pendingFactIds = MutableStateFlow<Set<String>>(emptySet())
+
+    val selectedFactIds: StateFlow<Set<String>> = combine(
+        repository.observeConversation(conversationId),
+        factRepository.observeSelectedFactIds(conversationId),
+        pendingFactIds,
+    ) { conversation, persisted, pending ->
+        if (conversation != null) persisted else pending
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
+
+    fun toggleFact(factId: String) {
+        viewModelScope.launch {
+            val currentlySelected = factId in selectedFactIds.value
+            if (repository.observeConversation(conversationId).first() != null) {
+                factRepository.setFactSelected(conversationId, factId, !currentlySelected)
+            } else {
+                pendingFactIds.value =
+                    if (currentlySelected) pendingFactIds.value - factId else pendingFactIds.value + factId
+            }
+        }
+    }
 
     private val _isSending = MutableStateFlow(false)
     val isSending: StateFlow<Boolean> = _isSending.asStateFlow()
@@ -123,9 +154,17 @@ class ChatViewModel(
             _pendingAction.value = null
 
             val modelId = currentModelId()
+            // Captured before any mutation - the combined flow may lag right after the
+            // pending selections are persisted below.
+            val selectedIds = selectedFactIds.value
 
             if (messages.value.isEmpty()) {
                 repository.createConversation(conversationId, deriveTitle(text), modelId)
+                // Persist fact selections made before the conversation row existed.
+                pendingFactIds.value.forEach { factId ->
+                    factRepository.setFactSelected(conversationId, factId, true)
+                }
+                pendingFactIds.value = emptySet()
             }
 
             val userMessage = Message(
@@ -137,7 +176,7 @@ class ChatViewModel(
             )
             repository.addMessage(conversationId, userMessage)
 
-            requestAiReply(messages.value + userMessage, modelId)
+            requestAiReply(messages.value + userMessage, modelId, selectedIds)
         }
     }
 
@@ -148,14 +187,15 @@ class ChatViewModel(
             _error.value = null
 
             val modelId = currentModelId()
+            val selectedIds = selectedFactIds.value
             val current = messages.value
 
             if (current.lastOrNull()?.id == message.id) {
-                requestAiReply(current, modelId)
+                requestAiReply(current, modelId, selectedIds)
             } else {
                 val copy = message.copy(id = UUID.randomUUID().toString(), timestamp = Instant.now())
                 repository.addMessage(conversationId, copy)
-                requestAiReply(current + copy, modelId)
+                requestAiReply(current + copy, modelId, selectedIds)
             }
         }
     }
@@ -186,11 +226,16 @@ class ChatViewModel(
     private suspend fun currentModelId(): String =
         selectedModel.value ?: settingsRepository.observeSelectedModel().first()
 
-    private suspend fun requestAiReply(history: List<Message>, modelId: String) {
+    private suspend fun activeFactContents(selectedIds: Set<String>): List<String> =
+        factRepository.observeFacts().first()
+            .filter { it.isGlobal || it.id in selectedIds }
+            .map { it.content }
+
+    private suspend fun requestAiReply(history: List<Message>, modelId: String, selectedIds: Set<String>) {
         _isSending.value = true
         try {
             val historyToSend = contextWindowStrategy.apply(history)
-            when (val reply = aiProvider.sendMessage(historyToSend, modelId)) {
+            when (val reply = aiProvider.sendMessage(historyToSend, modelId, activeFactContents(selectedIds))) {
                 is AiReply.Text -> repository.addMessage(conversationId, reply.message)
                 is AiReply.ToolCall -> dispatchToolCall(reply.request)
             }

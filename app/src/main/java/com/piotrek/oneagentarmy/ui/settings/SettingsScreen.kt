@@ -32,6 +32,7 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onNavigateToProviders: () -> Unit,
     onNavigateToTools: () -> Unit,
+    onNavigateToFacts: () -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -61,6 +62,11 @@ fun SettingsScreen(
                 title = stringResource(R.string.settings_tools_title),
                 subtitle = stringResource(R.string.settings_tools_subtitle),
                 onClick = onNavigateToTools,
+            )
+            SettingsMenuCard(
+                title = stringResource(R.string.settings_facts_title),
+                subtitle = stringResource(R.string.settings_facts_subtitle),
+                onClick = onNavigateToFacts,
             )
         }
     }

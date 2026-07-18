@@ -11,6 +11,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.piotrek.oneagentarmy.data.repository.ConversationRepository
+import com.piotrek.oneagentarmy.data.repository.FactRepository
 import com.piotrek.oneagentarmy.data.repository.SettingsRepository
 import com.piotrek.oneagentarmy.provider.ai.AiProvider
 import com.piotrek.oneagentarmy.provider.ai.ContextWindowStrategy
@@ -20,6 +21,8 @@ import com.piotrek.oneagentarmy.ui.conversationlist.ConversationListScreen
 import com.piotrek.oneagentarmy.ui.conversationlist.ConversationListViewModel
 import com.piotrek.oneagentarmy.ui.search.SearchScreen
 import com.piotrek.oneagentarmy.ui.search.SearchViewModel
+import com.piotrek.oneagentarmy.ui.settings.FactsViewModel
+import com.piotrek.oneagentarmy.ui.settings.SettingsFactsScreen
 import com.piotrek.oneagentarmy.ui.settings.SettingsProvidersScreen
 import com.piotrek.oneagentarmy.ui.settings.SettingsScreen
 import com.piotrek.oneagentarmy.ui.settings.SettingsToolsScreen
@@ -30,6 +33,7 @@ import java.util.UUID
 fun OneAgentArmyNavHost(
     conversationRepository: ConversationRepository,
     settingsRepository: SettingsRepository,
+    factRepository: FactRepository,
     aiProvider: AiProvider,
     contextWindowStrategy: ContextWindowStrategy,
     navController: NavHostController = rememberNavController(),
@@ -69,7 +73,14 @@ fun OneAgentArmyNavHost(
             val viewModel: ChatViewModel = viewModel(
                 factory = viewModelFactory {
                     initializer {
-                        ChatViewModel(conversationId, conversationRepository, settingsRepository, aiProvider, contextWindowStrategy)
+                        ChatViewModel(
+                            conversationId,
+                            conversationRepository,
+                            settingsRepository,
+                            factRepository,
+                            aiProvider,
+                            contextWindowStrategy,
+                        )
                     }
                 },
             )
@@ -99,6 +110,18 @@ fun OneAgentArmyNavHost(
                 onBack = { navController.popBackStack() },
                 onNavigateToProviders = { navController.navigate(Destinations.SETTINGS_PROVIDERS) },
                 onNavigateToTools = { navController.navigate(Destinations.SETTINGS_TOOLS) },
+                onNavigateToFacts = { navController.navigate(Destinations.SETTINGS_FACTS) },
+            )
+        }
+        composable(Destinations.SETTINGS_FACTS) {
+            val viewModel: FactsViewModel = viewModel(
+                factory = viewModelFactory {
+                    initializer { FactsViewModel(factRepository) }
+                },
+            )
+            SettingsFactsScreen(
+                viewModel = viewModel,
+                onBack = { navController.popBackStack() },
             )
         }
         composable(Destinations.SETTINGS_PROVIDERS) {

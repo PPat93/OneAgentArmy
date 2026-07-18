@@ -10,7 +10,9 @@ import com.piotrek.oneagentarmy.data.local.AppDatabase
 import com.piotrek.oneagentarmy.data.local.crypto.ApiKeyCipher
 import com.piotrek.oneagentarmy.data.repository.ConversationRepository
 import com.piotrek.oneagentarmy.data.repository.DataStoreSettingsRepository
+import com.piotrek.oneagentarmy.data.repository.FactRepository
 import com.piotrek.oneagentarmy.data.repository.RoomConversationRepository
+import com.piotrek.oneagentarmy.data.repository.RoomFactRepository
 import com.piotrek.oneagentarmy.data.repository.SettingsRepository
 import com.piotrek.oneagentarmy.provider.ai.AiProvider
 import com.piotrek.oneagentarmy.provider.ai.ContextWindowStrategies
@@ -34,10 +36,12 @@ import okhttp3.OkHttpClient
 
 class AppContainer(context: Context) {
     private val database = Room.databaseBuilder(context, AppDatabase::class.java, "oneagentarmy.db")
-        .addMigrations(AppDatabase.MIGRATION_1_2, AppDatabase.MIGRATION_2_3)
+        .addMigrations(AppDatabase.MIGRATION_1_2, AppDatabase.MIGRATION_2_3, AppDatabase.MIGRATION_3_4)
         .build()
 
     val conversationRepository: ConversationRepository = RoomConversationRepository(database.conversationDao())
+
+    val factRepository: FactRepository = RoomFactRepository(database.factDao())
 
     private val settingsDataStore: DataStore<Preferences> = PreferenceDataStoreFactory.create(
         produceFile = { context.preferencesDataStoreFile("settings") },
