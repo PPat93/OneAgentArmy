@@ -38,8 +38,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import android.content.ActivityNotFoundException
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextOverflow
@@ -47,6 +49,11 @@ import androidx.compose.ui.unit.dp
 import com.piotrek.oneagentarmy.R
 import com.piotrek.oneagentarmy.model.Sender
 import com.piotrek.oneagentarmy.provider.ai.AiProviderRegistry
+import com.piotrek.oneagentarmy.tools.calendar.CalendarEventDraft
+import com.piotrek.oneagentarmy.tools.calendar.CalendarIntentBuilder
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,6 +66,7 @@ fun ChatScreen(
     val messages by viewModel.messages.collectAsState()
     val isSending by viewModel.isSending.collectAsState()
     val error by viewModel.error.collectAsState()
+    val pendingAction by viewModel.pendingAction.collectAsState()
     val conversationTitle by viewModel.conversationTitle.collectAsState()
     val selectedModel by viewModel.selectedModel.collectAsState()
     val availableModels by viewModel.availableModels.collectAsState()
@@ -175,6 +183,14 @@ fun ChatScreen(
                 )
             }
 
+            when (val action = pendingAction) {
+                is PendingAction.CreateCalendarEvent -> PendingCalendarCard(
+                    draft = action.draft,
+                    viewModel = viewModel,
+                )
+                null -> Unit
+            }
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -211,6 +227,76 @@ fun ChatScreen(
 }
 
 @Composable
+private fun PendingCalendarCard(
+    draft: CalendarEventDraft,
+    viewModel: ChatViewModel,
+) {
+    val context = LocalContext.current
+    val formatter = remember {
+        DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm").withZone(ZoneId.systemDefault())
+    }
+    val startFormatted = formatter.format(Instant.ofEpochMilli(draft.startEpochMillis))
+    val endFormatted = formatter.format(Instant.ofEpochMilli(draft.endEpochMillis))
+    val summaryText = stringResource(R.string.chat_calendar_summary, draft.title, startFormatted, endFormatted)
+    val cancelNote = stringResource(R.string.chat_calendar_cancelled)
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text(
+                text = stringResource(R.string.pending_calendar_title),
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                style = MaterialTheme.typography.titleMedium,
+            )
+            Text(draft.title, color = MaterialTheme.colorScheme.onPrimaryContainer)
+            Text("$startFormatted – $endFormatted", color = MaterialTheme.colorScheme.onPrimaryContainer)
+            if (draft.allDay) {
+                Text(
+                    stringResource(R.string.pending_calendar_all_day),
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
+            }
+            draft.location?.let {
+                Text(
+                    stringResource(R.string.pending_calendar_location, it),
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
+            }
+            draft.description?.let {
+                Text(it, color = MaterialTheme.colorScheme.onPrimaryContainer)
+            }
+            if (draft.attendees.isNotEmpty()) {
+                Text(
+                    stringResource(R.string.pending_calendar_attendees, draft.attendees.joinToString(", ")),
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
+            }
+            Row(modifier = Modifier.padding(top = 8.dp)) {
+                Button(
+                    onClick = {
+                        try {
+                            context.startActivity(CalendarIntentBuilder.build(draft))
+                            viewModel.confirmPendingAction(summaryText)
+                        } catch (e: ActivityNotFoundException) {
+                            viewModel.reportCalendarAppMissing()
+                        }
+                    },
+                ) {
+                    Text(stringResource(R.string.pending_confirm))
+                }
+                TextButton(onClick = { viewModel.cancelPendingAction(cancelNote) }) {
+                    Text(stringResource(R.string.pending_cancel))
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun ChatErrorBanner(
     error: ChatError,
     onDismiss: () -> Unit,
@@ -227,6 +313,8 @@ private fun ChatErrorBanner(
         is ChatError.ServerError ->
             stringResource(R.string.error_server, error.statusCode).withDetail(error.detail) to false
         is ChatError.Unknown -> stringResource(R.string.error_unknown, error.detail) to false
+        ChatError.ToolArguments -> stringResource(R.string.error_tool_arguments) to false
+        ChatError.NoCalendarApp -> stringResource(R.string.error_no_calendar_app) to false
     }
 
     Card(

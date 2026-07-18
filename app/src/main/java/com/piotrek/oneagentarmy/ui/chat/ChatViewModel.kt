@@ -10,8 +10,14 @@ import com.piotrek.oneagentarmy.provider.ai.AiModelOption
 import com.piotrek.oneagentarmy.provider.ai.AiProvider
 import com.piotrek.oneagentarmy.provider.ai.AiProviderException
 import com.piotrek.oneagentarmy.provider.ai.AiProviderRegistry
+import com.piotrek.oneagentarmy.provider.ai.AiReply
 import com.piotrek.oneagentarmy.provider.ai.ContextWindowStrategy
+import com.piotrek.oneagentarmy.provider.ai.tools.ToolCallRequest
+import com.piotrek.oneagentarmy.tools.calendar.CREATE_CALENDAR_EVENT_TOOL
+import com.piotrek.oneagentarmy.tools.calendar.CalendarEventArgumentsParser
+import com.piotrek.oneagentarmy.tools.calendar.CalendarEventDraft
 import java.time.Instant
+import java.time.ZoneId
 import java.util.UUID
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -30,6 +36,12 @@ sealed interface ChatError {
     data class RateLimited(val retryAfterSeconds: Int?, val detail: String?) : ChatError
     data class ServerError(val statusCode: Int, val detail: String?) : ChatError
     data class Unknown(val detail: String) : ChatError
+    data object ToolArguments : ChatError
+    data object NoCalendarApp : ChatError
+}
+
+sealed interface PendingAction {
+    data class CreateCalendarEvent(val draft: CalendarEventDraft) : PendingAction
 }
 
 class ChatViewModel(
@@ -69,6 +81,9 @@ class ChatViewModel(
     private val _error = MutableStateFlow<ChatError?>(null)
     val error: StateFlow<ChatError?> = _error.asStateFlow()
 
+    private val _pendingAction = MutableStateFlow<PendingAction?>(null)
+    val pendingAction: StateFlow<PendingAction?> = _pendingAction.asStateFlow()
+
     fun selectModel(modelId: String) {
         viewModelScope.launch {
             pendingModel.value = modelId
@@ -83,6 +98,9 @@ class ChatViewModel(
 
         viewModelScope.launch {
             _error.value = null
+            // A new user message supersedes any unconfirmed action - the model will
+            // re-emit a corrected tool call if the user is refining the request.
+            _pendingAction.value = null
 
             val modelId = currentModelId()
 
@@ -126,6 +144,25 @@ class ChatViewModel(
         _error.value = null
     }
 
+    // Called by the UI after the calendar intent was fired successfully; summaryText is
+    // localized and formatted in the UI layer (the ViewModel has no Context).
+    fun confirmPendingAction(summaryText: String) {
+        _pendingAction.value = null
+        viewModelScope.launch { persistAiNote(summaryText) }
+    }
+
+    // The persisted note tells the model the user declined - without it, the next request
+    // would show an unanswered scheduling request and the model would re-emit the tool call.
+    fun cancelPendingAction(cancelNote: String) {
+        _pendingAction.value = null
+        viewModelScope.launch { persistAiNote(cancelNote) }
+    }
+
+    fun reportCalendarAppMissing() {
+        _pendingAction.value = null
+        _error.value = ChatError.NoCalendarApp
+    }
+
     private suspend fun currentModelId(): String =
         selectedModel.value ?: settingsRepository.observeSelectedModel().first()
 
@@ -133,13 +170,45 @@ class ChatViewModel(
         _isSending.value = true
         try {
             val historyToSend = contextWindowStrategy.apply(history)
-            val aiMessage = aiProvider.sendMessage(historyToSend, modelId)
-            repository.addMessage(conversationId, aiMessage)
+            when (val reply = aiProvider.sendMessage(historyToSend, modelId)) {
+                is AiReply.Text -> repository.addMessage(conversationId, reply.message)
+                is AiReply.ToolCall -> dispatchToolCall(reply.request)
+            }
         } catch (e: AiProviderException) {
             _error.value = e.toChatError()
         } finally {
             _isSending.value = false
         }
+    }
+
+    // A plain when is enough for one tool; switch to a parser map keyed by name
+    // when the second tool arrives.
+    private fun dispatchToolCall(request: ToolCallRequest) {
+        when (request.name) {
+            CREATE_CALENDAR_EVENT_TOOL -> {
+                val draft = try {
+                    CalendarEventArgumentsParser.parse(request.argumentsJson, ZoneId.systemDefault())
+                } catch (e: Exception) {
+                    _error.value = ChatError.ToolArguments
+                    return
+                }
+                _pendingAction.value = PendingAction.CreateCalendarEvent(draft)
+            }
+            else -> _error.value = ChatError.ToolArguments
+        }
+    }
+
+    private suspend fun persistAiNote(text: String) {
+        repository.addMessage(
+            conversationId,
+            Message(
+                id = UUID.randomUUID().toString(),
+                conversationId = conversationId,
+                sender = Sender.AI,
+                text = text,
+                timestamp = Instant.now(),
+            ),
+        )
     }
 }
 

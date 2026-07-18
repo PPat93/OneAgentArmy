@@ -17,6 +17,8 @@ import com.piotrek.oneagentarmy.provider.ai.ContextWindowStrategies
 import com.piotrek.oneagentarmy.provider.ai.ContextWindowStrategy
 import com.piotrek.oneagentarmy.provider.ai.openai.OpenAiApiClient
 import com.piotrek.oneagentarmy.provider.ai.openai.OpenAiProvider
+import com.piotrek.oneagentarmy.provider.ai.tools.ToolRegistry
+import com.piotrek.oneagentarmy.tools.calendar.CalendarToolDefinition
 import okhttp3.OkHttpClient
 
 class AppContainer(context: Context) {
@@ -34,7 +36,9 @@ class AppContainer(context: Context) {
 
     private val okHttpClient = OkHttpClient()
 
-    val aiProvider: AiProvider = OpenAiProvider(OpenAiApiClient(okHttpClient), settingsRepository)
+    private val toolRegistry = ToolRegistry(definitions = listOf(CalendarToolDefinition))
+
+    val aiProvider: AiProvider = OpenAiProvider(OpenAiApiClient(okHttpClient), settingsRepository, toolRegistry)
 
     val contextWindowStrategy: ContextWindowStrategy = ContextWindowStrategies.lastN(20)
 }
