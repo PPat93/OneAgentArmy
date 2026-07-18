@@ -18,6 +18,8 @@ import com.piotrek.oneagentarmy.provider.ai.ContextWindowStrategy
 import com.piotrek.oneagentarmy.provider.ai.openai.OpenAiApiClient
 import com.piotrek.oneagentarmy.provider.ai.openai.OpenAiProvider
 import com.piotrek.oneagentarmy.provider.ai.tools.ToolRegistry
+import com.piotrek.oneagentarmy.provider.ai.tools.websearch.TavilyWebSearchClient
+import com.piotrek.oneagentarmy.provider.ai.tools.websearch.WebSearchToolDefinition
 import com.piotrek.oneagentarmy.tools.calendar.CalendarToolDefinition
 import okhttp3.OkHttpClient
 
@@ -36,9 +38,16 @@ class AppContainer(context: Context) {
 
     private val okHttpClient = OkHttpClient()
 
-    private val toolRegistry = ToolRegistry(definitions = listOf(CalendarToolDefinition))
+    private val toolRegistry = ToolRegistry(definitions = listOf(CalendarToolDefinition, WebSearchToolDefinition))
 
-    val aiProvider: AiProvider = OpenAiProvider(OpenAiApiClient(okHttpClient), settingsRepository, toolRegistry)
+    private val webSearchClient = TavilyWebSearchClient(okHttpClient)
+
+    val aiProvider: AiProvider = OpenAiProvider(
+        OpenAiApiClient(okHttpClient),
+        settingsRepository,
+        toolRegistry,
+        webSearchClient,
+    )
 
     val contextWindowStrategy: ContextWindowStrategy = ContextWindowStrategies.lastN(20)
 }

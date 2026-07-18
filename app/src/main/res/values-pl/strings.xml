@@ -53,4 +53,7 @@
     <string name="chat_calendar_cancelled">Anulowano tworzenie wydarzenia.</string>
     <string name="error_no_calendar_app">Nie znaleziono aplikacji kalendarza na tym urządzeniu.</string>
     <string name="error_tool_arguments">Nie udało się odczytać szczegółów wydarzenia. Spróbuj ponownie.</string>
+
+    <string name="tools_section_title">Narzędzia</string>
+    <string name="tavily_api_key_label">Klucz API wyszukiwania (Tavily)</string>
 </resources>

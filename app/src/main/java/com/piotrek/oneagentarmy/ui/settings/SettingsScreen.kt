@@ -37,6 +37,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -44,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import com.piotrek.oneagentarmy.R
 import com.piotrek.oneagentarmy.provider.ai.AiProviderInfo
 import com.piotrek.oneagentarmy.provider.ai.AiProviderRegistry
+import com.piotrek.oneagentarmy.provider.ai.tools.websearch.TAVILY_KEY_ID
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,9 +56,11 @@ fun SettingsScreen(
     val activeProvider by viewModel.activeProvider.collectAsState()
     val apiKeyStates by viewModel.apiKeyStates.collectAsState()
     val selectedModel by viewModel.selectedModel.collectAsState()
+    val tavilyHasKey by viewModel.tavilyHasKey.collectAsState()
     val keyInputs = remember { mutableStateMapOf<String, String>() }
     var modelMenuExpanded by remember { mutableStateOf(false) }
     var clearKeyDialogFor by remember { mutableStateOf<AiProviderInfo?>(null) }
+    var showClearTavilyDialog by remember { mutableStateOf(false) }
 
     val activeModels = AiProviderRegistry.byId(activeProvider)?.models.orEmpty()
     val selectedOption = activeModels.firstOrNull { it.id == selectedModel }
@@ -136,31 +140,64 @@ fun SettingsScreen(
                     }
                 }
             }
+
+            Text(
+                text = stringResource(R.string.tools_section_title),
+                style = MaterialTheme.typography.titleLarge,
+            )
+
+            ToolApiKeyCard(
+                title = stringResource(R.string.tavily_api_key_label),
+                hasKey = tavilyHasKey,
+                keyInput = keyInputs[TAVILY_KEY_ID].orEmpty(),
+                onKeyInputChange = { keyInputs[TAVILY_KEY_ID] = it },
+                onSaveKey = {
+                    viewModel.saveApiKey(TAVILY_KEY_ID, keyInputs[TAVILY_KEY_ID].orEmpty())
+                    keyInputs[TAVILY_KEY_ID] = ""
+                },
+                onClearKeyRequest = { showClearTavilyDialog = true },
+            )
         }
     }
 
     clearKeyDialogFor?.let { provider ->
-        AlertDialog(
-            onDismissRequest = { clearKeyDialogFor = null },
-            title = { Text(stringResource(R.string.clear_api_key_title)) },
-            text = { Text(stringResource(R.string.clear_api_key_text)) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.clearApiKey(provider.id)
-                        clearKeyDialogFor = null
-                    },
-                ) {
-                    Text(stringResource(R.string.clear), color = MaterialTheme.colorScheme.error)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { clearKeyDialogFor = null }) {
-                    Text(stringResource(R.string.cancel))
-                }
+        ClearApiKeyDialog(
+            onDismiss = { clearKeyDialogFor = null },
+            onConfirm = {
+                viewModel.clearApiKey(provider.id)
+                clearKeyDialogFor = null
             },
         )
     }
+
+    if (showClearTavilyDialog) {
+        ClearApiKeyDialog(
+            onDismiss = { showClearTavilyDialog = false },
+            onConfirm = {
+                viewModel.clearApiKey(TAVILY_KEY_ID)
+                showClearTavilyDialog = false
+            },
+        )
+    }
+}
+
+@Composable
+private fun ClearApiKeyDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.clear_api_key_title)) },
+        text = { Text(stringResource(R.string.clear_api_key_text)) },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text(stringResource(R.string.clear), color = MaterialTheme.colorScheme.error)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel))
+            }
+        },
+    )
 }
 
 @Composable
@@ -197,30 +234,77 @@ private fun ProviderCard(
                 }
             }
 
+            ApiKeyFields(
+                hasKey = hasKey,
+                keyInput = keyInput,
+                onKeyInputChange = onKeyInputChange,
+                onSaveKey = onSaveKey,
+                onClearKeyRequest = onClearKeyRequest,
+                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ToolApiKeyCard(
+    title: String,
+    hasKey: Boolean,
+    keyInput: String,
+    onKeyInputChange: (String) -> Unit,
+    onSaveKey: () -> Unit,
+    onClearKeyRequest: () -> Unit,
+) {
+    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
+        Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = stringResource(if (hasKey) R.string.api_key_configured else R.string.api_key_missing),
+                text = title,
                 color = MaterialTheme.colorScheme.onSecondaryContainer,
+                style = MaterialTheme.typography.titleMedium,
             )
-
-            OutlinedTextField(
-                value = keyInput,
-                onValueChange = onKeyInputChange,
-                label = { Text(stringResource(R.string.api_key_label)) },
-                visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp),
+            ApiKeyFields(
+                hasKey = hasKey,
+                keyInput = keyInput,
+                onKeyInputChange = onKeyInputChange,
+                onSaveKey = onSaveKey,
+                onClearKeyRequest = onClearKeyRequest,
+                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
             )
+        }
+    }
+}
 
-            Row(modifier = Modifier.padding(top = 8.dp)) {
-                Button(onClick = onSaveKey) {
-                    Text(stringResource(R.string.save))
-                }
-                TextButton(onClick = onClearKeyRequest) {
-                    Text(stringResource(R.string.clear))
-                }
-            }
+@Composable
+private fun ApiKeyFields(
+    hasKey: Boolean,
+    keyInput: String,
+    onKeyInputChange: (String) -> Unit,
+    onSaveKey: () -> Unit,
+    onClearKeyRequest: () -> Unit,
+    contentColor: Color,
+) {
+    Text(
+        text = stringResource(if (hasKey) R.string.api_key_configured else R.string.api_key_missing),
+        color = contentColor,
+    )
+
+    OutlinedTextField(
+        value = keyInput,
+        onValueChange = onKeyInputChange,
+        label = { Text(stringResource(R.string.api_key_label)) },
+        visualTransformation = PasswordVisualTransformation(),
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp),
+    )
+
+    Row(modifier = Modifier.padding(top = 8.dp)) {
+        Button(onClick = onSaveKey) {
+            Text(stringResource(R.string.save))
+        }
+        TextButton(onClick = onClearKeyRequest) {
+            Text(stringResource(R.string.clear))
         }
     }
 }
