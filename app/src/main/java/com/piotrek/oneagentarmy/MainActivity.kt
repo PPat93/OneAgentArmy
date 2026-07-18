@@ -21,6 +21,7 @@ class MainActivity : ComponentActivity() {
                     OneAgentArmyNavHost(
                         conversationRepository = container.conversationRepository,
                         settingsRepository = container.settingsRepository,
+                        factRepository = container.factRepository,
                         aiProvider = container.aiProvider,
                         contextWindowStrategy = container.contextWindowStrategy,
                     )

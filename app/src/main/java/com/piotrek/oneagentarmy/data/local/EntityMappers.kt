@@ -1,6 +1,7 @@
 package com.piotrek.oneagentarmy.data.local
 
 import com.piotrek.oneagentarmy.model.Conversation
+import com.piotrek.oneagentarmy.model.Fact
 import com.piotrek.oneagentarmy.model.Message
 import com.piotrek.oneagentarmy.model.Sender
 import java.time.Instant
@@ -34,4 +35,20 @@ fun Message.toEntity() = MessageEntity(
     text = text,
     textNormalized = normalizeForSearch(text),
     timestamp = timestamp.toEpochMilli(),
+)
+
+fun FactEntity.toDomain() = Fact(
+    id = id,
+    title = title,
+    content = content,
+    isGlobal = isGlobal,
+    createdAt = Instant.ofEpochMilli(createdAt),
+)
+
+fun Fact.toEntity() = FactEntity(
+    id = id,
+    title = title,
+    content = content,
+    isGlobal = isGlobal,
+    createdAt = createdAt.toEpochMilli(),
 )

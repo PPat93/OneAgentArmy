@@ -32,7 +32,7 @@ class OpenAiProvider(
 
     private val executorsByName = executors.associateBy { it.toolName }
 
-    override suspend fun sendMessage(history: List<Message>, modelId: String): AiReply {
+    override suspend fun sendMessage(history: List<Message>, modelId: String, contextFacts: List<String>): AiReply {
         val apiKey = settingsRepository.getApiKey(AiProviderRegistry.OPENAI)
         if (apiKey.isNullOrBlank()) throw AiProviderException.MissingApiKey
 
@@ -51,7 +51,7 @@ class OpenAiProvider(
                 )
             }
 
-        var messages = listOf(systemMessage()) + history.map { it.toDto() }
+        var messages = listOf(systemMessage(contextFacts)) + history.map { it.toDto() }
         var roundTripsUsed = 0
         val disableReasoningForTools =
             AiProviderRegistry.modelOptionFor(modelId)?.disableReasoningForTools == true
@@ -103,10 +103,16 @@ class OpenAiProvider(
         }
     }
 
-    private fun systemMessage(): ChatMessageDto {
+    private fun systemMessage(contextFacts: List<String>): ChatMessageDto {
         val now = LocalDateTime.now(clock)
         val dayOfWeek = now.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.ENGLISH)
         val formatted = now.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+        val factsSection = if (contextFacts.isEmpty()) {
+            ""
+        } else {
+            "\n\nFacts about the user, provided by the user themselves - take them into account:\n" +
+                contextFacts.withIndex().joinToString("\n") { (i, fact) -> "${i + 1}) $fact" }
+        }
         return ChatMessageDto(
             role = "system",
             content = "Current date and time: $formatted ($dayOfWeek), timezone ${clock.zone}. " +
@@ -121,7 +127,8 @@ class OpenAiProvider(
                 "web_search more than once per message: if the first results are too shallow, " +
                 "off-topic, or don't fully answer the question, refine the query and search again " +
                 "rather than settling for a weak answer. " +
-                "Otherwise answer normally, in the user's language.",
+                "Otherwise answer normally, in the user's language." +
+                factsSection,
         )
     }
 

@@ -76,4 +76,17 @@
     <string name="settings_tools_title">Narzędzia</string>
     <string name="settings_tools_subtitle">Klucze narzędzi agenta (wyszukiwanie w necie)</string>
     <string name="tavily_api_key_label">Klucz API wyszukiwania (Tavily)</string>
+
+    <string name="settings_facts_title">Fakty kontekstowe</string>
+    <string name="settings_facts_subtitle">Notatki wstrzykiwane do rozmów</string>
+    <string name="fact_new_title">Nowy fakt</string>
+    <string name="fact_edit_title">Edytuj fakt</string>
+    <string name="fact_title_label">Tytuł</string>
+    <string name="fact_content_label">Treść</string>
+    <string name="fact_global_label">Dołączaj do każdej rozmowy</string>
+    <string name="fact_delete_title">Usunąć fakt?</string>
+    <string name="fact_delete_text">Usunąć \"%1$s\"?</string>
+    <string name="facts_empty">Brak faktów - kliknij +, żeby dodać</string>
+    <string name="facts_picker">Fakty kontekstowe</string>
+    <string name="facts_picker_empty">Brak wybieralnych faktów - dodaj w Ustawieniach</string>
 </resources>

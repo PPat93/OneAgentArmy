@@ -15,6 +15,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -74,8 +76,11 @@ fun ChatScreen(
     val conversationTitle by viewModel.conversationTitle.collectAsState()
     val selectedModel by viewModel.selectedModel.collectAsState()
     val availableModels by viewModel.availableModels.collectAsState()
+    val selectableFacts by viewModel.selectableFacts.collectAsState()
+    val selectedFactIds by viewModel.selectedFactIds.collectAsState()
     var inputText by remember { mutableStateOf("") }
     var modelMenuExpanded by remember { mutableStateOf(false) }
+    var factsMenuExpanded by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
 
     // With reverseLayout, index 0 is the newest message and the list is anchored to the
@@ -111,6 +116,47 @@ fun ChatScreen(
                     }
                 },
                 actions = {
+                    Box {
+                        IconButton(onClick = { factsMenuExpanded = true }) {
+                            Icon(
+                                Icons.Default.Bookmark,
+                                contentDescription = stringResource(R.string.facts_picker),
+                                tint = if (selectedFactIds.isEmpty()) {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                } else {
+                                    MaterialTheme.colorScheme.primary
+                                },
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = factsMenuExpanded,
+                            onDismissRequest = { factsMenuExpanded = false },
+                        ) {
+                            if (selectableFacts.isEmpty()) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.facts_picker_empty)) },
+                                    onClick = { factsMenuExpanded = false },
+                                    enabled = false,
+                                )
+                            } else {
+                                selectableFacts.forEach { fact ->
+                                    DropdownMenuItem(
+                                        text = { Text(fact.title) },
+                                        trailingIcon = {
+                                            if (fact.id in selectedFactIds) {
+                                                Icon(
+                                                    Icons.Default.Check,
+                                                    contentDescription = null,
+                                                    tint = MaterialTheme.colorScheme.primary,
+                                                )
+                                            }
+                                        },
+                                        onClick = { viewModel.toggleFact(fact.id) },
+                                    )
+                                }
+                            }
+                        }
+                    }
                     Box {
                         TextButton(onClick = { modelMenuExpanded = true }) {
                             Text(
