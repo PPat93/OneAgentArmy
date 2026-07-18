@@ -12,6 +12,7 @@ interface ConversationRepository {
     suspend fun createConversation(id: String, title: String, modelId: String)
     suspend fun addMessage(conversationId: String, message: Message)
     suspend fun deleteConversation(conversationId: String)
+    suspend fun deleteConversations(conversationIds: List<String>)
     suspend fun renameConversation(conversationId: String, title: String)
     suspend fun updateConversationModel(conversationId: String, modelId: String)
     fun searchMessages(query: String): Flow<List<MessageSearchResult>>

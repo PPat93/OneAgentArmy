@@ -1,5 +1,6 @@
 package com.piotrek.oneagentarmy.ui.conversationlist
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -15,6 +16,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
@@ -67,34 +70,69 @@ fun ConversationListScreen(
     val conversations by viewModel.conversations.collectAsState()
     var renameDialogFor by remember { mutableStateOf<Conversation?>(null) }
     var deleteDialogFor by remember { mutableStateOf<Conversation?>(null) }
+    var selectionMode by remember { mutableStateOf(false) }
+    var selectedIds by remember { mutableStateOf(setOf<String>()) }
+    var showDeleteSelectedDialog by remember { mutableStateOf(false) }
+
+    fun exitSelectionMode() {
+        selectionMode = false
+        selectedIds = emptySet()
+    }
+
+    BackHandler(enabled = selectionMode) { exitSelectionMode() }
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.app_name)) },
-                navigationIcon = {
-                    Image(
-                        painter = painterResource(R.drawable.logo_parrot),
-                        contentDescription = null,
-                        modifier = Modifier
-                            .padding(8.dp)
-                            .size(32.dp)
-                            .clip(CircleShape),
-                    )
-                },
-                actions = {
-                    IconButton(onClick = onNavigateToSearch) {
-                        Icon(Icons.Default.Search, contentDescription = stringResource(R.string.search))
-                    }
-                    IconButton(onClick = onNavigateToSettings) {
-                        Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.settings))
-                    }
-                },
-            )
+            if (selectionMode) {
+                TopAppBar(
+                    title = { Text(stringResource(R.string.selected_count, selectedIds.size)) },
+                    navigationIcon = {
+                        IconButton(onClick = ::exitSelectionMode) {
+                            Icon(Icons.Default.Close, contentDescription = stringResource(R.string.cancel))
+                        }
+                    },
+                    actions = {
+                        IconButton(
+                            onClick = { showDeleteSelectedDialog = true },
+                            enabled = selectedIds.isNotEmpty(),
+                        ) {
+                            Icon(
+                                Icons.Default.Delete,
+                                contentDescription = stringResource(R.string.delete),
+                                tint = MaterialTheme.colorScheme.error,
+                            )
+                        }
+                    },
+                )
+            } else {
+                TopAppBar(
+                    title = { Text(stringResource(R.string.app_name)) },
+                    navigationIcon = {
+                        Image(
+                            painter = painterResource(R.drawable.logo_parrot),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .padding(8.dp)
+                                .size(32.dp)
+                                .clip(CircleShape),
+                        )
+                    },
+                    actions = {
+                        IconButton(onClick = onNavigateToSearch) {
+                            Icon(Icons.Default.Search, contentDescription = stringResource(R.string.search))
+                        }
+                        IconButton(onClick = onNavigateToSettings) {
+                            Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.settings))
+                        }
+                    },
+                )
+            }
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = onNewConversation) {
-                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.new_conversation))
+            if (!selectionMode) {
+                FloatingActionButton(onClick = onNewConversation) {
+                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.new_conversation))
+                }
             }
         },
     ) { innerPadding ->
@@ -116,9 +154,25 @@ fun ConversationListScreen(
                 items(conversations, key = { it.id }) { conversation ->
                     ConversationRow(
                         conversation = conversation,
-                        onClick = { onConversationClick(conversation.id) },
+                        selectionMode = selectionMode,
+                        isSelected = conversation.id in selectedIds,
+                        onClick = {
+                            if (selectionMode) {
+                                selectedIds = if (conversation.id in selectedIds) {
+                                    selectedIds - conversation.id
+                                } else {
+                                    selectedIds + conversation.id
+                                }
+                            } else {
+                                onConversationClick(conversation.id)
+                            }
+                        },
                         onRenameRequest = { renameDialogFor = conversation },
                         onDeleteRequest = { deleteDialogFor = conversation },
+                        onSelectRequest = {
+                            selectionMode = true
+                            selectedIds = setOf(conversation.id)
+                        },
                     )
                 }
             }
@@ -146,20 +200,54 @@ fun ConversationListScreen(
             },
         )
     }
+
+    if (showDeleteSelectedDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteSelectedDialog = false },
+            title = { Text(stringResource(R.string.delete_selected_title)) },
+            text = { Text(stringResource(R.string.delete_selected_text, selectedIds.size)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.deleteConversations(selectedIds)
+                        showDeleteSelectedDialog = false
+                        exitSelectionMode()
+                    },
+                ) {
+                    Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteSelectedDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            },
+        )
+    }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ConversationRow(
     conversation: Conversation,
+    selectionMode: Boolean,
+    isSelected: Boolean,
     onClick: () -> Unit,
     onRenameRequest: () -> Unit,
     onDeleteRequest: () -> Unit,
+    onSelectRequest: () -> Unit,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
     val formatter = remember {
         DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withZone(ZoneId.systemDefault())
     }
+
+    val containerColor =
+        if (isSelected) MaterialTheme.colorScheme.tertiaryContainer else MaterialTheme.colorScheme.primaryContainer
+    val borderColor =
+        if (isSelected) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary
+    val contentColor =
+        if (isSelected) MaterialTheme.colorScheme.onTertiaryContainer else MaterialTheme.colorScheme.onPrimaryContainer
 
     Box(
         modifier = Modifier
@@ -171,16 +259,16 @@ private fun ConversationRow(
                 .fillMaxWidth()
                 .combinedClickable(
                     onClick = onClick,
-                    onLongClick = { menuExpanded = true },
+                    onLongClick = { if (!selectionMode) menuExpanded = true },
                 ),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
+            colors = CardDefaults.cardColors(containerColor = containerColor),
+            border = BorderStroke(1.dp, borderColor),
         ) {
             ListItem(
                 headlineContent = {
                     Text(
                         conversation.title,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        color = contentColor,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -188,13 +276,20 @@ private fun ConversationRow(
                 supportingContent = {
                     Text(
                         formatter.format(conversation.createdAt),
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        color = contentColor,
                     )
                 },
                 colors = ListItemDefaults.colors(containerColor = Color.Transparent),
             )
         }
         DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.select)) },
+                onClick = {
+                    menuExpanded = false
+                    onSelectRequest()
+                },
+            )
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.rename)) },
                 onClick = {

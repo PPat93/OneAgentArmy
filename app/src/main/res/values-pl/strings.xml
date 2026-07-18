@@ -50,10 +50,30 @@
     <string name="pending_calendar_attendees">Goście: %1$s</string>
     <string name="pending_calendar_all_day">Cały dzień</string>
     <string name="chat_calendar_summary">📅 Wydarzenie: %1$s, %2$s – %3$s</string>
-    <string name="chat_calendar_cancelled">Anulowano tworzenie wydarzenia.</string>
-    <string name="error_no_calendar_app">Nie znaleziono aplikacji kalendarza na tym urządzeniu.</string>
-    <string name="error_tool_arguments">Nie udało się odczytać szczegółów wydarzenia. Spróbuj ponownie.</string>
+    <string name="chat_action_cancelled">Anulowano akcję.</string>
+    <string name="error_no_app_for_action">Brak aplikacji do obsłużenia tej akcji.</string>
+    <string name="error_tool_arguments">Nie udało się odczytać szczegółów akcji. Spróbuj ponownie.</string>
 
-    <string name="tools_section_title">Narzędzia</string>
+    <string name="pending_alarm_title">Ustawić alarm?</string>
+    <string name="pending_timer_title">Uruchomić minutnik?</string>
+    <string name="pending_sms_title">Otworzyć szkic SMS-a?</string>
+    <string name="pending_navigation_title">Otworzyć nawigację?</string>
+    <string name="pending_open_calendar_title">Otworzyć kalendarz?</string>
+    <string name="timer_minutes">%1$d min</string>
+    <string name="chat_alarm_summary">⏰ Alarm na %1$s</string>
+    <string name="chat_timer_summary">⏲️ Minutnik: %1$s</string>
+    <string name="chat_sms_summary">✉️ Szkic SMS-a: %1$s</string>
+    <string name="chat_navigation_summary">🧭 Nawigacja do: %1$s</string>
+    <string name="chat_open_calendar_summary">📅 Otwarto kalendarz: %1$s</string>
+
+    <string name="select">Zaznacz</string>
+    <string name="selected_count">Zaznaczono: %1$d</string>
+    <string name="delete_selected_title">Usunąć rozmowy?</string>
+    <string name="delete_selected_text">Usunąć rozmowy (%1$d)? Tej operacji nie można cofnąć.</string>
+
+    <string name="settings_providers_title">Dostawcy AI i globalny model</string>
+    <string name="settings_providers_subtitle">Klucze API, aktywny dostawca, domyślny model</string>
+    <string name="settings_tools_title">Narzędzia</string>
+    <string name="settings_tools_subtitle">Klucze narzędzi agenta (wyszukiwanie w necie)</string>
     <string name="tavily_api_key_label">Klucz API wyszukiwania (Tavily)</string>
 </resources>

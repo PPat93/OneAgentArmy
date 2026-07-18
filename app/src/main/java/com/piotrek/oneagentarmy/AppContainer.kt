@@ -18,9 +18,18 @@ import com.piotrek.oneagentarmy.provider.ai.ContextWindowStrategy
 import com.piotrek.oneagentarmy.provider.ai.openai.OpenAiApiClient
 import com.piotrek.oneagentarmy.provider.ai.openai.OpenAiProvider
 import com.piotrek.oneagentarmy.provider.ai.tools.ToolRegistry
+import com.piotrek.oneagentarmy.provider.ai.tools.weather.OpenMeteoWeatherClient
+import com.piotrek.oneagentarmy.provider.ai.tools.weather.WeatherExecutor
+import com.piotrek.oneagentarmy.provider.ai.tools.weather.WeatherToolDefinition
 import com.piotrek.oneagentarmy.provider.ai.tools.websearch.TavilyWebSearchClient
+import com.piotrek.oneagentarmy.provider.ai.tools.websearch.WebSearchExecutor
 import com.piotrek.oneagentarmy.provider.ai.tools.websearch.WebSearchToolDefinition
 import com.piotrek.oneagentarmy.tools.calendar.CalendarToolDefinition
+import com.piotrek.oneagentarmy.tools.calendar.OpenCalendarToolDefinition
+import com.piotrek.oneagentarmy.tools.clock.SetAlarmToolDefinition
+import com.piotrek.oneagentarmy.tools.clock.SetTimerToolDefinition
+import com.piotrek.oneagentarmy.tools.navigation.NavigateToolDefinition
+import com.piotrek.oneagentarmy.tools.sms.DraftSmsToolDefinition
 import okhttp3.OkHttpClient
 
 class AppContainer(context: Context) {
@@ -38,15 +47,30 @@ class AppContainer(context: Context) {
 
     private val okHttpClient = OkHttpClient()
 
-    private val toolRegistry = ToolRegistry(definitions = listOf(CalendarToolDefinition, WebSearchToolDefinition))
+    private val toolRegistry = ToolRegistry(
+        definitions = listOf(
+            CalendarToolDefinition,
+            OpenCalendarToolDefinition,
+            SetAlarmToolDefinition,
+            SetTimerToolDefinition,
+            DraftSmsToolDefinition,
+            NavigateToolDefinition,
+            WebSearchToolDefinition,
+            WeatherToolDefinition,
+        ),
+    )
 
     private val webSearchClient = TavilyWebSearchClient(okHttpClient)
+    private val weatherClient = OpenMeteoWeatherClient(okHttpClient)
 
     val aiProvider: AiProvider = OpenAiProvider(
-        OpenAiApiClient(okHttpClient),
-        settingsRepository,
-        toolRegistry,
-        webSearchClient,
+        apiClient = OpenAiApiClient(okHttpClient),
+        settingsRepository = settingsRepository,
+        toolRegistry = toolRegistry,
+        executors = listOf(
+            WebSearchExecutor(webSearchClient, settingsRepository),
+            WeatherExecutor(weatherClient),
+        ),
     )
 
     val contextWindowStrategy: ContextWindowStrategy = ContextWindowStrategies.lastN(20)

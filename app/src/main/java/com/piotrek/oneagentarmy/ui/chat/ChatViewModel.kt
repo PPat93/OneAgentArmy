@@ -16,6 +16,21 @@ import com.piotrek.oneagentarmy.provider.ai.tools.ToolCallRequest
 import com.piotrek.oneagentarmy.tools.calendar.CREATE_CALENDAR_EVENT_TOOL
 import com.piotrek.oneagentarmy.tools.calendar.CalendarEventArgumentsParser
 import com.piotrek.oneagentarmy.tools.calendar.CalendarEventDraft
+import com.piotrek.oneagentarmy.tools.calendar.OPEN_CALENDAR_AT_TOOL
+import com.piotrek.oneagentarmy.tools.calendar.OpenCalendarDraft
+import com.piotrek.oneagentarmy.tools.calendar.parseOpenCalendarArgs
+import com.piotrek.oneagentarmy.tools.clock.AlarmDraft
+import com.piotrek.oneagentarmy.tools.clock.SET_ALARM_TOOL
+import com.piotrek.oneagentarmy.tools.clock.SET_TIMER_TOOL
+import com.piotrek.oneagentarmy.tools.clock.TimerDraft
+import com.piotrek.oneagentarmy.tools.clock.parseAlarmArgs
+import com.piotrek.oneagentarmy.tools.clock.parseTimerArgs
+import com.piotrek.oneagentarmy.tools.navigation.NAVIGATE_TO_TOOL
+import com.piotrek.oneagentarmy.tools.navigation.NavigationDraft
+import com.piotrek.oneagentarmy.tools.navigation.parseNavigationArgs
+import com.piotrek.oneagentarmy.tools.sms.DRAFT_SMS_TOOL
+import com.piotrek.oneagentarmy.tools.sms.SmsDraft
+import com.piotrek.oneagentarmy.tools.sms.parseSmsArgs
 import java.time.Instant
 import java.time.ZoneId
 import java.util.UUID
@@ -37,11 +52,16 @@ sealed interface ChatError {
     data class ServerError(val statusCode: Int, val detail: String?) : ChatError
     data class Unknown(val detail: String) : ChatError
     data object ToolArguments : ChatError
-    data object NoCalendarApp : ChatError
+    data object NoAppForAction : ChatError
 }
 
 sealed interface PendingAction {
     data class CreateCalendarEvent(val draft: CalendarEventDraft) : PendingAction
+    data class SetAlarm(val draft: AlarmDraft) : PendingAction
+    data class SetTimer(val draft: TimerDraft) : PendingAction
+    data class DraftSms(val draft: SmsDraft) : PendingAction
+    data class Navigate(val draft: NavigationDraft) : PendingAction
+    data class OpenCalendarDate(val draft: OpenCalendarDraft) : PendingAction
 }
 
 class ChatViewModel(
@@ -158,9 +178,9 @@ class ChatViewModel(
         viewModelScope.launch { persistAiNote(cancelNote) }
     }
 
-    fun reportCalendarAppMissing() {
+    fun reportNoAppForAction() {
         _pendingAction.value = null
-        _error.value = ChatError.NoCalendarApp
+        _error.value = ChatError.NoAppForAction
     }
 
     private suspend fun currentModelId(): String =
@@ -181,22 +201,31 @@ class ChatViewModel(
         }
     }
 
-    // A plain when is enough for one tool; switch to a parser map keyed by name
-    // when the second tool arrives.
     private fun dispatchToolCall(request: ToolCallRequest) {
-        when (request.name) {
-            CREATE_CALENDAR_EVENT_TOOL -> {
-                val draft = try {
-                    CalendarEventArgumentsParser.parse(request.argumentsJson, ZoneId.systemDefault())
-                } catch (e: Exception) {
-                    _error.value = ChatError.ToolArguments
-                    return
-                }
-                _pendingAction.value = PendingAction.CreateCalendarEvent(draft)
-            }
-            else -> _error.value = ChatError.ToolArguments
+        val parser = actionParsers[request.name]
+        if (parser == null) {
+            _error.value = ChatError.ToolArguments
+            return
         }
+        val action = try {
+            parser(request.argumentsJson)
+        } catch (e: Exception) {
+            _error.value = ChatError.ToolArguments
+            return
+        }
+        _pendingAction.value = action
     }
+
+    private val actionParsers: Map<String, (String) -> PendingAction> = mapOf(
+        CREATE_CALENDAR_EVENT_TOOL to { args ->
+            PendingAction.CreateCalendarEvent(CalendarEventArgumentsParser.parse(args, ZoneId.systemDefault()))
+        },
+        SET_ALARM_TOOL to { args -> PendingAction.SetAlarm(parseAlarmArgs(args)) },
+        SET_TIMER_TOOL to { args -> PendingAction.SetTimer(parseTimerArgs(args)) },
+        DRAFT_SMS_TOOL to { args -> PendingAction.DraftSms(parseSmsArgs(args)) },
+        NAVIGATE_TO_TOOL to { args -> PendingAction.Navigate(parseNavigationArgs(args)) },
+        OPEN_CALENDAR_AT_TOOL to { args -> PendingAction.OpenCalendarDate(parseOpenCalendarArgs(args)) },
+    )
 
     private suspend fun persistAiNote(text: String) {
         repository.addMessage(

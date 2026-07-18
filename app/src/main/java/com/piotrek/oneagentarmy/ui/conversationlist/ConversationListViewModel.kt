@@ -20,6 +20,10 @@ class ConversationListViewModel(
         viewModelScope.launch { repository.deleteConversation(conversationId) }
     }
 
+    fun deleteConversations(conversationIds: Collection<String>) {
+        viewModelScope.launch { repository.deleteConversations(conversationIds.toList()) }
+    }
+
     fun renameConversation(conversationId: String, title: String) {
         if (title.isBlank()) return
         viewModelScope.launch { repository.renameConversation(conversationId, title) }

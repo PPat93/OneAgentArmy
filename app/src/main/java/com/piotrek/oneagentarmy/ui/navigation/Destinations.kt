@@ -6,6 +6,8 @@ object Destinations {
     const val CHAT_FOCUS_MESSAGE_ID_ARG = "focusMessageId"
     const val CHAT = "chat/{$CHAT_CONVERSATION_ID_ARG}?$CHAT_FOCUS_MESSAGE_ID_ARG={$CHAT_FOCUS_MESSAGE_ID_ARG}"
     const val SETTINGS = "settings"
+    const val SETTINGS_PROVIDERS = "settings/providers"
+    const val SETTINGS_TOOLS = "settings/tools"
     const val SEARCH = "search"
 
     fun chatRoute(conversationId: String, focusMessageId: String? = null): String =
