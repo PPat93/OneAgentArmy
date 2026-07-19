@@ -3,6 +3,7 @@ package com.piotrek.oneagentarmy.ui.settings
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -11,6 +12,7 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -20,6 +22,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
@@ -29,11 +33,13 @@ import com.piotrek.oneagentarmy.R
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
+    viewModel: SettingsViewModel,
     onBack: () -> Unit,
     onNavigateToProviders: () -> Unit,
     onNavigateToTools: () -> Unit,
     onNavigateToFacts: () -> Unit,
 ) {
+    val chatFontScale by viewModel.chatFontScale.collectAsState()
     Scaffold(
         topBar = {
             TopAppBar(
@@ -68,6 +74,41 @@ fun SettingsScreen(
                 subtitle = stringResource(R.string.settings_facts_subtitle),
                 onClick = onNavigateToFacts,
             )
+            ChatFontScaleCard(
+                currentScale = chatFontScale,
+                onScaleSelected = viewModel::setChatFontScale,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ChatFontScaleCard(
+    currentScale: Float,
+    onScaleSelected: (Float) -> Unit,
+) {
+    val options = listOf(
+        0.85f to stringResource(R.string.font_scale_small),
+        1.0f to stringResource(R.string.font_scale_normal),
+        1.15f to stringResource(R.string.font_scale_large),
+        1.3f to stringResource(R.string.font_scale_xlarge),
+    )
+    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = stringResource(R.string.chat_font_scale_title),
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                style = MaterialTheme.typography.titleMedium,
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                options.forEach { (scale, label) ->
+                    FilterChip(
+                        selected = scale == currentScale,
+                        onClick = { onScaleSelected(scale) },
+                        label = { Text(label) },
+                    )
+                }
+            }
         }
     }
 }

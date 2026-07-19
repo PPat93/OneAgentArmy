@@ -32,6 +32,9 @@ class SettingsViewModel(
     val searchProvider: StateFlow<String> = repository.observeSearchProvider()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsRepository.SEARCH_PROVIDER_BUILT_IN)
 
+    val chatFontScale: StateFlow<Float> = repository.observeChatFontScale()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 1.0f)
+
     fun saveApiKey(providerId: String, key: String) {
         if (key.isBlank()) return
         viewModelScope.launch { repository.saveApiKey(providerId, key) }
@@ -43,6 +46,10 @@ class SettingsViewModel(
 
     fun setActiveProvider(providerId: String) {
         viewModelScope.launch { repository.setActiveProvider(providerId) }
+    }
+
+    fun setChatFontScale(scale: Float) {
+        viewModelScope.launch { repository.setChatFontScale(scale) }
     }
 
     fun setSearchProvider(searchProviderId: String) {

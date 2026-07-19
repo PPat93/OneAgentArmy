@@ -109,7 +109,13 @@ fun OneAgentArmyNavHost(
             )
         }
         composable(Destinations.SETTINGS) {
+            val viewModel: SettingsViewModel = viewModel(
+                factory = viewModelFactory {
+                    initializer { SettingsViewModel(settingsRepository) }
+                },
+            )
             SettingsScreen(
+                viewModel = viewModel,
                 onBack = { navController.popBackStack() },
                 onNavigateToProviders = { navController.navigate(Destinations.SETTINGS_PROVIDERS) },
                 onNavigateToTools = { navController.navigate(Destinations.SETTINGS_TOOLS) },

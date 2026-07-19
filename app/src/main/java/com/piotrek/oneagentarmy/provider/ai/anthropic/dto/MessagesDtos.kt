@@ -61,15 +61,16 @@ data class AnthropicToolUse(
     val inputJson: String,
 )
 
-fun MessagesResponse.firstToolUse(): AnthropicToolUse? {
-    val block = content.firstOrNull { it.stringField("type") == "tool_use" } ?: return null
-    val input = block["input"] as? JsonObject ?: return null
-    return AnthropicToolUse(
-        id = block.stringField("id") ?: return null,
-        name = block.stringField("name") ?: return null,
-        inputJson = input.toString(),
-    )
-}
+fun MessagesResponse.allToolUses(): List<AnthropicToolUse> =
+    content.mapNotNull { block ->
+        if (block.stringField("type") != "tool_use") return@mapNotNull null
+        val input = block["input"] as? JsonObject ?: return@mapNotNull null
+        AnthropicToolUse(
+            id = block.stringField("id") ?: return@mapNotNull null,
+            name = block.stringField("name") ?: return@mapNotNull null,
+            inputJson = input.toString(),
+        )
+    }
 
 fun MessagesResponse.outputText(): String? =
     content.asSequence()
@@ -90,27 +91,33 @@ fun assistantMessage(content: List<JsonObject>): JsonObject = buildJsonObject {
     put("content", JsonArray(content))
 }
 
-fun toolResultMessage(toolUseId: String, result: String): JsonObject = buildJsonObject {
+// The API rejects a follow-up unless every tool_use in the turn has a matching
+// tool_result - all results go into a single user message.
+fun toolResultsMessage(results: List<Pair<String, String>>): JsonObject = buildJsonObject {
     put("role", JsonPrimitive("user"))
     put(
         "content",
         buildJsonArray {
-            add(
-                buildJsonObject {
-                    put("type", JsonPrimitive("tool_result"))
-                    put("tool_use_id", JsonPrimitive(toolUseId))
-                    put("content", JsonPrimitive(result))
-                },
-            )
+            results.forEach { (toolUseId, result) ->
+                add(
+                    buildJsonObject {
+                        put("type", JsonPrimitive("tool_result"))
+                        put("tool_use_id", JsonPrimitive(toolUseId))
+                        put("content", JsonPrimitive(result))
+                    },
+                )
+            }
         },
     )
 }
 
-fun functionToolJson(definition: ToolDefinition): JsonObject = buildJsonObject {
+// strict is skipped when the request also carries the dynamic-filtering web search
+// (web_search_20260209) - its under-the-hood code execution rejects strict tools.
+fun functionToolJson(definition: ToolDefinition, includeStrict: Boolean): JsonObject = buildJsonObject {
     put("name", JsonPrimitive(definition.name))
     put("description", JsonPrimitive(definition.description))
     put("input_schema", definition.parametersSchema)
-    put("strict", JsonPrimitive(definition.strict))
+    if (includeStrict) put("strict", JsonPrimitive(definition.strict))
 }
 
 // Server-side web search - the tool type variant differs per model

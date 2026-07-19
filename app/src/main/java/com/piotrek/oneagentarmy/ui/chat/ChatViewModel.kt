@@ -89,6 +89,9 @@ class ChatViewModel(
     val usdToEur: StateFlow<Double> = exchangeRateRepository.usdToEur
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0.86)
 
+    val chatFontScale: StateFlow<Float> = settingsRepository.observeChatFontScale()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 1.0f)
+
     val messages: StateFlow<List<Message>> = repository.observeMessages(conversationId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 

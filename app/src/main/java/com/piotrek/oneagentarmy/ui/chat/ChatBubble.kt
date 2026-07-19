@@ -18,15 +18,20 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import com.mikepenz.markdown.m3.Markdown
 import com.mikepenz.markdown.m3.markdownColor
+import com.mikepenz.markdown.m3.markdownTypography
 import com.piotrek.oneagentarmy.R
 import com.piotrek.oneagentarmy.model.Message
 import com.piotrek.oneagentarmy.model.Sender
@@ -40,6 +45,7 @@ fun ChatBubble(
     message: Message,
     onResend: (() -> Unit)?,
     usdToEur: Double,
+    fontScale: Float,
     modifier: Modifier = Modifier,
 ) {
     val isUser = message.sender == Sender.USER
@@ -48,6 +54,27 @@ fun ChatBubble(
         DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withZone(ZoneId.systemDefault())
     }
 
+    // Scaling fontScale (not density) bumps every sp-sized text in the bubble -
+    // user text and all markdown alike - while dp paddings and icons stay put.
+    val density = LocalDensity.current
+    val scaledDensity = remember(density, fontScale) {
+        Density(density.density, density.fontScale * fontScale)
+    }
+    CompositionLocalProvider(LocalDensity provides scaledDensity) {
+        ChatBubbleContent(message, onResend, usdToEur, isUser, clipboard, timeFormatter, modifier)
+    }
+}
+
+@Composable
+private fun ChatBubbleContent(
+    message: Message,
+    onResend: (() -> Unit)?,
+    usdToEur: Double,
+    isUser: Boolean,
+    clipboard: ClipboardManager,
+    timeFormatter: DateTimeFormatter,
+    modifier: Modifier = Modifier,
+) {
     Column(
         modifier = modifier.fillMaxWidth(),
         horizontalAlignment = if (isUser) Alignment.End else Alignment.Start,
@@ -82,6 +109,16 @@ fun ChatBubble(
                         Markdown(
                             content = message.text,
                             colors = markdownColor(text = MaterialTheme.colorScheme.onTertiaryContainer),
+                            // Default heading sizes are tuned for full-screen articles and
+                            // look huge inside a chat bubble - scaled down to title/body roles.
+                            typography = markdownTypography(
+                                h1 = MaterialTheme.typography.titleLarge,
+                                h2 = MaterialTheme.typography.titleMedium,
+                                h3 = MaterialTheme.typography.titleSmall,
+                                h4 = MaterialTheme.typography.titleSmall,
+                                h5 = MaterialTheme.typography.bodyMedium,
+                                h6 = MaterialTheme.typography.bodyMedium,
+                            ),
                         )
                     }
                 }

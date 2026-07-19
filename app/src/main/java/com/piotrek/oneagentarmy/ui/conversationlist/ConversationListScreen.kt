@@ -299,6 +299,14 @@ private fun ConversationRow(
     val formatter = remember {
         DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withZone(ZoneId.systemDefault())
     }
+    // E.g. "ChatGPT 4.1 nano" - saves opening each conversation to check.
+    val modelLabel = remember(conversation.modelId) {
+        val providerChip = AiProviderRegistry
+            .byId(AiProviderRegistry.providerIdForModel(conversation.modelId))
+            ?.chipLabel
+        listOfNotNull(providerChip, AiProviderRegistry.shortLabelFor(conversation.modelId))
+            .joinToString(" ")
+    }
 
     val containerColor =
         if (isSelected) MaterialTheme.colorScheme.tertiaryContainer else MaterialTheme.colorScheme.primaryContainer
@@ -333,8 +341,10 @@ private fun ConversationRow(
                 },
                 supportingContent = {
                     Text(
-                        formatter.format(conversation.createdAt),
+                        "${formatter.format(conversation.createdAt)} · $modelLabel",
                         color = contentColor,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 },
                 colors = ListItemDefaults.colors(containerColor = Color.Transparent),
