@@ -60,7 +60,12 @@ sealed interface ChatError {
     data class Unknown(val detail: String) : ChatError
     data object ToolArguments : ChatError
     data object NoAppForAction : ChatError
+    data object AttachmentTooLarge : ChatError
 }
+
+// Text file (txt/md/csv) staged for the next message - its content is inlined
+// into the message text on send.
+data class PendingAttachment(val name: String, val content: String)
 
 sealed interface PendingAction {
     data class CreateCalendarEvent(val draft: CalendarEventDraft) : PendingAction
@@ -160,6 +165,25 @@ class ChatViewModel(
     private var pendingActionUsage: TokenUsage? = null
     private var pendingActionCost: Double? = null
 
+    private val _pendingAttachment = MutableStateFlow<PendingAttachment?>(null)
+    val pendingAttachment: StateFlow<PendingAttachment?> = _pendingAttachment.asStateFlow()
+
+    fun attachFile(name: String, content: String) {
+        if (content.length > MAX_ATTACHMENT_CHARS) {
+            _error.value = ChatError.AttachmentTooLarge
+            return
+        }
+        _pendingAttachment.value = PendingAttachment(name, content)
+    }
+
+    fun clearAttachment() {
+        _pendingAttachment.value = null
+    }
+
+    fun reportAttachmentError(detail: String) {
+        _error.value = ChatError.Unknown(detail)
+    }
+
     fun selectModel(modelId: String) {
         viewModelScope.launch {
             pendingModel.value = modelId
@@ -170,7 +194,8 @@ class ChatViewModel(
     }
 
     fun sendMessage(text: String) {
-        if (text.isBlank()) return
+        val attachment = _pendingAttachment.value
+        if (text.isBlank() && attachment == null) return
 
         viewModelScope.launch {
             _error.value = null
@@ -183,8 +208,21 @@ class ChatViewModel(
             // pending selections are persisted below.
             val selectedIds = selectedFactIds.value
 
+            // Attachment content is inlined into the message text - it becomes part of
+            // the conversation history and is replayed to the API like any other text.
+            val messageText = if (attachment == null) {
+                text
+            } else {
+                buildString {
+                    append("📎 ").append(attachment.name).append("\n\n").append(attachment.content)
+                    if (text.isNotBlank()) append("\n\n").append(text)
+                }
+            }
+            _pendingAttachment.value = null
+
             if (messages.value.isEmpty()) {
-                repository.createConversation(conversationId, deriveTitle(text), modelId)
+                val titleSource = text.ifBlank { attachment?.name ?: messageText }
+                repository.createConversation(conversationId, deriveTitle(titleSource), modelId)
                 // Persist fact selections made before the conversation row existed.
                 pendingFactIds.value.forEach { factId ->
                     factRepository.setFactSelected(conversationId, factId, true)
@@ -196,7 +234,7 @@ class ChatViewModel(
                 id = UUID.randomUUID().toString(),
                 conversationId = conversationId,
                 sender = Sender.USER,
-                text = text,
+                text = messageText,
                 timestamp = Instant.now(),
             )
             repository.addMessage(conversationId, userMessage)
@@ -323,6 +361,10 @@ class ChatViewModel(
         )
     }
 }
+
+// Inlined attachments ride along with every later request in the context window -
+// the cap keeps a single file from dominating token costs.
+private const val MAX_ATTACHMENT_CHARS = 30_000
 
 private fun deriveTitle(messageText: String): String {
     val singleLine = messageText.replace('\n', ' ').trim()

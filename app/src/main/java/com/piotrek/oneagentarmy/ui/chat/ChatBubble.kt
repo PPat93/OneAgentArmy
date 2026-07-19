@@ -29,6 +29,10 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
+import com.mikepenz.markdown.compose.components.markdownComponents
+import com.mikepenz.markdown.compose.elements.MarkdownTable
+import com.mikepenz.markdown.compose.elements.MarkdownTableHeader
+import com.mikepenz.markdown.compose.elements.MarkdownTableRow
 import com.mikepenz.markdown.m3.Markdown
 import com.mikepenz.markdown.m3.markdownColor
 import com.mikepenz.markdown.m3.markdownTypography
@@ -118,6 +122,24 @@ private fun ChatBubbleContent(
                                 h4 = MaterialTheme.typography.titleSmall,
                                 h5 = MaterialTheme.typography.bodyMedium,
                                 h6 = MaterialTheme.typography.bodyMedium,
+                            ),
+                            // The library's table cells default to maxLines = 1 with
+                            // ellipsis, silently truncating longer values - re-rendered
+                            // here with wrapping enabled.
+                            components = markdownComponents(
+                                table = { model ->
+                                    MarkdownTable(
+                                        content = model.content,
+                                        node = model.node,
+                                        style = model.typography.text,
+                                        headerBlock = { content, header, tableWidth, style ->
+                                            MarkdownTableHeader(content, header, tableWidth, style, maxLines = Int.MAX_VALUE)
+                                        },
+                                        rowBlock = { content, row, tableWidth, style ->
+                                            MarkdownTableRow(content, row, tableWidth, style, maxLines = Int.MAX_VALUE)
+                                        },
+                                    )
+                                },
                             ),
                         )
                     }

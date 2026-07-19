@@ -45,6 +45,9 @@
     <string name="font_scale_normal">Normalna</string>
     <string name="font_scale_large">Duża</string>
     <string name="font_scale_xlarge">Bardzo duża</string>
+    <string name="attach_file">Załącz plik tekstowy (txt, md, csv)</string>
+    <string name="remove_attachment">Usuń załącznik</string>
+    <string name="error_attachment_too_large">Plik jest za duży (limit ~30 000 znaków). Skróć go albo wyślij fragment.</string>
 
     <string name="model_gpt41_nano">GPT-4.1 nano - najtańszy ($0.10 / $0.40 za 1M tokenów)</string>
     <string name="model_gpt56_luna">GPT-5.6 Luna - lepsza jakość ($1.00 / $6.00 za 1M tokenów)</string>

@@ -340,9 +340,12 @@ private fun ConversationRow(
                     )
                 },
                 supportingContent = {
+                    // Deliberately smaller and faded - at full contrast the metadata
+                    // line reads like a second title.
                     Text(
                         "${formatter.format(conversation.createdAt)} · $modelLabel",
-                        color = contentColor,
+                        color = contentColor.copy(alpha = 0.65f),
+                        style = MaterialTheme.typography.bodySmall,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
