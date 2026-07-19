@@ -3,11 +3,11 @@ package com.piotrek.oneagentarmy.ui.chat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
@@ -18,6 +18,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -29,6 +30,9 @@ import com.mikepenz.markdown.m3.markdownColor
 import com.piotrek.oneagentarmy.R
 import com.piotrek.oneagentarmy.model.Message
 import com.piotrek.oneagentarmy.model.Sender
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 
 @Composable
 fun ChatBubble(
@@ -38,42 +42,58 @@ fun ChatBubble(
 ) {
     val isUser = message.sender == Sender.USER
     val clipboard = LocalClipboardManager.current
+    val timeFormatter = remember {
+        DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withZone(ZoneId.systemDefault())
+    }
 
-    Row(
+    Column(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start,
-        verticalAlignment = Alignment.Bottom,
+        horizontalAlignment = if (isUser) Alignment.End else Alignment.Start,
     ) {
-        if (isUser) {
-            onResend?.let { ResendButton(it) }
-            CopyButton { clipboard.setText(AnnotatedString(message.text)) }
-        }
-        Box(
-            modifier = Modifier
-                .widthIn(max = 280.dp)
-                .background(
-                    color = if (isUser) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.tertiaryContainer,
-                    shape = RoundedCornerShape(16.dp),
-                )
-                .padding(horizontal = 12.dp, vertical = 8.dp),
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start,
+            verticalAlignment = Alignment.Bottom,
         ) {
-            SelectionContainer {
-                if (isUser) {
-                    Text(
-                        text = message.text,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+            if (isUser) {
+                onResend?.let { ResendButton(it) }
+                CopyButton { clipboard.setText(AnnotatedString(message.text)) }
+            }
+            Box(
+                modifier = Modifier
+                    // Grows up to the full width left over by the action icons, but
+                    // short messages stay as narrow as their content.
+                    .weight(1f, fill = false)
+                    .background(
+                        color = if (isUser) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.tertiaryContainer,
+                        shape = RoundedCornerShape(16.dp),
                     )
-                } else {
-                    Markdown(
-                        content = message.text,
-                        colors = markdownColor(text = MaterialTheme.colorScheme.onTertiaryContainer),
-                    )
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+            ) {
+                SelectionContainer {
+                    if (isUser) {
+                        Text(
+                            text = message.text,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        )
+                    } else {
+                        Markdown(
+                            content = message.text,
+                            colors = markdownColor(text = MaterialTheme.colorScheme.onTertiaryContainer),
+                        )
+                    }
                 }
             }
+            if (!isUser) {
+                CopyButton { clipboard.setText(AnnotatedString(message.text)) }
+            }
         }
-        if (!isUser) {
-            CopyButton { clipboard.setText(AnnotatedString(message.text)) }
-        }
+        Text(
+            text = timeFormatter.format(message.timestamp),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 4.dp),
+        )
     }
 }
 

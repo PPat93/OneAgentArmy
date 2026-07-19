@@ -93,9 +93,9 @@ class ChatViewModel(
     val selectedModel: StateFlow<String?> = combine(
         repository.observeConversation(conversationId),
         pendingModel,
-        settingsRepository.observeSelectedModel(),
-    ) { conversation, pending, defaultModel ->
-        conversation?.modelId ?: pending ?: defaultModel
+        settingsRepository.observeActiveProvider(),
+    ) { conversation, pending, activeProvider ->
+        conversation?.modelId ?: pending ?: AiProviderRegistry.defaultModelFor(activeProvider)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     val availableModels: StateFlow<List<AiModelOption>> = settingsRepository.observeActiveProvider()
@@ -228,7 +228,8 @@ class ChatViewModel(
     }
 
     private suspend fun currentModelId(): String =
-        selectedModel.value ?: settingsRepository.observeSelectedModel().first()
+        selectedModel.value
+            ?: AiProviderRegistry.defaultModelFor(settingsRepository.observeActiveProvider().first())
 
     private suspend fun activeFactContents(selectedIds: Set<String>): List<String> =
         factRepository.observeFacts().first()

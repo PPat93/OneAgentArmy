@@ -37,8 +37,8 @@
     <string name="api_key_missing">API key: not set</string>
     <string name="api_key_label">API key</string>
     <string name="coming_soon">Coming soon</string>
-    <string name="model_section_title">AI model</string>
     <string name="model_label">Model</string>
+    <string name="provider_chip_label">AI:</string>
 
     <string name="model_gpt41_nano">GPT-4.1 nano - cheapest ($0.10 / $0.40 per 1M tokens)</string>
     <string name="model_gpt56_luna">GPT-5.6 Luna - better quality ($1.00 / $6.00 per 1M tokens)</string>
@@ -87,7 +87,7 @@
     <string name="settings_tools_subtitle">Keys for agent tools (web search)</string>
     <string name="tavily_api_key_label">Web search API key (Tavily)</string>
     <string name="search_provider_label">Web search source</string>
-    <string name="search_provider_built_in">Provider\'s built-in search (OpenAI)</string>
+    <string name="search_provider_built_in">Built-in search of the active provider: %1$s</string>
     <string name="search_provider_tavily">Tavily</string>
 
     <string name="settings_facts_title">Context facts</string>

@@ -5,6 +5,14 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
 
+    <!-- Needed to resolve whether a notes app handles CREATE_NOTE before firing it
+         (Android 11+ package visibility). -->
+    <queries>
+        <intent>
+            <action android:name="com.google.android.gms.actions.CREATE_NOTE" />
+        </intent>
+    </queries>
+
     <application
         android:name=".OneAgentArmyApplication"
         android:allowBackup="true"

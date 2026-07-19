@@ -1,5 +1,6 @@
 package com.piotrek.oneagentarmy.tools.notes
 
+import android.content.Context
 import android.content.Intent
 import com.piotrek.oneagentarmy.provider.ai.tools.ToolDefinition
 import kotlinx.serialization.Serializable
@@ -17,9 +18,9 @@ private val json = Json { ignoreUnknownKeys = true }
 
 val CreateNoteToolDefinition = ToolDefinition(
     name = CREATE_NOTE_TOOL,
-    description = "Save a note on the user's phone. Opens the system share sheet with the note " +
-        "pre-filled, so the user can drop it into their notes app (e.g. Google Keep). Use when " +
-        "the user asks to note something down or save a piece of text for later.",
+    description = "Save a note on the user's phone. Opens the user's notes app (e.g. Google Keep) " +
+        "with the note pre-filled. Use when the user asks to note something down or save " +
+        "a piece of text for later.",
     parametersSchema = Json.parseToJsonElement(
         """
         {
@@ -41,7 +42,17 @@ fun parseNoteArgs(argumentsJson: String): NoteDraft {
     return NoteDraft(args.title?.takeIf { it.isNotBlank() }, args.content)
 }
 
-fun buildNoteIntent(draft: NoteDraft): Intent {
+// Note apps (Keep, Samsung Notes...) handle the assistant-era CREATE_NOTE action and
+// open directly with the content pre-filled - the share sheet is only the fallback
+// for phones without any app handling it.
+fun buildNoteIntent(context: Context, draft: NoteDraft): Intent {
+    val createNote = Intent(ACTION_CREATE_NOTE).apply {
+        type = "text/plain"
+        draft.title?.let { putExtra(EXTRA_NOTE_NAME, it) }
+        putExtra(Intent.EXTRA_TEXT, draft.content)
+    }
+    if (createNote.resolveActivity(context.packageManager) != null) return createNote
+
     val send = Intent(Intent.ACTION_SEND).apply {
         type = "text/plain"
         draft.title?.let { putExtra(Intent.EXTRA_SUBJECT, it) }
@@ -49,3 +60,6 @@ fun buildNoteIntent(draft: NoteDraft): Intent {
     }
     return Intent.createChooser(send, null)
 }
+
+private const val ACTION_CREATE_NOTE = "com.google.android.gms.actions.CREATE_NOTE"
+private const val EXTRA_NOTE_NAME = "com.google.android.gms.actions.EXTRA_NAME"

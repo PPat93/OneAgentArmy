@@ -58,9 +58,35 @@ import com.piotrek.oneagentarmy.tools.clock.buildTimerIntent
 import com.piotrek.oneagentarmy.tools.navigation.buildNavigationIntent
 import com.piotrek.oneagentarmy.tools.notes.buildNoteIntent
 import com.piotrek.oneagentarmy.tools.sms.buildSmsIntent
+import com.piotrek.oneagentarmy.model.Message
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
+
+// List rows for the chat LazyColumn: messages interleaved with day separators.
+private sealed interface ChatListItem {
+    data class MessageItem(val message: Message) : ChatListItem
+    data class DateHeader(val date: LocalDate) : ChatListItem
+}
+
+@Composable
+private fun DateHeaderRow(date: LocalDate) {
+    val formatter = remember { DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM) }
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = formatter.format(date),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -86,14 +112,27 @@ fun ChatScreen(
 
     // With reverseLayout, index 0 is the newest message and the list is anchored to the
     // bottom natively - immune to bubbles growing after async markdown parsing finishes.
-    val reversedMessages = remember(messages) { messages.asReversed() }
+    // A day's header is emitted after its last (oldest-rendered-highest) message, so on
+    // screen it appears above that day's messages.
+    val chatItems = remember(messages) {
+        val reversed = messages.asReversed()
+        val zone = ZoneId.systemDefault()
+        buildList {
+            reversed.forEachIndexed { index, message ->
+                add(ChatListItem.MessageItem(message))
+                val date = message.timestamp.atZone(zone).toLocalDate()
+                val olderDate = reversed.getOrNull(index + 1)?.timestamp?.atZone(zone)?.toLocalDate()
+                if (olderDate != date) add(ChatListItem.DateHeader(date))
+            }
+        }
+    }
 
     var initialScrollHandled by remember { mutableStateOf(false) }
     LaunchedEffect(messages.size) {
         if (messages.isEmpty()) return@LaunchedEffect
         if (!initialScrollHandled && focusMessageId != null) {
             // Opened from a search result - land on the matched message instead of the bottom.
-            val index = reversedMessages.indexOfFirst { it.id == focusMessageId }
+            val index = chatItems.indexOfFirst { it is ChatListItem.MessageItem && it.message.id == focusMessageId }
             listState.scrollToItem(index.coerceAtLeast(0))
         } else {
             listState.animateScrollToItem(0)
@@ -213,15 +252,26 @@ fun ChatScreen(
                     contentPadding = PaddingValues(12.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    items(reversedMessages, key = { it.id }) { message ->
-                        ChatBubble(
-                            message = message,
-                            onResend = if (message.sender == Sender.USER) {
-                                { viewModel.resendMessage(message) }
-                            } else {
-                                null
-                            },
-                        )
+                    items(
+                        chatItems,
+                        key = { item ->
+                            when (item) {
+                                is ChatListItem.MessageItem -> item.message.id
+                                is ChatListItem.DateHeader -> "date-${item.date}"
+                            }
+                        },
+                    ) { item ->
+                        when (item) {
+                            is ChatListItem.MessageItem -> ChatBubble(
+                                message = item.message,
+                                onResend = if (item.message.sender == Sender.USER) {
+                                    { viewModel.resendMessage(item.message) }
+                                } else {
+                                    null
+                                },
+                            )
+                            is ChatListItem.DateHeader -> DateHeaderRow(item.date)
+                        }
                     }
                 }
             }
@@ -354,7 +404,7 @@ private fun PendingActionCard(
         is PendingAction.CreateNote -> PendingActionUi(
             title = stringResource(R.string.pending_note_title),
             lines = listOfNotNull(action.draft.title, action.draft.content),
-            intent = buildNoteIntent(action.draft),
+            intent = buildNoteIntent(context, action.draft),
             summary = stringResource(R.string.chat_note_summary, action.draft.title ?: action.draft.content),
         )
     }

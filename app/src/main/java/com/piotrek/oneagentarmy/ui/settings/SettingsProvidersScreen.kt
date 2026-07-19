@@ -1,8 +1,6 @@
 package com.piotrek.oneagentarmy.ui.settings
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,13 +11,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -47,14 +42,8 @@ fun SettingsProvidersScreen(
 ) {
     val activeProvider by viewModel.activeProvider.collectAsState()
     val apiKeyStates by viewModel.apiKeyStates.collectAsState()
-    val selectedModel by viewModel.selectedModel.collectAsState()
     val keyInputs = remember { mutableStateMapOf<String, String>() }
-    var modelMenuExpanded by remember { mutableStateOf(false) }
     var clearKeyDialogFor by remember { mutableStateOf<AiProviderInfo?>(null) }
-
-    val activeModels = AiProviderRegistry.byId(activeProvider)?.models.orEmpty()
-    val selectedOption = activeModels.firstOrNull { it.id == selectedModel }
-    val selectedModelLabel = if (selectedOption != null) stringResource(selectedOption.labelRes) else selectedModel
 
     Scaffold(
         topBar = {
@@ -90,45 +79,6 @@ fun SettingsProvidersScreen(
                     },
                     onClearKeyRequest = { clearKeyDialogFor = provider },
                 )
-            }
-
-            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(stringResource(R.string.model_section_title), color = MaterialTheme.colorScheme.onTertiaryContainer)
-
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 8.dp),
-                    ) {
-                        OutlinedTextField(
-                            value = selectedModelLabel,
-                            onValueChange = {},
-                            readOnly = true,
-                            label = { Text(stringResource(R.string.model_label)) },
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                        Box(
-                            modifier = Modifier
-                                .matchParentSize()
-                                .clickable { modelMenuExpanded = true },
-                        )
-                        DropdownMenu(
-                            expanded = modelMenuExpanded,
-                            onDismissRequest = { modelMenuExpanded = false },
-                        ) {
-                            activeModels.forEach { option ->
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(option.labelRes)) },
-                                    onClick = {
-                                        viewModel.selectModel(option.id)
-                                        modelMenuExpanded = false
-                                    },
-                                )
-                            }
-                        }
-                    }
-                }
             }
         }
     }

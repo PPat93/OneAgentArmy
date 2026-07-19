@@ -26,9 +26,6 @@ class SettingsViewModel(
     ) { pairs -> pairs.toMap() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
 
-    val selectedModel: StateFlow<String> = repository.observeSelectedModel()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AiProviderRegistry.DEFAULT_MODEL)
-
     val tavilyHasKey: StateFlow<Boolean> = repository.observeHasApiKey(TAVILY_KEY_ID)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
@@ -45,19 +42,7 @@ class SettingsViewModel(
     }
 
     fun setActiveProvider(providerId: String) {
-        viewModelScope.launch {
-            repository.setActiveProvider(providerId)
-            // Keep the global model consistent with the new provider - otherwise the
-            // model dropdown would show a raw model id from the previous provider.
-            val models = AiProviderRegistry.byId(providerId)?.models.orEmpty()
-            if (models.isNotEmpty() && models.none { it.id == selectedModel.value }) {
-                repository.setSelectedModel(models.first().id)
-            }
-        }
-    }
-
-    fun selectModel(modelId: String) {
-        viewModelScope.launch { repository.setSelectedModel(modelId) }
+        viewModelScope.launch { repository.setActiveProvider(providerId) }
     }
 
     fun setSearchProvider(searchProviderId: String) {
