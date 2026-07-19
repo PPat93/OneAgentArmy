@@ -1,8 +1,8 @@
 package com.piotrek.oneagentarmy.provider.ai.openai
 
 import com.piotrek.oneagentarmy.provider.ai.AiProviderException
-import com.piotrek.oneagentarmy.provider.ai.openai.dto.ChatCompletionRequest
-import com.piotrek.oneagentarmy.provider.ai.openai.dto.ChatCompletionResponse
+import com.piotrek.oneagentarmy.provider.ai.openai.dto.ResponsesRequest
+import com.piotrek.oneagentarmy.provider.ai.openai.dto.ResponsesResponse
 import com.piotrek.oneagentarmy.provider.ai.openai.dto.OpenAiErrorResponse
 import java.io.IOException
 import kotlinx.coroutines.Dispatchers
@@ -16,21 +16,21 @@ import okhttp3.RequestBody.Companion.toRequestBody
 class OpenAiApiClient(
     private val okHttpClient: OkHttpClient,
 ) {
-    // encodeDefaults so ToolDto.type/FunctionDto.strict are serialized;
-    // explicitNulls=false so null fields (content on tool turns, unused tools) are omitted.
+    // encodeDefaults so ResponsesRequest.store=false is serialized;
+    // explicitNulls=false so null fields (unused tools, include) are omitted.
     private val json = Json {
         ignoreUnknownKeys = true
         encodeDefaults = true
         explicitNulls = false
     }
 
-    suspend fun chatCompletion(apiKey: String, request: ChatCompletionRequest): ChatCompletionResponse =
+    suspend fun createResponse(apiKey: String, request: ResponsesRequest): ResponsesResponse =
         withContext(Dispatchers.IO) {
-            val body = json.encodeToString(ChatCompletionRequest.serializer(), request)
+            val body = json.encodeToString(ResponsesRequest.serializer(), request)
                 .toRequestBody(JSON_MEDIA_TYPE)
 
             val httpRequest = Request.Builder()
-                .url(CHAT_COMPLETIONS_URL)
+                .url(RESPONSES_URL)
                 .header("Authorization", "Bearer $apiKey")
                 .post(body)
                 .build()
@@ -44,7 +44,7 @@ class OpenAiApiClient(
             response.use {
                 val responseBody = it.body?.string().orEmpty()
                 when (it.code) {
-                    in 200..299 -> json.decodeFromString(ChatCompletionResponse.serializer(), responseBody)
+                    in 200..299 -> json.decodeFromString(ResponsesResponse.serializer(), responseBody)
                     401 -> throw AiProviderException.InvalidApiKey(extractErrorDetail(it.code, responseBody))
                     429 -> throw AiProviderException.RateLimited(
                         retryAfterSeconds = it.header("Retry-After")?.toIntOrNull(),
@@ -69,7 +69,7 @@ class OpenAiApiClient(
     }
 
     private companion object {
-        const val CHAT_COMPLETIONS_URL = "https://api.openai.com/v1/chat/completions"
+        const val RESPONSES_URL = "https://api.openai.com/v1/responses"
         val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaType()
     }
 }

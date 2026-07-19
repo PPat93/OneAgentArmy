@@ -78,6 +78,9 @@
     <string name="settings_tools_title">Narzędzia</string>
     <string name="settings_tools_subtitle">Klucze narzędzi agenta (wyszukiwanie w necie)</string>
     <string name="tavily_api_key_label">Klucz API wyszukiwania (Tavily)</string>
+    <string name="search_provider_label">Źródło wyszukiwania w necie</string>
+    <string name="search_provider_built_in">Wbudowane wyszukiwanie dostawcy (OpenAI)</string>
+    <string name="search_provider_tavily">Tavily</string>
 
     <string name="settings_facts_title">Fakty kontekstowe</string>
     <string name="settings_facts_subtitle">Notatki wstrzykiwane do rozmów</string>

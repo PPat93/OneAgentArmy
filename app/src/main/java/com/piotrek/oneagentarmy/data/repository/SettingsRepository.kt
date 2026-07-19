@@ -13,4 +13,13 @@ interface SettingsRepository {
 
     fun observeSelectedModel(): Flow<String>
     suspend fun setSelectedModel(modelId: String)
+
+    fun observeSearchProvider(): Flow<String>
+    suspend fun setSearchProvider(searchProviderId: String)
+
+    companion object {
+        // Active AI provider's hosted web search (e.g. OpenAI's web_search tool).
+        const val SEARCH_PROVIDER_BUILT_IN = "provider"
+        const val SEARCH_PROVIDER_TAVILY = "tavily"
+    }
 }
