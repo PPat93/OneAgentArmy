@@ -18,6 +18,9 @@ data class AiProviderInfo(
     val displayName: String,
     val models: List<AiModelOption>,
     val isAvailable: Boolean,
+    // Optional informational note rendered in the provider's settings card
+    // (e.g. Gemini's free-tier/privacy explanation).
+    @StringRes val noteRes: Int? = null,
 )
 
 object AiProviderRegistry {
@@ -34,6 +37,7 @@ object AiProviderRegistry {
             models = listOf(
                 AiModelOption("gpt-4.1-nano", R.string.model_gpt41_nano, "4.1 nano"),
                 AiModelOption("gpt-5.6-luna", R.string.model_gpt56_luna, "5.6 Luna", supportsHostedWebSearch = true),
+                AiModelOption("gpt-5.6-sol", R.string.model_gpt56_sol, "5.6 Sol", supportsHostedWebSearch = true),
             ),
             isAvailable = true,
         ),
@@ -41,16 +45,27 @@ object AiProviderRegistry {
             id = GEMINI,
             displayName = "Google (Gemini)",
             models = listOf(
-                // Combining google_search with custom function tools requires Gemini 3.x -
-                // 2.5 models fall back to the Tavily function tool.
-                AiModelOption("gemini-2.5-flash", R.string.model_gemini_25_flash, "2.5 Flash"),
+                // Flash-Lite is absent from Google's list of grounding-capable models -
+                // it falls back to the Tavily function tool for web search.
+                AiModelOption("gemini-3.1-flash-lite", R.string.model_gemini_31_flash_lite, "3.1 Lite"),
+                // The Gemini 3 (non-.5) series is published only under preview ids -
+                // the bare "gemini-3-flash" alias 404s.
+                AiModelOption("gemini-3-flash-preview", R.string.model_gemini_3_flash, "3 Flash", supportsHostedWebSearch = true),
                 AiModelOption("gemini-3.5-flash", R.string.model_gemini_35_flash, "3.5 Flash", supportsHostedWebSearch = true),
             ),
             isAvailable = true,
+            noteRes = R.string.gemini_free_tier_note,
         ),
-        // Placeholder - keys can already be stored, but the provider can't be
-        // activated until a real client implementation lands (flip isAvailable then).
-        AiProviderInfo(id = ANTHROPIC, displayName = "Anthropic (Claude)", models = emptyList(), isAvailable = false),
+        AiProviderInfo(
+            id = ANTHROPIC,
+            displayName = "Anthropic (Claude)",
+            models = listOf(
+                AiModelOption("claude-haiku-4-5", R.string.model_claude_haiku_45, "Haiku 4.5", supportsHostedWebSearch = true),
+                AiModelOption("claude-sonnet-5", R.string.model_claude_sonnet_5, "Sonnet 5", supportsHostedWebSearch = true),
+                AiModelOption("claude-opus-4-8", R.string.model_claude_opus_48, "Opus 4.8", supportsHostedWebSearch = true),
+            ),
+            isAvailable = true,
+        ),
     )
 
     fun byId(id: String): AiProviderInfo? = providers.firstOrNull { it.id == id }

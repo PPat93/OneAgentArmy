@@ -178,6 +178,15 @@ private fun ProviderCard(
                 }
             }
 
+            provider.noteRes?.let { noteRes ->
+                Text(
+                    text = stringResource(noteRes),
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+            }
+
             ApiKeyFields(
                 hasKey = hasKey,
                 keyInput = keyInput,

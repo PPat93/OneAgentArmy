@@ -1,0 +1,125 @@
+package com.piotrek.oneagentarmy.provider.ai.anthropic.dto
+
+import com.piotrek.oneagentarmy.provider.ai.tools.ToolDefinition
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.contentOrNull
+
+@Serializable
+data class MessagesRequest(
+    val model: String,
+    // Required by the Messages API; caps thinking + visible text combined.
+    @SerialName("max_tokens") val maxTokens: Int,
+    val system: String,
+    // Messages are raw JsonElements on purpose: history entries are hand-built
+    // {role, content-string} objects, while tool round-trips echo the assistant's
+    // content blocks verbatim (thinking blocks must be resent unchanged).
+    val messages: List<JsonElement>,
+    val tools: List<JsonElement>? = null,
+    @SerialName("tool_choice") val toolChoice: JsonElement? = null,
+)
+
+@Serializable
+data class MessagesResponse(
+    val content: List<JsonObject> = emptyList(),
+    @SerialName("stop_reason") val stopReason: String? = null,
+)
+
+@Serializable
+data class AnthropicErrorResponse(
+    val error: AnthropicErrorDetail? = null,
+)
+
+@Serializable
+data class AnthropicErrorDetail(
+    val message: String? = null,
+)
+
+data class AnthropicToolUse(
+    val id: String,
+    val name: String,
+    // JSON-encoded arguments object - the API delivers input as an object, callers
+    // get the same string shape ToolCallRequest/argument parsers expect.
+    val inputJson: String,
+)
+
+fun MessagesResponse.firstToolUse(): AnthropicToolUse? {
+    val block = content.firstOrNull { it.stringField("type") == "tool_use" } ?: return null
+    val input = block["input"] as? JsonObject ?: return null
+    return AnthropicToolUse(
+        id = block.stringField("id") ?: return null,
+        name = block.stringField("name") ?: return null,
+        inputJson = input.toString(),
+    )
+}
+
+fun MessagesResponse.outputText(): String? =
+    content.asSequence()
+        .filter { it.stringField("type") == "text" }
+        .mapNotNull { it.stringField("text") }
+        .joinToString("\n\n")
+        .ifBlank { null }
+
+fun historyMessage(role: String, text: String): JsonObject = buildJsonObject {
+    put("role", JsonPrimitive(role))
+    put("content", JsonPrimitive(text))
+}
+
+// Echoes a response's content blocks back verbatim - required so thinking blocks
+// (Sonnet) and server-tool blocks return unchanged on the next request.
+fun assistantMessage(content: List<JsonObject>): JsonObject = buildJsonObject {
+    put("role", JsonPrimitive("assistant"))
+    put("content", JsonArray(content))
+}
+
+fun toolResultMessage(toolUseId: String, result: String): JsonObject = buildJsonObject {
+    put("role", JsonPrimitive("user"))
+    put(
+        "content",
+        buildJsonArray {
+            add(
+                buildJsonObject {
+                    put("type", JsonPrimitive("tool_result"))
+                    put("tool_use_id", JsonPrimitive(toolUseId))
+                    put("content", JsonPrimitive(result))
+                },
+            )
+        },
+    )
+}
+
+fun functionToolJson(definition: ToolDefinition): JsonObject = buildJsonObject {
+    put("name", JsonPrimitive(definition.name))
+    put("description", JsonPrimitive(definition.description))
+    put("input_schema", definition.parametersSchema)
+    put("strict", JsonPrimitive(definition.strict))
+}
+
+// Server-side web search - the tool type variant differs per model
+// (web_search_20260209 on Sonnet 5, web_search_20250305 on Haiku 4.5).
+fun webSearchToolJson(type: String): JsonObject = buildJsonObject {
+    put("type", JsonPrimitive(type))
+    put("name", JsonPrimitive("web_search"))
+}
+
+// The loop handles one tool call at a time; parallel tool_use blocks would each
+// demand a tool_result, so parallel calls are disabled outright.
+fun toolChoiceAutoNoParallel(): JsonObject = buildJsonObject {
+    put("type", JsonPrimitive("auto"))
+    put("disable_parallel_tool_use", JsonPrimitive(true))
+}
+
+// Used once the round-trip cap is reached - tools must stay defined (history
+// containing tool_use blocks without a tools param is rejected), so further
+// calls are blocked via tool_choice instead.
+fun toolChoiceNone(): JsonObject = buildJsonObject {
+    put("type", JsonPrimitive("none"))
+}
+
+private fun JsonObject.stringField(key: String): String? = (this[key] as? JsonPrimitive)?.contentOrNull

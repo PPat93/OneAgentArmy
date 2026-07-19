@@ -19,6 +19,8 @@ import com.piotrek.oneagentarmy.provider.ai.AiProviderRegistry
 import com.piotrek.oneagentarmy.provider.ai.ContextWindowStrategies
 import com.piotrek.oneagentarmy.provider.ai.ContextWindowStrategy
 import com.piotrek.oneagentarmy.provider.ai.RoutingAiProvider
+import com.piotrek.oneagentarmy.provider.ai.anthropic.AnthropicApiClient
+import com.piotrek.oneagentarmy.provider.ai.anthropic.AnthropicProvider
 import com.piotrek.oneagentarmy.provider.ai.gemini.GeminiApiClient
 import com.piotrek.oneagentarmy.provider.ai.gemini.GeminiProvider
 import com.piotrek.oneagentarmy.provider.ai.openai.OpenAiApiClient
@@ -88,6 +90,12 @@ class AppContainer(context: Context) {
             ),
             AiProviderRegistry.GEMINI to GeminiProvider(
                 apiClient = GeminiApiClient(okHttpClient),
+                settingsRepository = settingsRepository,
+                toolRegistry = toolRegistry,
+                executors = roundTripExecutors,
+            ),
+            AiProviderRegistry.ANTHROPIC to AnthropicProvider(
+                apiClient = AnthropicApiClient(okHttpClient),
                 settingsRepository = settingsRepository,
                 toolRegistry = toolRegistry,
                 executors = roundTripExecutors,
