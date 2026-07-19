@@ -37,16 +37,29 @@ object AiProviderRegistry {
             ),
             isAvailable = true,
         ),
-        // Placeholders - keys can already be stored, but the provider can't be
+        AiProviderInfo(
+            id = GEMINI,
+            displayName = "Google (Gemini)",
+            models = listOf(
+                // Combining google_search with custom function tools requires Gemini 3.x -
+                // 2.5 models fall back to the Tavily function tool.
+                AiModelOption("gemini-2.5-flash", R.string.model_gemini_25_flash, "2.5 Flash"),
+                AiModelOption("gemini-3.5-flash", R.string.model_gemini_35_flash, "3.5 Flash", supportsHostedWebSearch = true),
+            ),
+            isAvailable = true,
+        ),
+        // Placeholder - keys can already be stored, but the provider can't be
         // activated until a real client implementation lands (flip isAvailable then).
         AiProviderInfo(id = ANTHROPIC, displayName = "Anthropic (Claude)", models = emptyList(), isAvailable = false),
-        AiProviderInfo(id = GEMINI, displayName = "Google (Gemini)", models = emptyList(), isAvailable = false),
     )
 
     fun byId(id: String): AiProviderInfo? = providers.firstOrNull { it.id == id }
 
     fun modelOptionFor(modelId: String): AiModelOption? =
         providers.asSequence().flatMap { it.models }.firstOrNull { it.id == modelId }
+
+    fun providerIdForModel(modelId: String): String =
+        providers.firstOrNull { provider -> provider.models.any { it.id == modelId } }?.id ?: OPENAI
 
     fun shortLabelFor(modelId: String): String =
         modelOptionFor(modelId)?.shortLabel ?: modelId

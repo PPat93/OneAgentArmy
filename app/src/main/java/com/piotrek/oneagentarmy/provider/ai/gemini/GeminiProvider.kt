@@ -1,4 +1,4 @@
-package com.piotrek.oneagentarmy.provider.ai.openai
+package com.piotrek.oneagentarmy.provider.ai.gemini
 
 import com.piotrek.oneagentarmy.data.repository.SettingsRepository
 import com.piotrek.oneagentarmy.model.Message
@@ -8,12 +8,14 @@ import com.piotrek.oneagentarmy.provider.ai.AiProviderException
 import com.piotrek.oneagentarmy.provider.ai.AiProviderRegistry
 import com.piotrek.oneagentarmy.provider.ai.AiReply
 import com.piotrek.oneagentarmy.provider.ai.buildSystemPrompt
-import com.piotrek.oneagentarmy.provider.ai.openai.dto.ResponsesRequest
-import com.piotrek.oneagentarmy.provider.ai.openai.dto.firstFunctionCall
-import com.piotrek.oneagentarmy.provider.ai.openai.dto.functionCallOutputItem
-import com.piotrek.oneagentarmy.provider.ai.openai.dto.functionToolJson
-import com.piotrek.oneagentarmy.provider.ai.openai.dto.outputText
-import com.piotrek.oneagentarmy.provider.ai.openai.dto.webSearchToolJson
+import com.piotrek.oneagentarmy.provider.ai.gemini.dto.InteractionsRequest
+import com.piotrek.oneagentarmy.provider.ai.gemini.dto.firstFunctionCall
+import com.piotrek.oneagentarmy.provider.ai.gemini.dto.functionResultStep
+import com.piotrek.oneagentarmy.provider.ai.gemini.dto.functionToolJson
+import com.piotrek.oneagentarmy.provider.ai.gemini.dto.googleSearchToolJson
+import com.piotrek.oneagentarmy.provider.ai.gemini.dto.modelOutputStep
+import com.piotrek.oneagentarmy.provider.ai.gemini.dto.outputText
+import com.piotrek.oneagentarmy.provider.ai.gemini.dto.userInputStep
 import com.piotrek.oneagentarmy.provider.ai.tools.RoundTripToolExecutor
 import com.piotrek.oneagentarmy.provider.ai.tools.ToolCallRequest
 import com.piotrek.oneagentarmy.provider.ai.tools.ToolRegistry
@@ -24,8 +26,8 @@ import java.util.UUID
 import kotlinx.coroutines.flow.first
 import kotlinx.serialization.json.JsonElement
 
-class OpenAiProvider(
-    private val apiClient: OpenAiApiClient,
+class GeminiProvider(
+    private val apiClient: GeminiApiClient,
     private val settingsRepository: SettingsRepository,
     private val toolRegistry: ToolRegistry,
     executors: List<RoundTripToolExecutor>,
@@ -35,14 +37,13 @@ class OpenAiProvider(
     private val executorsByName = executors.associateBy { it.toolName }
 
     override suspend fun sendMessage(history: List<Message>, modelId: String, contextFacts: List<String>): AiReply {
-        val apiKey = settingsRepository.getApiKey(AiProviderRegistry.OPENAI)
+        val apiKey = settingsRepository.getApiKey(AiProviderRegistry.GEMINI)
         if (apiKey.isNullOrBlank()) throw AiProviderException.MissingApiKey
 
         val conversationId = history.last().conversationId
 
-        // Hosted mode swaps the Tavily function tool for OpenAI's server-side web_search,
-        // which needs no key and no round-trip on our side. Models that reject the hosted
-        // tool (e.g. gpt-4.1-nano) fall back to Tavily regardless of the setting.
+        // Hosted mode swaps the Tavily function tool for Google Search grounding,
+        // which needs no key and no round-trip on our side.
         val useHostedSearch =
             settingsRepository.observeSearchProvider().first() == SettingsRepository.SEARCH_PROVIDER_BUILT_IN &&
                 AiProviderRegistry.modelOptionFor(modelId)?.supportsHostedWebSearch == true
@@ -52,10 +53,12 @@ class OpenAiProvider(
             .filter { it.requiredKeyId == null || settingsRepository.getApiKey(it.requiredKeyId) != null }
             .map { functionToolJson(it) }
         val tools: List<JsonElement> =
-            if (useHostedSearch) functionTools + webSearchToolJson() else functionTools
+            if (useHostedSearch) functionTools + googleSearchToolJson() else functionTools
 
-        val instructions = buildSystemPrompt(clock, contextFacts)
-        var input: List<JsonElement> = history.map { it.toInputItem() }
+        val systemInstruction = buildSystemPrompt(clock, contextFacts)
+        var input: List<JsonElement> = history.map {
+            if (it.sender == Sender.USER) userInputStep(it.text) else modelOutputStep(it.text)
+        }
         var roundTripsUsed = 0
 
         while (true) {
@@ -63,15 +66,13 @@ class OpenAiProvider(
             // the next request omits tools entirely, forcing a text answer.
             val toolsForThisRequest = if (roundTripsUsed >= MAX_TOOL_ROUND_TRIPS) null else tools.ifEmpty { null }
 
-            val request = ResponsesRequest(
+            val request = InteractionsRequest(
                 model = modelId,
-                instructions = instructions,
                 input = input,
+                systemInstruction = systemInstruction,
                 tools = toolsForThisRequest,
-                parallelToolCalls = if (toolsForThisRequest == null) null else false,
-                include = listOf("reasoning.encrypted_content"),
             )
-            val response = apiClient.createResponse(apiKey, request)
+            val response = apiClient.createInteraction(apiKey, request)
 
             val functionCall = response.firstFunctionCall()
             if (functionCall == null) {
@@ -91,17 +92,17 @@ class OpenAiProvider(
             val executor = executorsByName[functionCall.name]
             if (executor != null && roundTripsUsed < MAX_TOOL_ROUND_TRIPS) {
                 roundTripsUsed++
-                val result = executor.execute(functionCall.arguments)
-                // All output items are replayed verbatim - with store=false, reasoning
-                // models require their reasoning items (encrypted_content) back on the
-                // next turn, and the function_call item must precede its output.
-                input = input + response.output + functionCallOutputItem(functionCall.callId, result)
+                val result = executor.execute(functionCall.argumentsJson)
+                // All response steps are replayed verbatim - thought and function_call
+                // steps carry signatures the API requires back unchanged, and the
+                // function_call step must precede its result.
+                input = input + response.steps + functionResultStep(functionCall.id, result)
                 continue
             }
 
             // Tools without an executor (calendar, alarms, SMS...) have a client-side
             // effect the ViewModel must confirm with the user - handed back unresolved.
-            return AiReply.ToolCall(ToolCallRequest(functionCall.name, functionCall.arguments))
+            return AiReply.ToolCall(ToolCallRequest(functionCall.name, functionCall.argumentsJson))
         }
     }
 

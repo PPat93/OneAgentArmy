@@ -42,6 +42,8 @@
 
     <string name="model_gpt41_nano">GPT-4.1 nano - najtańszy ($0.10 / $0.40 za 1M tokenów)</string>
     <string name="model_gpt56_luna">GPT-5.6 Luna - lepsza jakość ($1.00 / $6.00 za 1M tokenów)</string>
+    <string name="model_gemini_25_flash">Gemini 2.5 Flash - najtańszy ($0.30 / $2.50 za 1M tokenów)</string>
+    <string name="model_gemini_35_flash">Gemini 3.5 Flash - lepsza jakość ($1.50 / $9.00 za 1M tokenów)</string>
 
     <string name="pending_calendar_title">Dodać wydarzenie do kalendarza?</string>
     <string name="pending_confirm">Dodaj</string>

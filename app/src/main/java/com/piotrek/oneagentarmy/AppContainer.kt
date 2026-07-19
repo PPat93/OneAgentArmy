@@ -15,8 +15,12 @@ import com.piotrek.oneagentarmy.data.repository.RoomConversationRepository
 import com.piotrek.oneagentarmy.data.repository.RoomFactRepository
 import com.piotrek.oneagentarmy.data.repository.SettingsRepository
 import com.piotrek.oneagentarmy.provider.ai.AiProvider
+import com.piotrek.oneagentarmy.provider.ai.AiProviderRegistry
 import com.piotrek.oneagentarmy.provider.ai.ContextWindowStrategies
 import com.piotrek.oneagentarmy.provider.ai.ContextWindowStrategy
+import com.piotrek.oneagentarmy.provider.ai.RoutingAiProvider
+import com.piotrek.oneagentarmy.provider.ai.gemini.GeminiApiClient
+import com.piotrek.oneagentarmy.provider.ai.gemini.GeminiProvider
 import com.piotrek.oneagentarmy.provider.ai.openai.OpenAiApiClient
 import com.piotrek.oneagentarmy.provider.ai.openai.OpenAiProvider
 import com.piotrek.oneagentarmy.provider.ai.tools.ToolRegistry
@@ -69,13 +73,25 @@ class AppContainer(context: Context) {
     private val webSearchClient = TavilyWebSearchClient(okHttpClient)
     private val weatherClient = OpenMeteoWeatherClient(okHttpClient)
 
-    val aiProvider: AiProvider = OpenAiProvider(
-        apiClient = OpenAiApiClient(okHttpClient),
-        settingsRepository = settingsRepository,
-        toolRegistry = toolRegistry,
-        executors = listOf(
-            WebSearchExecutor(webSearchClient, settingsRepository),
-            WeatherExecutor(weatherClient),
+    private val roundTripExecutors = listOf(
+        WebSearchExecutor(webSearchClient, settingsRepository),
+        WeatherExecutor(weatherClient),
+    )
+
+    val aiProvider: AiProvider = RoutingAiProvider(
+        providers = mapOf(
+            AiProviderRegistry.OPENAI to OpenAiProvider(
+                apiClient = OpenAiApiClient(okHttpClient),
+                settingsRepository = settingsRepository,
+                toolRegistry = toolRegistry,
+                executors = roundTripExecutors,
+            ),
+            AiProviderRegistry.GEMINI to GeminiProvider(
+                apiClient = GeminiApiClient(okHttpClient),
+                settingsRepository = settingsRepository,
+                toolRegistry = toolRegistry,
+                executors = roundTripExecutors,
+            ),
         ),
     )
 

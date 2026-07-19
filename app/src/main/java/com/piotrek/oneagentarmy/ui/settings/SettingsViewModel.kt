@@ -45,7 +45,15 @@ class SettingsViewModel(
     }
 
     fun setActiveProvider(providerId: String) {
-        viewModelScope.launch { repository.setActiveProvider(providerId) }
+        viewModelScope.launch {
+            repository.setActiveProvider(providerId)
+            // Keep the global model consistent with the new provider - otherwise the
+            // model dropdown would show a raw model id from the previous provider.
+            val models = AiProviderRegistry.byId(providerId)?.models.orEmpty()
+            if (models.isNotEmpty() && models.none { it.id == selectedModel.value }) {
+                repository.setSelectedModel(models.first().id)
+            }
+        }
     }
 
     fun selectModel(modelId: String) {
