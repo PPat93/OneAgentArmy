@@ -30,6 +30,9 @@ import com.piotrek.oneagentarmy.tools.clock.parseTimerArgs
 import com.piotrek.oneagentarmy.tools.navigation.NAVIGATE_TO_TOOL
 import com.piotrek.oneagentarmy.tools.navigation.NavigationDraft
 import com.piotrek.oneagentarmy.tools.navigation.parseNavigationArgs
+import com.piotrek.oneagentarmy.tools.notes.CREATE_NOTE_TOOL
+import com.piotrek.oneagentarmy.tools.notes.NoteDraft
+import com.piotrek.oneagentarmy.tools.notes.parseNoteArgs
 import com.piotrek.oneagentarmy.tools.sms.DRAFT_SMS_TOOL
 import com.piotrek.oneagentarmy.tools.sms.SmsDraft
 import com.piotrek.oneagentarmy.tools.sms.parseSmsArgs
@@ -64,6 +67,7 @@ sealed interface PendingAction {
     data class DraftSms(val draft: SmsDraft) : PendingAction
     data class Navigate(val draft: NavigationDraft) : PendingAction
     data class OpenCalendarDate(val draft: OpenCalendarDraft) : PendingAction
+    data class CreateNote(val draft: NoteDraft) : PendingAction
 }
 
 class ChatViewModel(
@@ -270,6 +274,7 @@ class ChatViewModel(
         DRAFT_SMS_TOOL to { args -> PendingAction.DraftSms(parseSmsArgs(args)) },
         NAVIGATE_TO_TOOL to { args -> PendingAction.Navigate(parseNavigationArgs(args)) },
         OPEN_CALENDAR_AT_TOOL to { args -> PendingAction.OpenCalendarDate(parseOpenCalendarArgs(args)) },
+        CREATE_NOTE_TOOL to { args -> PendingAction.CreateNote(parseNoteArgs(args)) },
     )
 
     private suspend fun persistAiNote(text: String) {

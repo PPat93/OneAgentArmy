@@ -121,7 +121,8 @@ class OpenAiProvider(
                 "Only include attendee emails the user explicitly provided; if they name a person " +
                 "without an email address, ask for the address instead of calling the tool. " +
                 "Use the other tools when the user asks for those actions: alarms, timers, " +
-                "SMS drafts, navigation, opening the calendar at a date, weather forecasts. " +
+                "SMS drafts, navigation, opening the calendar at a date, weather forecasts, " +
+                "saving a note. " +
                 "Use web_search only when the question genuinely needs current, real-time, or " +
                 "recent information - answer from your own knowledge otherwise. You may call " +
                 "web_search more than once per message: if the first results are too shallow, " +

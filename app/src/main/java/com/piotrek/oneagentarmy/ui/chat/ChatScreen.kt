@@ -21,7 +21,6 @@ import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -52,10 +51,12 @@ import com.piotrek.oneagentarmy.R
 import com.piotrek.oneagentarmy.model.Sender
 import com.piotrek.oneagentarmy.provider.ai.AiProviderRegistry
 import com.piotrek.oneagentarmy.tools.calendar.CalendarIntentBuilder
+import com.piotrek.oneagentarmy.ui.components.WaveLoadingIndicator
 import com.piotrek.oneagentarmy.tools.calendar.buildOpenCalendarIntent
 import com.piotrek.oneagentarmy.tools.clock.buildAlarmIntent
 import com.piotrek.oneagentarmy.tools.clock.buildTimerIntent
 import com.piotrek.oneagentarmy.tools.navigation.buildNavigationIntent
+import com.piotrek.oneagentarmy.tools.notes.buildNoteIntent
 import com.piotrek.oneagentarmy.tools.sms.buildSmsIntent
 import java.time.Instant
 import java.time.ZoneId
@@ -252,7 +253,7 @@ fun ChatScreen(
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                 )
                 if (isSending) {
-                    CircularProgressIndicator(modifier = Modifier.padding(12.dp))
+                    WaveLoadingIndicator(modifier = Modifier.padding(12.dp))
                 } else {
                     IconButton(
                         onClick = {
@@ -350,6 +351,12 @@ private fun PendingActionCard(
                 summary = stringResource(R.string.chat_open_calendar_summary, date),
             )
         }
+        is PendingAction.CreateNote -> PendingActionUi(
+            title = stringResource(R.string.pending_note_title),
+            lines = listOfNotNull(action.draft.title, action.draft.content),
+            intent = buildNoteIntent(action.draft),
+            summary = stringResource(R.string.chat_note_summary, action.draft.title ?: action.draft.content),
+        )
     }
 
     ConfirmActionCard(

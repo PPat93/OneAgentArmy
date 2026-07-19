@@ -59,12 +59,14 @@
     <string name="pending_sms_title">Otworzyć szkic SMS-a?</string>
     <string name="pending_navigation_title">Otworzyć nawigację?</string>
     <string name="pending_open_calendar_title">Otworzyć kalendarz?</string>
+    <string name="pending_note_title">Zapisać notatkę?</string>
     <string name="timer_minutes">%1$d min</string>
     <string name="chat_alarm_summary">⏰ Alarm na %1$s</string>
     <string name="chat_timer_summary">⏲️ Minutnik: %1$s</string>
     <string name="chat_sms_summary">✉️ Szkic SMS-a: %1$s</string>
     <string name="chat_navigation_summary">🧭 Nawigacja do: %1$s</string>
     <string name="chat_open_calendar_summary">📅 Otwarto kalendarz: %1$s</string>
+    <string name="chat_note_summary">📝 Zapisano notatkę: %1$s</string>
 
     <string name="select">Zaznacz</string>
     <string name="selected_count">Zaznaczono: %1$d</string>

@@ -130,7 +130,11 @@ fun ConversationListScreen(
         },
         floatingActionButton = {
             if (!selectionMode) {
-                FloatingActionButton(onClick = onNewConversation) {
+                FloatingActionButton(
+                    onClick = onNewConversation,
+                    containerColor = MaterialTheme.colorScheme.tertiary,
+                    contentColor = MaterialTheme.colorScheme.onTertiary,
+                ) {
                     Icon(Icons.Default.Add, contentDescription = stringResource(R.string.new_conversation))
                 }
             }
