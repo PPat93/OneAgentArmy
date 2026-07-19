@@ -31,6 +31,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.piotrek.oneagentarmy.R
 import com.piotrek.oneagentarmy.data.repository.SettingsRepository
+import com.piotrek.oneagentarmy.provider.ai.AiProviderRegistry
 import com.piotrek.oneagentarmy.provider.ai.tools.websearch.TAVILY_KEY_ID
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -41,6 +42,8 @@ fun SettingsToolsScreen(
 ) {
     val tavilyHasKey by viewModel.tavilyHasKey.collectAsState()
     val searchProvider by viewModel.searchProvider.collectAsState()
+    val activeProvider by viewModel.activeProvider.collectAsState()
+    val activeProviderName = AiProviderRegistry.byId(activeProvider)?.displayName ?: activeProvider
     var keyInput by remember { mutableStateOf("") }
     var showClearDialog by remember { mutableStateOf(false) }
 
@@ -72,7 +75,7 @@ fun SettingsToolsScreen(
                         style = MaterialTheme.typography.titleMedium,
                     )
                     SearchProviderOption(
-                        label = stringResource(R.string.search_provider_built_in),
+                        label = stringResource(R.string.search_provider_built_in, activeProviderName),
                         selected = searchProvider == SettingsRepository.SEARCH_PROVIDER_BUILT_IN,
                         onSelect = { viewModel.setSearchProvider(SettingsRepository.SEARCH_PROVIDER_BUILT_IN) },
                     )

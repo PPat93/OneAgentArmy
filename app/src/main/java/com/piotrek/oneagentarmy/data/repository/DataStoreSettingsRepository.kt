@@ -51,13 +51,6 @@ class DataStoreSettingsRepository(
         dataStore.edit { prefs -> prefs[ACTIVE_PROVIDER] = providerId }
     }
 
-    override fun observeSelectedModel(): Flow<String> =
-        dataStore.data.map { prefs -> prefs[SELECTED_MODEL] ?: AiProviderRegistry.DEFAULT_MODEL }
-
-    override suspend fun setSelectedModel(modelId: String) {
-        dataStore.edit { prefs -> prefs[SELECTED_MODEL] = modelId }
-    }
-
     override fun observeSearchProvider(): Flow<String> =
         dataStore.data.map { prefs -> prefs[SEARCH_PROVIDER] ?: SettingsRepository.SEARCH_PROVIDER_BUILT_IN }
 
@@ -67,7 +60,6 @@ class DataStoreSettingsRepository(
 
     private companion object {
         val ACTIVE_PROVIDER = stringPreferencesKey("active_provider")
-        val SELECTED_MODEL = stringPreferencesKey("selected_model")
         val SEARCH_PROVIDER = stringPreferencesKey("search_provider")
     }
 }

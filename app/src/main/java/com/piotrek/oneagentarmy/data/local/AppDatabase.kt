@@ -4,7 +4,6 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-import com.piotrek.oneagentarmy.provider.ai.AiProviderRegistry
 
 @Database(
     entities = [ConversationEntity::class, MessageEntity::class, FactEntity::class, ConversationFactEntity::class],
@@ -18,8 +17,10 @@ abstract class AppDatabase : RoomDatabase() {
     companion object {
         val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
+                // Frozen literal: migrations must never change, so the default-model
+                // value from the time this migration shipped is inlined here.
                 db.execSQL(
-                    "ALTER TABLE conversations ADD COLUMN modelId TEXT NOT NULL DEFAULT '${AiProviderRegistry.DEFAULT_MODEL}'",
+                    "ALTER TABLE conversations ADD COLUMN modelId TEXT NOT NULL DEFAULT 'gpt-4.1-nano'",
                 )
             }
         }

@@ -42,7 +42,7 @@ fun OneAgentArmyNavHost(
         composable(Destinations.CONVERSATION_LIST) {
             val viewModel: ConversationListViewModel = viewModel(
                 factory = viewModelFactory {
-                    initializer { ConversationListViewModel(conversationRepository) }
+                    initializer { ConversationListViewModel(conversationRepository, settingsRepository) }
                 },
             )
             ConversationListScreen(

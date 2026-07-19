@@ -5,7 +5,10 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -26,6 +29,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -54,6 +58,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.piotrek.oneagentarmy.R
 import com.piotrek.oneagentarmy.model.Conversation
+import com.piotrek.oneagentarmy.provider.ai.AiProviderRegistry
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -68,6 +73,7 @@ fun ConversationListScreen(
     onNavigateToSearch: () -> Unit,
 ) {
     val conversations by viewModel.conversations.collectAsState()
+    val activeProvider by viewModel.activeProvider.collectAsState()
     var renameDialogFor by remember { mutableStateOf<Conversation?>(null) }
     var deleteDialogFor by remember { mutableStateOf<Conversation?>(null) }
     var selectionMode by remember { mutableStateOf(false) }
@@ -140,44 +146,51 @@ fun ConversationListScreen(
             }
         },
     ) { innerPadding ->
-        if (conversations.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(stringResource(R.string.empty_conversation_list))
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-            ) {
-                items(conversations, key = { it.id }) { conversation ->
-                    ConversationRow(
-                        conversation = conversation,
-                        selectionMode = selectionMode,
-                        isSelected = conversation.id in selectedIds,
-                        onClick = {
-                            if (selectionMode) {
-                                selectedIds = if (conversation.id in selectedIds) {
-                                    selectedIds - conversation.id
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
+        ) {
+            ProviderChipRow(
+                activeProvider = activeProvider,
+                onProviderSelected = viewModel::setActiveProvider,
+            )
+            if (conversations.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(stringResource(R.string.empty_conversation_list))
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    items(conversations, key = { it.id }) { conversation ->
+                        ConversationRow(
+                            conversation = conversation,
+                            selectionMode = selectionMode,
+                            isSelected = conversation.id in selectedIds,
+                            onClick = {
+                                if (selectionMode) {
+                                    selectedIds = if (conversation.id in selectedIds) {
+                                        selectedIds - conversation.id
+                                    } else {
+                                        selectedIds + conversation.id
+                                    }
                                 } else {
-                                    selectedIds + conversation.id
+                                    onConversationClick(conversation.id)
                                 }
-                            } else {
-                                onConversationClick(conversation.id)
-                            }
-                        },
-                        onRenameRequest = { renameDialogFor = conversation },
-                        onDeleteRequest = { deleteDialogFor = conversation },
-                        onSelectRequest = {
-                            selectionMode = true
-                            selectedIds = setOf(conversation.id)
-                        },
-                    )
+                            },
+                            onRenameRequest = { renameDialogFor = conversation },
+                            onDeleteRequest = { deleteDialogFor = conversation },
+                            onSelectRequest = {
+                                selectionMode = true
+                                selectedIds = setOf(conversation.id)
+                            },
+                        )
+                    }
                 }
             }
         }
@@ -227,6 +240,33 @@ fun ConversationListScreen(
                 }
             },
         )
+    }
+}
+
+@Composable
+private fun ProviderChipRow(
+    activeProvider: String,
+    onProviderSelected: (String) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = stringResource(R.string.provider_chip_label),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        AiProviderRegistry.providers.forEach { provider ->
+            FilterChip(
+                selected = provider.id == activeProvider,
+                onClick = { onProviderSelected(provider.id) },
+                label = { Text(provider.chipLabel) },
+            )
+        }
     }
 }
 

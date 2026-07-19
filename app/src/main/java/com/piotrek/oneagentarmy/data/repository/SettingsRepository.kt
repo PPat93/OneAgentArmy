@@ -11,9 +11,6 @@ interface SettingsRepository {
     fun observeActiveProvider(): Flow<String>
     suspend fun setActiveProvider(providerId: String)
 
-    fun observeSelectedModel(): Flow<String>
-    suspend fun setSelectedModel(modelId: String)
-
     fun observeSearchProvider(): Flow<String>
     suspend fun setSearchProvider(searchProviderId: String)
 
