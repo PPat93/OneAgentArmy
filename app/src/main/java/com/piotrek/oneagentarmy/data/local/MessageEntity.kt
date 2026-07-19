@@ -24,4 +24,7 @@ data class MessageEntity(
     val text: String,
     val textNormalized: String,
     val timestamp: Long,
+    val inputTokens: Long? = null,
+    val outputTokens: Long? = null,
+    val costUsd: Double? = null,
 )

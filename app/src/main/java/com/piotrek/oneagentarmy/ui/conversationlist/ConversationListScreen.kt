@@ -59,6 +59,7 @@ import androidx.compose.ui.unit.dp
 import com.piotrek.oneagentarmy.R
 import com.piotrek.oneagentarmy.model.Conversation
 import com.piotrek.oneagentarmy.provider.ai.AiProviderRegistry
+import com.piotrek.oneagentarmy.ui.components.formatCostEur
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -74,6 +75,8 @@ fun ConversationListScreen(
 ) {
     val conversations by viewModel.conversations.collectAsState()
     val activeProvider by viewModel.activeProvider.collectAsState()
+    val monthlyCost by viewModel.monthlyCost.collectAsState()
+    val usdToEur by viewModel.usdToEur.collectAsState()
     var renameDialogFor by remember { mutableStateOf<Conversation?>(null) }
     var deleteDialogFor by remember { mutableStateOf<Conversation?>(null) }
     var selectionMode by remember { mutableStateOf(false) }
@@ -112,7 +115,18 @@ fun ConversationListScreen(
                 )
             } else {
                 TopAppBar(
-                    title = { Text(stringResource(R.string.app_name)) },
+                    title = {
+                        Column {
+                            Text(stringResource(R.string.app_name))
+                            monthlyCost?.takeIf { it > 0.0 }?.let { cost ->
+                                Text(
+                                    text = stringResource(R.string.monthly_cost_label, formatCostEur(cost, usdToEur)),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+                    },
                     navigationIcon = {
                         Image(
                             painter = painterResource(R.drawable.logo_parrot),

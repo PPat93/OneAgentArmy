@@ -52,6 +52,7 @@ import com.piotrek.oneagentarmy.model.Sender
 import com.piotrek.oneagentarmy.provider.ai.AiProviderRegistry
 import com.piotrek.oneagentarmy.tools.calendar.CalendarIntentBuilder
 import com.piotrek.oneagentarmy.ui.components.WaveLoadingIndicator
+import com.piotrek.oneagentarmy.ui.components.formatCostEur
 import com.piotrek.oneagentarmy.tools.calendar.buildOpenCalendarIntent
 import com.piotrek.oneagentarmy.tools.clock.buildAlarmIntent
 import com.piotrek.oneagentarmy.tools.clock.buildTimerIntent
@@ -101,6 +102,8 @@ fun ChatScreen(
     val error by viewModel.error.collectAsState()
     val pendingAction by viewModel.pendingAction.collectAsState()
     val conversationTitle by viewModel.conversationTitle.collectAsState()
+    val conversationCost by viewModel.conversationCost.collectAsState()
+    val usdToEur by viewModel.usdToEur.collectAsState()
     val selectedModel by viewModel.selectedModel.collectAsState()
     val availableModels by viewModel.availableModels.collectAsState()
     val selectableFacts by viewModel.selectableFacts.collectAsState()
@@ -144,11 +147,20 @@ fun ChatScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(
-                        conversationTitle ?: stringResource(R.string.new_conversation),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
+                    Column {
+                        Text(
+                            conversationTitle ?: stringResource(R.string.new_conversation),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        conversationCost?.takeIf { it > 0.0 }?.let { cost ->
+                            Text(
+                                text = formatCostEur(cost, usdToEur),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -269,6 +281,7 @@ fun ChatScreen(
                                 } else {
                                     null
                                 },
+                                usdToEur = usdToEur,
                             )
                             is ChatListItem.DateHeader -> DateHeaderRow(item.date)
                         }

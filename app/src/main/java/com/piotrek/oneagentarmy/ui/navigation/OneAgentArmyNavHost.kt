@@ -11,6 +11,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.piotrek.oneagentarmy.data.repository.ConversationRepository
+import com.piotrek.oneagentarmy.data.repository.ExchangeRateRepository
 import com.piotrek.oneagentarmy.data.repository.FactRepository
 import com.piotrek.oneagentarmy.data.repository.SettingsRepository
 import com.piotrek.oneagentarmy.provider.ai.AiProvider
@@ -36,13 +37,14 @@ fun OneAgentArmyNavHost(
     factRepository: FactRepository,
     aiProvider: AiProvider,
     contextWindowStrategy: ContextWindowStrategy,
+    exchangeRateRepository: ExchangeRateRepository,
     navController: NavHostController = rememberNavController(),
 ) {
     NavHost(navController = navController, startDestination = Destinations.CONVERSATION_LIST) {
         composable(Destinations.CONVERSATION_LIST) {
             val viewModel: ConversationListViewModel = viewModel(
                 factory = viewModelFactory {
-                    initializer { ConversationListViewModel(conversationRepository, settingsRepository) }
+                    initializer { ConversationListViewModel(conversationRepository, settingsRepository, exchangeRateRepository) }
                 },
             )
             ConversationListScreen(
@@ -80,6 +82,7 @@ fun OneAgentArmyNavHost(
                             factRepository,
                             aiProvider,
                             contextWindowStrategy,
+                            exchangeRateRepository,
                         )
                     }
                 },

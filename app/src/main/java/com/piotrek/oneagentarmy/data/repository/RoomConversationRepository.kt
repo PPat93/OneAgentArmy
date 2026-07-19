@@ -49,6 +49,12 @@ class RoomConversationRepository(
         dao.updateConversationModel(conversationId, modelId)
     }
 
+    override fun observeConversationCost(conversationId: String): Flow<Double?> =
+        dao.observeConversationCost(conversationId)
+
+    override fun observeCostSince(since: Instant): Flow<Double?> =
+        dao.observeCostSince(since.toEpochMilli())
+
     override fun searchMessages(query: String): Flow<List<MessageSearchResult>> {
         val normalizedEscaped = normalizeForSearch(query)
             .replace("\\", "\\\\")

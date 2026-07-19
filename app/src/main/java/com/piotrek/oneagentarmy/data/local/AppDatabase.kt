@@ -7,7 +7,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [ConversationEntity::class, MessageEntity::class, FactEntity::class, ConversationFactEntity::class],
-    version = 4,
+    version = 5,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -46,6 +46,14 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL(
                     "CREATE INDEX IF NOT EXISTS index_conversation_facts_factId ON conversation_facts (factId)",
                 )
+            }
+        }
+
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE messages ADD COLUMN inputTokens INTEGER")
+                db.execSQL("ALTER TABLE messages ADD COLUMN outputTokens INTEGER")
+                db.execSQL("ALTER TABLE messages ADD COLUMN costUsd REAL")
             }
         }
 

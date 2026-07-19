@@ -1,5 +1,6 @@
 package com.piotrek.oneagentarmy.provider.ai.openai.dto
 
+import com.piotrek.oneagentarmy.provider.ai.TokenUsage
 import com.piotrek.oneagentarmy.provider.ai.tools.ToolDefinition
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -32,7 +33,18 @@ data class ResponsesRequest(
 @Serializable
 data class ResponsesResponse(
     val output: List<JsonObject> = emptyList(),
+    val usage: ResponsesUsage? = null,
 )
+
+@Serializable
+data class ResponsesUsage(
+    // Reasoning tokens are already included in output_tokens.
+    @SerialName("input_tokens") val inputTokens: Long = 0,
+    @SerialName("output_tokens") val outputTokens: Long = 0,
+)
+
+fun ResponsesUsage?.toTokenUsage(): TokenUsage =
+    if (this == null) TokenUsage.ZERO else TokenUsage(inputTokens, outputTokens)
 
 data class FunctionCallItem(
     val callId: String,

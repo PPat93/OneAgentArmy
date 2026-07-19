@@ -7,8 +7,10 @@ import com.piotrek.oneagentarmy.provider.ai.AiProvider
 import com.piotrek.oneagentarmy.provider.ai.AiProviderException
 import com.piotrek.oneagentarmy.provider.ai.AiProviderRegistry
 import com.piotrek.oneagentarmy.provider.ai.AiReply
+import com.piotrek.oneagentarmy.provider.ai.TokenUsage
 import com.piotrek.oneagentarmy.provider.ai.buildSystemPrompt
 import com.piotrek.oneagentarmy.provider.ai.openai.dto.ResponsesRequest
+import com.piotrek.oneagentarmy.provider.ai.openai.dto.toTokenUsage
 import com.piotrek.oneagentarmy.provider.ai.openai.dto.firstFunctionCall
 import com.piotrek.oneagentarmy.provider.ai.openai.dto.functionCallOutputItem
 import com.piotrek.oneagentarmy.provider.ai.openai.dto.functionToolJson
@@ -57,6 +59,7 @@ class OpenAiProvider(
         val instructions = buildSystemPrompt(clock, contextFacts)
         var input: List<JsonElement> = history.map { it.toInputItem() }
         var roundTripsUsed = 0
+        var usageTotal = TokenUsage.ZERO
 
         while (true) {
             // Hard cap on provider-executed tool round-trips per message: once used up,
@@ -72,6 +75,7 @@ class OpenAiProvider(
                 include = listOf("reasoning.encrypted_content"),
             )
             val response = apiClient.createResponse(apiKey, request)
+            usageTotal += response.usage.toTokenUsage()
 
             val functionCall = response.firstFunctionCall()
             if (functionCall == null) {
@@ -84,6 +88,9 @@ class OpenAiProvider(
                         sender = Sender.AI,
                         text = replyText,
                         timestamp = Instant.now(),
+                        inputTokens = usageTotal.inputTokens,
+                        outputTokens = usageTotal.outputTokens,
+                        costUsd = AiProviderRegistry.estimateCostUsd(modelId, usageTotal),
                     ),
                 )
             }
@@ -101,7 +108,11 @@ class OpenAiProvider(
 
             // Tools without an executor (calendar, alarms, SMS...) have a client-side
             // effect the ViewModel must confirm with the user - handed back unresolved.
-            return AiReply.ToolCall(ToolCallRequest(functionCall.name, functionCall.arguments))
+            return AiReply.ToolCall(
+                ToolCallRequest(functionCall.name, functionCall.arguments),
+                usage = usageTotal,
+                costUsd = AiProviderRegistry.estimateCostUsd(modelId, usageTotal),
+            )
         }
     }
 

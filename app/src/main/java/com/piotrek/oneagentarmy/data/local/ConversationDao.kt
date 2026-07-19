@@ -34,6 +34,12 @@ interface ConversationDao {
     @Query("UPDATE conversations SET modelId = :modelId WHERE id = :id")
     suspend fun updateConversationModel(id: String, modelId: String)
 
+    @Query("SELECT SUM(costUsd) FROM messages WHERE conversationId = :conversationId")
+    fun observeConversationCost(conversationId: String): Flow<Double?>
+
+    @Query("SELECT SUM(costUsd) FROM messages WHERE timestamp >= :sinceMillis")
+    fun observeCostSince(sinceMillis: Long): Flow<Double?>
+
     // Caller is responsible for normalizing (normalizeForSearch) and escaping %, _ and \
     // in the query (see RoomConversationRepository).
     @Query(
