@@ -32,6 +32,9 @@ class SettingsViewModel(
     val tavilyHasKey: StateFlow<Boolean> = repository.observeHasApiKey(TAVILY_KEY_ID)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
+    val searchProvider: StateFlow<String> = repository.observeSearchProvider()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsRepository.SEARCH_PROVIDER_BUILT_IN)
+
     fun saveApiKey(providerId: String, key: String) {
         if (key.isBlank()) return
         viewModelScope.launch { repository.saveApiKey(providerId, key) }
@@ -47,5 +50,9 @@ class SettingsViewModel(
 
     fun selectModel(modelId: String) {
         viewModelScope.launch { repository.setSelectedModel(modelId) }
+    }
+
+    fun setSearchProvider(searchProviderId: String) {
+        viewModelScope.launch { repository.setSearchProvider(searchProviderId) }
     }
 }

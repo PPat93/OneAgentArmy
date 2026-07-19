@@ -7,9 +7,10 @@ data class AiModelOption(
     val id: String,
     @StringRes val labelRes: Int,
     val shortLabel: String,
-    // Reasoning models reject function tools in Chat Completions unless
-    // reasoning_effort is explicitly set to "none" - declare it per model here.
-    val disableReasoningForTools: Boolean = false,
+    // Not every model supports the hosted web_search tool in the Responses API
+    // (gpt-4.1-nano rejects it with HTTP 400) - models without support fall back
+    // to the Tavily function tool even when hosted search is selected in settings.
+    val supportsHostedWebSearch: Boolean = false,
 )
 
 data class AiProviderInfo(
@@ -32,7 +33,7 @@ object AiProviderRegistry {
             displayName = "OpenAI",
             models = listOf(
                 AiModelOption("gpt-4.1-nano", R.string.model_gpt41_nano, "4.1 nano"),
-                AiModelOption("gpt-5.6-luna", R.string.model_gpt56_luna, "5.6 Luna", disableReasoningForTools = true),
+                AiModelOption("gpt-5.6-luna", R.string.model_gpt56_luna, "5.6 Luna", supportsHostedWebSearch = true),
             ),
             isAvailable = true,
         ),

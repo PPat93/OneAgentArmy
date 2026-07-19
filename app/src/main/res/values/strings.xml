@@ -78,6 +78,9 @@
     <string name="settings_tools_title">Tools</string>
     <string name="settings_tools_subtitle">Keys for agent tools (web search)</string>
     <string name="tavily_api_key_label">Web search API key (Tavily)</string>
+    <string name="search_provider_label">Web search source</string>
+    <string name="search_provider_built_in">Provider\'s built-in search (OpenAI)</string>
+    <string name="search_provider_tavily">Tavily</string>
 
     <string name="settings_facts_title">Context facts</string>
     <string name="settings_facts_subtitle">Reusable notes injected into conversations</string>

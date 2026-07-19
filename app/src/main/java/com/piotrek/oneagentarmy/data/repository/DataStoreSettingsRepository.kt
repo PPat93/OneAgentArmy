@@ -58,8 +58,16 @@ class DataStoreSettingsRepository(
         dataStore.edit { prefs -> prefs[SELECTED_MODEL] = modelId }
     }
 
+    override fun observeSearchProvider(): Flow<String> =
+        dataStore.data.map { prefs -> prefs[SEARCH_PROVIDER] ?: SettingsRepository.SEARCH_PROVIDER_BUILT_IN }
+
+    override suspend fun setSearchProvider(searchProviderId: String) {
+        dataStore.edit { prefs -> prefs[SEARCH_PROVIDER] = searchProviderId }
+    }
+
     private companion object {
         val ACTIVE_PROVIDER = stringPreferencesKey("active_provider")
         val SELECTED_MODEL = stringPreferencesKey("selected_model")
+        val SEARCH_PROVIDER = stringPreferencesKey("search_provider")
     }
 }
