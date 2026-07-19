@@ -12,12 +12,20 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardOptions
+import android.content.Context
+import android.net.Uri
+import android.provider.OpenableColumns
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.AttachFile
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Send
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -60,11 +68,35 @@ import com.piotrek.oneagentarmy.tools.navigation.buildNavigationIntent
 import com.piotrek.oneagentarmy.tools.notes.buildNoteIntent
 import com.piotrek.oneagentarmy.tools.sms.buildSmsIntent
 import com.piotrek.oneagentarmy.model.Message
+import java.io.IOException
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+
+// Text-ish types only - binary spreadsheets (xls/xlsx) are deliberately excluded;
+// if a picker greys out a CSV, renaming it to .txt is the workaround.
+private val TEXT_ATTACHMENT_MIME_TYPES = arrayOf(
+    "text/*",
+    "text/csv",
+    "application/csv",
+    "text/comma-separated-values",
+)
+
+// Resolves the display name and reads the whole file as text; throws on
+// unreadable content - the caller maps that to a chat error.
+private fun readTextAttachment(context: Context, uri: Uri): Pair<String, String> {
+    val name = context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+        val index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+        if (index >= 0 && cursor.moveToFirst()) cursor.getString(index) else null
+    } ?: "file"
+    val content = context.contentResolver.openInputStream(uri)
+        ?.bufferedReader()
+        ?.use { it.readText() }
+        ?: throw IOException("Cannot open attachment")
+    return name to content
+}
 
 // List rows for the chat LazyColumn: messages interleaved with day separators.
 private sealed interface ChatListItem {
@@ -109,10 +141,19 @@ fun ChatScreen(
     val availableModels by viewModel.availableModels.collectAsState()
     val selectableFacts by viewModel.selectableFacts.collectAsState()
     val selectedFactIds by viewModel.selectedFactIds.collectAsState()
+    val pendingAttachment by viewModel.pendingAttachment.collectAsState()
     var inputText by remember { mutableStateOf("") }
     var modelMenuExpanded by remember { mutableStateOf(false) }
     var factsMenuExpanded by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
+    val attachContext = LocalContext.current
+    val attachLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) {
+            runCatching { readTextAttachment(attachContext, uri) }
+                .onSuccess { (name, content) -> viewModel.attachFile(name, content) }
+                .onFailure { viewModel.reportAttachmentError(it.message ?: "attachment read failed") }
+        }
+    }
 
     // With reverseLayout, index 0 is the newest message and the list is anchored to the
     // bottom natively - immune to bubbles growing after async markdown parsing finishes.
@@ -303,12 +344,35 @@ fun ChatScreen(
                 PendingActionCard(action = action, viewModel = viewModel)
             }
 
+            pendingAttachment?.let { attachment ->
+                AssistChip(
+                    onClick = viewModel::clearAttachment,
+                    label = { Text("📎 ${attachment.name}", maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                    trailingIcon = {
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = stringResource(R.string.remove_attachment),
+                        )
+                    },
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                )
+            }
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
+                IconButton(
+                    onClick = { attachLauncher.launch(TEXT_ATTACHMENT_MIME_TYPES) },
+                    enabled = !isSending,
+                ) {
+                    Icon(
+                        Icons.Default.AttachFile,
+                        contentDescription = stringResource(R.string.attach_file),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
                 OutlinedTextField(
                     value = inputText,
                     onValueChange = { inputText = it },
@@ -492,6 +556,7 @@ private fun ChatErrorBanner(
         is ChatError.Unknown -> stringResource(R.string.error_unknown, error.detail) to false
         ChatError.ToolArguments -> stringResource(R.string.error_tool_arguments) to false
         ChatError.NoAppForAction -> stringResource(R.string.error_no_app_for_action) to false
+        ChatError.AttachmentTooLarge -> stringResource(R.string.error_attachment_too_large) to false
     }
 
     Card(
