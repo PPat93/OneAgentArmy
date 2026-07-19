@@ -3,6 +3,7 @@ package com.piotrek.oneagentarmy.data.repository
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.piotrek.oneagentarmy.data.local.crypto.ApiKeyCipher
 import com.piotrek.oneagentarmy.data.local.crypto.EncryptedBlob
@@ -58,8 +59,16 @@ class DataStoreSettingsRepository(
         dataStore.edit { prefs -> prefs[SEARCH_PROVIDER] = searchProviderId }
     }
 
+    override fun observeChatFontScale(): Flow<Float> =
+        dataStore.data.map { prefs -> prefs[CHAT_FONT_SCALE] ?: 1.0f }
+
+    override suspend fun setChatFontScale(scale: Float) {
+        dataStore.edit { prefs -> prefs[CHAT_FONT_SCALE] = scale }
+    }
+
     private companion object {
         val ACTIVE_PROVIDER = stringPreferencesKey("active_provider")
         val SEARCH_PROVIDER = stringPreferencesKey("search_provider")
+        val CHAT_FONT_SCALE = floatPreferencesKey("chat_font_scale")
     }
 }

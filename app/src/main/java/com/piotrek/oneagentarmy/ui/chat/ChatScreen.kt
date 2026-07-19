@@ -104,6 +104,7 @@ fun ChatScreen(
     val conversationTitle by viewModel.conversationTitle.collectAsState()
     val conversationCost by viewModel.conversationCost.collectAsState()
     val usdToEur by viewModel.usdToEur.collectAsState()
+    val chatFontScale by viewModel.chatFontScale.collectAsState()
     val selectedModel by viewModel.selectedModel.collectAsState()
     val availableModels by viewModel.availableModels.collectAsState()
     val selectableFacts by viewModel.selectableFacts.collectAsState()
@@ -282,6 +283,7 @@ fun ChatScreen(
                                     null
                                 },
                                 usdToEur = usdToEur,
+                                fontScale = chatFontScale,
                             )
                             is ChatListItem.DateHeader -> DateHeaderRow(item.date)
                         }

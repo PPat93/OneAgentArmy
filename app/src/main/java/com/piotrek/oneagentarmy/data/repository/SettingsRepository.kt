@@ -14,6 +14,9 @@ interface SettingsRepository {
     fun observeSearchProvider(): Flow<String>
     suspend fun setSearchProvider(searchProviderId: String)
 
+    fun observeChatFontScale(): Flow<Float>
+    suspend fun setChatFontScale(scale: Float)
+
     companion object {
         // Active AI provider's hosted web search (e.g. OpenAI's web_search tool).
         const val SEARCH_PROVIDER_BUILT_IN = "provider"

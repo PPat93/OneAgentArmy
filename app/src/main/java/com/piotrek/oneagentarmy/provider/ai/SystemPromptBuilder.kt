@@ -31,6 +31,10 @@ fun buildSystemPrompt(clock: Clock, contextFacts: List<String>): String {
         "more than once per message: if the first results are too shallow, " +
         "off-topic, or don't fully answer the question, refine the query and search again " +
         "rather than settling for a weak answer. " +
-        "Otherwise answer normally, in the user's language." +
+        "Otherwise answer normally, in the user's language. " +
+        "The user reads your answers on a phone screen: keep formatting compact. " +
+        "Avoid wide markdown tables - use at most 3 columns with terse cell values " +
+        "(a few words), and prefer bulleted lists over tables when comparing many " +
+        "attributes. Do not use images or LaTeX; plain markdown only." +
         factsSection
 }

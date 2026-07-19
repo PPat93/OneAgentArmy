@@ -8,14 +8,14 @@ import com.piotrek.oneagentarmy.provider.ai.AiProviderException
 import com.piotrek.oneagentarmy.provider.ai.AiProviderRegistry
 import com.piotrek.oneagentarmy.provider.ai.AiReply
 import com.piotrek.oneagentarmy.provider.ai.anthropic.dto.MessagesRequest
+import com.piotrek.oneagentarmy.provider.ai.anthropic.dto.allToolUses
 import com.piotrek.oneagentarmy.provider.ai.anthropic.dto.assistantMessage
-import com.piotrek.oneagentarmy.provider.ai.anthropic.dto.firstToolUse
 import com.piotrek.oneagentarmy.provider.ai.anthropic.dto.functionToolJson
 import com.piotrek.oneagentarmy.provider.ai.anthropic.dto.historyMessage
 import com.piotrek.oneagentarmy.provider.ai.anthropic.dto.outputText
 import com.piotrek.oneagentarmy.provider.ai.anthropic.dto.toolChoiceAutoNoParallel
 import com.piotrek.oneagentarmy.provider.ai.anthropic.dto.toolChoiceNone
-import com.piotrek.oneagentarmy.provider.ai.anthropic.dto.toolResultMessage
+import com.piotrek.oneagentarmy.provider.ai.anthropic.dto.toolResultsMessage
 import com.piotrek.oneagentarmy.provider.ai.anthropic.dto.webSearchToolJson
 import com.piotrek.oneagentarmy.provider.ai.TokenUsage
 import com.piotrek.oneagentarmy.provider.ai.anthropic.dto.toTokenUsage
@@ -52,12 +52,18 @@ class AnthropicProvider(
             settingsRepository.observeSearchProvider().first() == SettingsRepository.SEARCH_PROVIDER_BUILT_IN &&
                 AiProviderRegistry.modelOptionFor(modelId)?.supportsHostedWebSearch == true
 
+        // The dynamic-filtering search variant (Sonnet 5 / Opus 4.8) runs code
+        // execution under the hood, which rejects disable_parallel_tool_use and
+        // strict tools with HTTP 400 - both are skipped on those requests.
+        val hostedSearchType = if (useHostedSearch) hostedSearchTypeFor(modelId) else null
+        val usesDynamicFilteringSearch = hostedSearchType == "web_search_20260209"
+
         val functionTools = toolRegistry.definitions
             .filter { !(useHostedSearch && it.name == WEB_SEARCH_TOOL) }
             .filter { it.requiredKeyId == null || settingsRepository.getApiKey(it.requiredKeyId) != null }
-            .map { functionToolJson(it) }
+            .map { functionToolJson(it, includeStrict = !usesDynamicFilteringSearch) }
         val tools: List<JsonElement> =
-            if (useHostedSearch) functionTools + webSearchToolJson(hostedSearchTypeFor(modelId)) else functionTools
+            if (hostedSearchType != null) functionTools + webSearchToolJson(hostedSearchType) else functionTools
 
         val system = buildSystemPrompt(clock, contextFacts)
         var messages: List<JsonElement> = history.map {
@@ -80,6 +86,9 @@ class AnthropicProvider(
                 toolChoice = when {
                     tools.isEmpty() -> null
                     roundTripsUsed >= MAX_TOOL_ROUND_TRIPS -> toolChoiceNone()
+                    // Default (parallel-capable) tool choice - the loop answers every
+                    // tool_use in the turn, so parallel calls are safe here.
+                    usesDynamicFilteringSearch -> null
                     else -> toolChoiceAutoNoParallel()
                 },
             )
@@ -95,8 +104,8 @@ class AnthropicProvider(
                 continue
             }
 
-            val toolUse = response.firstToolUse()
-            if (toolUse == null) {
+            val toolUses = response.allToolUses()
+            if (toolUses.isEmpty()) {
                 val replyText = response.outputText()
                     ?: throw AiProviderException.Unknown("Response contained neither text nor a tool call")
                 return AiReply.Text(
@@ -113,22 +122,30 @@ class AnthropicProvider(
                 )
             }
 
-            val executor = executorsByName[toolUse.name]
-            if (executor != null && roundTripsUsed < MAX_TOOL_ROUND_TRIPS) {
+            // Without disable_parallel_tool_use (dynamic-filtering requests) a turn may
+            // carry several tool_use blocks - each one needs a tool_result or the
+            // follow-up 400s, so they are executed together as a single round-trip.
+            val allHaveExecutors = toolUses.all { executorsByName.containsKey(it.name) }
+            if (allHaveExecutors && roundTripsUsed < MAX_TOOL_ROUND_TRIPS) {
                 roundTripsUsed++
-                val result = executor.execute(toolUse.inputJson)
+                val results = toolUses.map { it.id to executorsByName.getValue(it.name).execute(it.inputJson) }
                 // The assistant content is echoed verbatim - thinking blocks (Sonnet)
                 // must return unchanged, and every tool_use needs its tool_result.
                 messages = messages +
                     assistantMessage(response.content) +
-                    toolResultMessage(toolUse.id, result)
+                    toolResultsMessage(results)
                 continue
             }
 
             // Tools without an executor (calendar, alarms, SMS...) have a client-side
             // effect the ViewModel must confirm with the user - handed back unresolved.
+            // The whole turn is dropped client-side, so unanswered sibling tool_use
+            // blocks never reach the API again.
+            // Fallback to the first tool_use for the degenerate case of executor tools
+            // arriving after the round-trip cap (tool_choice "none" should prevent it).
+            val clientToolUse = toolUses.firstOrNull { !executorsByName.containsKey(it.name) } ?: toolUses.first()
             return AiReply.ToolCall(
-                ToolCallRequest(toolUse.name, toolUse.inputJson),
+                ToolCallRequest(clientToolUse.name, clientToolUse.inputJson),
                 usage = usageTotal,
                 costUsd = AiProviderRegistry.estimateCostUsd(modelId, usageTotal),
             )
