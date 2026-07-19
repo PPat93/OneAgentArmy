@@ -17,6 +17,8 @@ import com.piotrek.oneagentarmy.provider.ai.anthropic.dto.toolChoiceAutoNoParall
 import com.piotrek.oneagentarmy.provider.ai.anthropic.dto.toolChoiceNone
 import com.piotrek.oneagentarmy.provider.ai.anthropic.dto.toolResultMessage
 import com.piotrek.oneagentarmy.provider.ai.anthropic.dto.webSearchToolJson
+import com.piotrek.oneagentarmy.provider.ai.TokenUsage
+import com.piotrek.oneagentarmy.provider.ai.anthropic.dto.toTokenUsage
 import com.piotrek.oneagentarmy.provider.ai.buildSystemPrompt
 import com.piotrek.oneagentarmy.provider.ai.tools.RoundTripToolExecutor
 import com.piotrek.oneagentarmy.provider.ai.tools.ToolCallRequest
@@ -63,6 +65,7 @@ class AnthropicProvider(
         }
         var roundTripsUsed = 0
         var pauseTurnsUsed = 0
+        var usageTotal = TokenUsage.ZERO
 
         while (true) {
             // Hard cap on provider-executed tool round-trips per message. Tools stay
@@ -81,6 +84,7 @@ class AnthropicProvider(
                 },
             )
             val response = apiClient.createMessage(apiKey, request)
+            usageTotal += response.usage.toTokenUsage()
 
             // Server-side tool loop (hosted web search) paused - echo the assistant
             // content back and the server resumes automatically. Not counted against
@@ -102,6 +106,9 @@ class AnthropicProvider(
                         sender = Sender.AI,
                         text = replyText,
                         timestamp = Instant.now(),
+                        inputTokens = usageTotal.inputTokens,
+                        outputTokens = usageTotal.outputTokens,
+                        costUsd = AiProviderRegistry.estimateCostUsd(modelId, usageTotal),
                     ),
                 )
             }
@@ -120,7 +127,11 @@ class AnthropicProvider(
 
             // Tools without an executor (calendar, alarms, SMS...) have a client-side
             // effect the ViewModel must confirm with the user - handed back unresolved.
-            return AiReply.ToolCall(ToolCallRequest(toolUse.name, toolUse.inputJson))
+            return AiReply.ToolCall(
+                ToolCallRequest(toolUse.name, toolUse.inputJson),
+                usage = usageTotal,
+                costUsd = AiProviderRegistry.estimateCostUsd(modelId, usageTotal),
+            )
         }
     }
 

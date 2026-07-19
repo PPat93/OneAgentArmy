@@ -39,6 +39,7 @@
     <string name="coming_soon">Wkrótce</string>
     <string name="model_label">Model</string>
     <string name="provider_chip_label">AI:</string>
+    <string name="monthly_cost_label">W tym miesiącu: %1$s</string>
 
     <string name="model_gpt41_nano">GPT-4.1 nano - najtańszy ($0.10 / $0.40 za 1M tokenów)</string>
     <string name="model_gpt56_luna">GPT-5.6 Luna - lepsza jakość ($1.00 / $6.00 za 1M tokenów)</string>

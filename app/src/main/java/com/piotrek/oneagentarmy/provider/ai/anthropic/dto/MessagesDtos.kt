@@ -1,5 +1,6 @@
 package com.piotrek.oneagentarmy.provider.ai.anthropic.dto
 
+import com.piotrek.oneagentarmy.provider.ai.TokenUsage
 import com.piotrek.oneagentarmy.provider.ai.tools.ToolDefinition
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -29,7 +30,18 @@ data class MessagesRequest(
 data class MessagesResponse(
     val content: List<JsonObject> = emptyList(),
     @SerialName("stop_reason") val stopReason: String? = null,
+    val usage: AnthropicUsage? = null,
 )
+
+@Serializable
+data class AnthropicUsage(
+    // Thinking tokens are already included in output_tokens.
+    @SerialName("input_tokens") val inputTokens: Long = 0,
+    @SerialName("output_tokens") val outputTokens: Long = 0,
+)
+
+fun AnthropicUsage?.toTokenUsage(): TokenUsage =
+    if (this == null) TokenUsage.ZERO else TokenUsage(inputTokens, outputTokens)
 
 @Serializable
 data class AnthropicErrorResponse(

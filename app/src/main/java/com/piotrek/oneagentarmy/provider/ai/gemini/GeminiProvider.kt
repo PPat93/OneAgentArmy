@@ -7,8 +7,10 @@ import com.piotrek.oneagentarmy.provider.ai.AiProvider
 import com.piotrek.oneagentarmy.provider.ai.AiProviderException
 import com.piotrek.oneagentarmy.provider.ai.AiProviderRegistry
 import com.piotrek.oneagentarmy.provider.ai.AiReply
+import com.piotrek.oneagentarmy.provider.ai.TokenUsage
 import com.piotrek.oneagentarmy.provider.ai.buildSystemPrompt
 import com.piotrek.oneagentarmy.provider.ai.gemini.dto.InteractionsRequest
+import com.piotrek.oneagentarmy.provider.ai.gemini.dto.toTokenUsage
 import com.piotrek.oneagentarmy.provider.ai.gemini.dto.firstFunctionCall
 import com.piotrek.oneagentarmy.provider.ai.gemini.dto.functionResultStep
 import com.piotrek.oneagentarmy.provider.ai.gemini.dto.functionToolJson
@@ -60,6 +62,7 @@ class GeminiProvider(
             if (it.sender == Sender.USER) userInputStep(it.text) else modelOutputStep(it.text)
         }
         var roundTripsUsed = 0
+        var usageTotal = TokenUsage.ZERO
 
         while (true) {
             // Hard cap on provider-executed tool round-trips per message: once used up,
@@ -73,6 +76,7 @@ class GeminiProvider(
                 tools = toolsForThisRequest,
             )
             val response = apiClient.createInteraction(apiKey, request)
+            usageTotal += response.usage.toTokenUsage()
 
             val functionCall = response.firstFunctionCall()
             if (functionCall == null) {
@@ -85,6 +89,9 @@ class GeminiProvider(
                         sender = Sender.AI,
                         text = replyText,
                         timestamp = Instant.now(),
+                        inputTokens = usageTotal.inputTokens,
+                        outputTokens = usageTotal.outputTokens,
+                        costUsd = AiProviderRegistry.estimateCostUsd(modelId, usageTotal),
                     ),
                 )
             }
@@ -102,7 +109,11 @@ class GeminiProvider(
 
             // Tools without an executor (calendar, alarms, SMS...) have a client-side
             // effect the ViewModel must confirm with the user - handed back unresolved.
-            return AiReply.ToolCall(ToolCallRequest(functionCall.name, functionCall.argumentsJson))
+            return AiReply.ToolCall(
+                ToolCallRequest(functionCall.name, functionCall.argumentsJson),
+                usage = usageTotal,
+                costUsd = AiProviderRegistry.estimateCostUsd(modelId, usageTotal),
+            )
         }
     }
 

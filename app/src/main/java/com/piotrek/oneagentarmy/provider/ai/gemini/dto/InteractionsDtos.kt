@@ -1,5 +1,6 @@
 package com.piotrek.oneagentarmy.provider.ai.gemini.dto
 
+import com.piotrek.oneagentarmy.provider.ai.TokenUsage
 import com.piotrek.oneagentarmy.provider.ai.tools.ToolDefinition
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -27,7 +28,23 @@ data class InteractionsRequest(
 @Serializable
 data class InteractionsResponse(
     val steps: List<JsonObject> = emptyList(),
+    val usage: InteractionsUsage? = null,
 )
+
+@Serializable
+data class InteractionsUsage(
+    @SerialName("total_input_tokens") val totalInputTokens: Long = 0,
+    @SerialName("total_output_tokens") val totalOutputTokens: Long = 0,
+    // Thought tokens are billed at the output rate but reported separately.
+    @SerialName("total_thought_tokens") val totalThoughtTokens: Long = 0,
+)
+
+fun InteractionsUsage?.toTokenUsage(): TokenUsage =
+    if (this == null) {
+        TokenUsage.ZERO
+    } else {
+        TokenUsage(totalInputTokens, totalOutputTokens + totalThoughtTokens)
+    }
 
 @Serializable
 data class GeminiErrorResponse(

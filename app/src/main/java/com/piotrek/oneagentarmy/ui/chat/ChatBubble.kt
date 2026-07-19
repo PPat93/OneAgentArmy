@@ -30,6 +30,7 @@ import com.mikepenz.markdown.m3.markdownColor
 import com.piotrek.oneagentarmy.R
 import com.piotrek.oneagentarmy.model.Message
 import com.piotrek.oneagentarmy.model.Sender
+import com.piotrek.oneagentarmy.ui.components.formatCostEur
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -38,6 +39,7 @@ import java.time.format.FormatStyle
 fun ChatBubble(
     message: Message,
     onResend: (() -> Unit)?,
+    usdToEur: Double,
     modifier: Modifier = Modifier,
 ) {
     val isUser = message.sender == Sender.USER
@@ -88,8 +90,12 @@ fun ChatBubble(
                 CopyButton { clipboard.setText(AnnotatedString(message.text)) }
             }
         }
+        val timeLine = buildString {
+            append(timeFormatter.format(message.timestamp))
+            message.costUsd?.let { append(" · ").append(formatCostEur(it, usdToEur)) }
+        }
         Text(
-            text = timeFormatter.format(message.timestamp),
+            text = timeLine,
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 4.dp),

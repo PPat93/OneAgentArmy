@@ -24,6 +24,7 @@ class MainActivity : ComponentActivity() {
                         factRepository = container.factRepository,
                         aiProvider = container.aiProvider,
                         contextWindowStrategy = container.contextWindowStrategy,
+                        exchangeRateRepository = container.exchangeRateRepository,
                     )
                 }
             }

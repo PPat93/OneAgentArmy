@@ -7,6 +7,9 @@ data class AiModelOption(
     val id: String,
     @StringRes val labelRes: Int,
     val shortLabel: String,
+    // USD per 1M tokens - keep in sync with the price shown in the label string.
+    val inputUsdPerMTok: Double,
+    val outputUsdPerMTok: Double,
     // Not every model supports the hosted web_search tool in the Responses API
     // (gpt-4.1-nano rejects it with HTTP 400) - models without support fall back
     // to the Tavily function tool even when hosted search is selected in settings.
@@ -38,9 +41,9 @@ object AiProviderRegistry {
             displayName = "OpenAI (ChatGPT)",
             chipLabel = "ChatGPT",
             models = listOf(
-                AiModelOption("gpt-4.1-nano", R.string.model_gpt41_nano, "4.1 nano"),
-                AiModelOption("gpt-5.6-luna", R.string.model_gpt56_luna, "5.6 Luna", supportsHostedWebSearch = true),
-                AiModelOption("gpt-5.6-sol", R.string.model_gpt56_sol, "5.6 Sol", supportsHostedWebSearch = true),
+                AiModelOption("gpt-4.1-nano", R.string.model_gpt41_nano, "4.1 nano", 0.10, 0.40),
+                AiModelOption("gpt-5.6-luna", R.string.model_gpt56_luna, "5.6 Luna", 1.00, 6.00, supportsHostedWebSearch = true),
+                AiModelOption("gpt-5.6-sol", R.string.model_gpt56_sol, "5.6 Sol", 5.00, 30.00, supportsHostedWebSearch = true),
             ),
             isAvailable = true,
         ),
@@ -51,11 +54,11 @@ object AiProviderRegistry {
             models = listOf(
                 // Flash-Lite is absent from Google's list of grounding-capable models -
                 // it falls back to the Tavily function tool for web search.
-                AiModelOption("gemini-3.1-flash-lite", R.string.model_gemini_31_flash_lite, "3.1 Lite"),
+                AiModelOption("gemini-3.1-flash-lite", R.string.model_gemini_31_flash_lite, "3.1 Lite", 0.25, 1.50),
                 // The Gemini 3 (non-.5) series is published only under preview ids -
                 // the bare "gemini-3-flash" alias 404s.
-                AiModelOption("gemini-3-flash-preview", R.string.model_gemini_3_flash, "3 Flash", supportsHostedWebSearch = true),
-                AiModelOption("gemini-3.5-flash", R.string.model_gemini_35_flash, "3.5 Flash", supportsHostedWebSearch = true),
+                AiModelOption("gemini-3-flash-preview", R.string.model_gemini_3_flash, "3 Flash", 0.50, 3.00, supportsHostedWebSearch = true),
+                AiModelOption("gemini-3.5-flash", R.string.model_gemini_35_flash, "3.5 Flash", 1.50, 9.00, supportsHostedWebSearch = true),
             ),
             isAvailable = true,
             noteRes = R.string.gemini_free_tier_note,
@@ -65,9 +68,10 @@ object AiProviderRegistry {
             displayName = "Anthropic (Claude)",
             chipLabel = "Claude",
             models = listOf(
-                AiModelOption("claude-haiku-4-5", R.string.model_claude_haiku_45, "Haiku 4.5", supportsHostedWebSearch = true),
-                AiModelOption("claude-sonnet-5", R.string.model_claude_sonnet_5, "Sonnet 5", supportsHostedWebSearch = true),
-                AiModelOption("claude-opus-4-8", R.string.model_claude_opus_48, "Opus 4.8", supportsHostedWebSearch = true),
+                AiModelOption("claude-haiku-4-5", R.string.model_claude_haiku_45, "Haiku 4.5", 1.00, 5.00, supportsHostedWebSearch = true),
+                // Intro pricing until Aug 2026 - bump to 3.00/15.00 afterwards (label too).
+                AiModelOption("claude-sonnet-5", R.string.model_claude_sonnet_5, "Sonnet 5", 2.00, 10.00, supportsHostedWebSearch = true),
+                AiModelOption("claude-opus-4-8", R.string.model_claude_opus_48, "Opus 4.8", 5.00, 25.00, supportsHostedWebSearch = true),
             ),
             isAvailable = true,
         ),
@@ -89,4 +93,12 @@ object AiProviderRegistry {
 
     fun shortLabelFor(modelId: String): String =
         modelOptionFor(modelId)?.shortLabel ?: modelId
+
+    // Token-based estimate only: hosted web search fees (billed per query) and
+    // cache discounts are not reflected; on Gemini's free tier the nominal cost
+    // is shown even though nothing is billed.
+    fun estimateCostUsd(modelId: String, usage: TokenUsage): Double? {
+        val model = modelOptionFor(modelId) ?: return null
+        return (usage.inputTokens * model.inputUsdPerMTok + usage.outputTokens * model.outputUsdPerMTok) / 1_000_000.0
+    }
 }

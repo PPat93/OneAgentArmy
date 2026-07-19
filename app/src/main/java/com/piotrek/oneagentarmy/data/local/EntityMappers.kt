@@ -26,6 +26,9 @@ fun MessageEntity.toDomain() = Message(
     sender = Sender.valueOf(sender),
     text = text,
     timestamp = Instant.ofEpochMilli(timestamp),
+    inputTokens = inputTokens,
+    outputTokens = outputTokens,
+    costUsd = costUsd,
 )
 
 fun Message.toEntity() = MessageEntity(
@@ -35,6 +38,9 @@ fun Message.toEntity() = MessageEntity(
     text = text,
     textNormalized = normalizeForSearch(text),
     timestamp = timestamp.toEpochMilli(),
+    inputTokens = inputTokens,
+    outputTokens = outputTokens,
+    costUsd = costUsd,
 )
 
 fun FactEntity.toDomain() = Fact(

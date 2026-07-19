@@ -3,6 +3,7 @@ package com.piotrek.oneagentarmy.ui.chat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.piotrek.oneagentarmy.data.repository.ConversationRepository
+import com.piotrek.oneagentarmy.data.repository.ExchangeRateRepository
 import com.piotrek.oneagentarmy.data.repository.FactRepository
 import com.piotrek.oneagentarmy.data.repository.SettingsRepository
 import com.piotrek.oneagentarmy.model.Fact
@@ -14,6 +15,7 @@ import com.piotrek.oneagentarmy.provider.ai.AiProviderException
 import com.piotrek.oneagentarmy.provider.ai.AiProviderRegistry
 import com.piotrek.oneagentarmy.provider.ai.AiReply
 import com.piotrek.oneagentarmy.provider.ai.ContextWindowStrategy
+import com.piotrek.oneagentarmy.provider.ai.TokenUsage
 import com.piotrek.oneagentarmy.provider.ai.tools.ToolCallRequest
 import com.piotrek.oneagentarmy.tools.calendar.CREATE_CALENDAR_EVENT_TOOL
 import com.piotrek.oneagentarmy.tools.calendar.CalendarEventArgumentsParser
@@ -77,13 +79,24 @@ class ChatViewModel(
     private val factRepository: FactRepository,
     private val aiProvider: AiProvider,
     private val contextWindowStrategy: ContextWindowStrategy,
+    private val exchangeRateRepository: ExchangeRateRepository,
 ) : ViewModel() {
+
+    init {
+        viewModelScope.launch { exchangeRateRepository.refreshIfStale() }
+    }
+
+    val usdToEur: StateFlow<Double> = exchangeRateRepository.usdToEur
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0.86)
 
     val messages: StateFlow<List<Message>> = repository.observeMessages(conversationId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     val conversationTitle: StateFlow<String?> = repository.observeConversation(conversationId)
         .map { it?.title }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    val conversationCost: StateFlow<Double?> = repository.observeConversationCost(conversationId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     // Model chosen in this screen before the conversation exists in the database.
@@ -138,6 +151,11 @@ class ChatViewModel(
 
     private val _pendingAction = MutableStateFlow<PendingAction?>(null)
     val pendingAction: StateFlow<PendingAction?> = _pendingAction.asStateFlow()
+
+    // Usage/cost of the tool-call turn behind the pending action - attached to the
+    // locally-generated summary note once the user confirms or cancels.
+    private var pendingActionUsage: TokenUsage? = null
+    private var pendingActionCost: Double? = null
 
     fun selectModel(modelId: String) {
         viewModelScope.launch {
@@ -242,7 +260,11 @@ class ChatViewModel(
             val historyToSend = contextWindowStrategy.apply(history)
             when (val reply = aiProvider.sendMessage(historyToSend, modelId, activeFactContents(selectedIds))) {
                 is AiReply.Text -> repository.addMessage(conversationId, reply.message)
-                is AiReply.ToolCall -> dispatchToolCall(reply.request)
+                is AiReply.ToolCall -> {
+                    pendingActionUsage = reply.usage
+                    pendingActionCost = reply.costUsd
+                    dispatchToolCall(reply.request)
+                }
             }
         } catch (e: AiProviderException) {
             _error.value = e.toChatError()
@@ -279,6 +301,10 @@ class ChatViewModel(
     )
 
     private suspend fun persistAiNote(text: String) {
+        val usage = pendingActionUsage
+        val cost = pendingActionCost
+        pendingActionUsage = null
+        pendingActionCost = null
         repository.addMessage(
             conversationId,
             Message(
@@ -287,6 +313,9 @@ class ChatViewModel(
                 sender = Sender.AI,
                 text = text,
                 timestamp = Instant.now(),
+                inputTokens = usage?.inputTokens,
+                outputTokens = usage?.outputTokens,
+                costUsd = cost,
             ),
         )
     }

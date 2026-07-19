@@ -10,6 +10,7 @@ import com.piotrek.oneagentarmy.data.local.AppDatabase
 import com.piotrek.oneagentarmy.data.local.crypto.ApiKeyCipher
 import com.piotrek.oneagentarmy.data.repository.ConversationRepository
 import com.piotrek.oneagentarmy.data.repository.DataStoreSettingsRepository
+import com.piotrek.oneagentarmy.data.repository.ExchangeRateRepository
 import com.piotrek.oneagentarmy.data.repository.FactRepository
 import com.piotrek.oneagentarmy.data.repository.RoomConversationRepository
 import com.piotrek.oneagentarmy.data.repository.RoomFactRepository
@@ -43,7 +44,12 @@ import okhttp3.OkHttpClient
 
 class AppContainer(context: Context) {
     private val database = Room.databaseBuilder(context, AppDatabase::class.java, "oneagentarmy.db")
-        .addMigrations(AppDatabase.MIGRATION_1_2, AppDatabase.MIGRATION_2_3, AppDatabase.MIGRATION_3_4)
+        .addMigrations(
+            AppDatabase.MIGRATION_1_2,
+            AppDatabase.MIGRATION_2_3,
+            AppDatabase.MIGRATION_3_4,
+            AppDatabase.MIGRATION_4_5,
+        )
         .build()
 
     val conversationRepository: ConversationRepository = RoomConversationRepository(database.conversationDao())
@@ -57,6 +63,8 @@ class AppContainer(context: Context) {
     val settingsRepository: SettingsRepository = DataStoreSettingsRepository(settingsDataStore, ApiKeyCipher())
 
     private val okHttpClient = OkHttpClient()
+
+    val exchangeRateRepository = ExchangeRateRepository(okHttpClient, settingsDataStore)
 
     private val toolRegistry = ToolRegistry(
         definitions = listOf(
