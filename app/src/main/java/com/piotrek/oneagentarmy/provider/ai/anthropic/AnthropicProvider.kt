@@ -1,0 +1,137 @@
+package com.piotrek.oneagentarmy.provider.ai.anthropic
+
+import com.piotrek.oneagentarmy.data.repository.SettingsRepository
+import com.piotrek.oneagentarmy.model.Message
+import com.piotrek.oneagentarmy.model.Sender
+import com.piotrek.oneagentarmy.provider.ai.AiProvider
+import com.piotrek.oneagentarmy.provider.ai.AiProviderException
+import com.piotrek.oneagentarmy.provider.ai.AiProviderRegistry
+import com.piotrek.oneagentarmy.provider.ai.AiReply
+import com.piotrek.oneagentarmy.provider.ai.anthropic.dto.MessagesRequest
+import com.piotrek.oneagentarmy.provider.ai.anthropic.dto.assistantMessage
+import com.piotrek.oneagentarmy.provider.ai.anthropic.dto.firstToolUse
+import com.piotrek.oneagentarmy.provider.ai.anthropic.dto.functionToolJson
+import com.piotrek.oneagentarmy.provider.ai.anthropic.dto.historyMessage
+import com.piotrek.oneagentarmy.provider.ai.anthropic.dto.outputText
+import com.piotrek.oneagentarmy.provider.ai.anthropic.dto.toolChoiceAutoNoParallel
+import com.piotrek.oneagentarmy.provider.ai.anthropic.dto.toolChoiceNone
+import com.piotrek.oneagentarmy.provider.ai.anthropic.dto.toolResultMessage
+import com.piotrek.oneagentarmy.provider.ai.anthropic.dto.webSearchToolJson
+import com.piotrek.oneagentarmy.provider.ai.buildSystemPrompt
+import com.piotrek.oneagentarmy.provider.ai.tools.RoundTripToolExecutor
+import com.piotrek.oneagentarmy.provider.ai.tools.ToolCallRequest
+import com.piotrek.oneagentarmy.provider.ai.tools.ToolRegistry
+import com.piotrek.oneagentarmy.provider.ai.tools.websearch.WEB_SEARCH_TOOL
+import java.time.Clock
+import java.time.Instant
+import java.util.UUID
+import kotlinx.coroutines.flow.first
+import kotlinx.serialization.json.JsonElement
+
+class AnthropicProvider(
+    private val apiClient: AnthropicApiClient,
+    private val settingsRepository: SettingsRepository,
+    private val toolRegistry: ToolRegistry,
+    executors: List<RoundTripToolExecutor>,
+    private val clock: Clock = Clock.systemDefaultZone(),
+) : AiProvider {
+
+    private val executorsByName = executors.associateBy { it.toolName }
+
+    override suspend fun sendMessage(history: List<Message>, modelId: String, contextFacts: List<String>): AiReply {
+        val apiKey = settingsRepository.getApiKey(AiProviderRegistry.ANTHROPIC)
+        if (apiKey.isNullOrBlank()) throw AiProviderException.MissingApiKey
+
+        val conversationId = history.last().conversationId
+
+        // Hosted mode swaps the Tavily function tool for Anthropic's server-side
+        // web search, which needs no key and no round-trip on our side.
+        val useHostedSearch =
+            settingsRepository.observeSearchProvider().first() == SettingsRepository.SEARCH_PROVIDER_BUILT_IN &&
+                AiProviderRegistry.modelOptionFor(modelId)?.supportsHostedWebSearch == true
+
+        val functionTools = toolRegistry.definitions
+            .filter { !(useHostedSearch && it.name == WEB_SEARCH_TOOL) }
+            .filter { it.requiredKeyId == null || settingsRepository.getApiKey(it.requiredKeyId) != null }
+            .map { functionToolJson(it) }
+        val tools: List<JsonElement> =
+            if (useHostedSearch) functionTools + webSearchToolJson(hostedSearchTypeFor(modelId)) else functionTools
+
+        val system = buildSystemPrompt(clock, contextFacts)
+        var messages: List<JsonElement> = history.map {
+            historyMessage(role = if (it.sender == Sender.USER) "user" else "assistant", text = it.text)
+        }
+        var roundTripsUsed = 0
+        var pauseTurnsUsed = 0
+
+        while (true) {
+            // Hard cap on provider-executed tool round-trips per message. Tools stay
+            // defined even past the cap (history with tool_use blocks requires them) -
+            // further calls are blocked via tool_choice instead.
+            val request = MessagesRequest(
+                model = modelId,
+                maxTokens = MAX_OUTPUT_TOKENS,
+                system = system,
+                messages = messages,
+                tools = tools.ifEmpty { null },
+                toolChoice = when {
+                    tools.isEmpty() -> null
+                    roundTripsUsed >= MAX_TOOL_ROUND_TRIPS -> toolChoiceNone()
+                    else -> toolChoiceAutoNoParallel()
+                },
+            )
+            val response = apiClient.createMessage(apiKey, request)
+
+            // Server-side tool loop (hosted web search) paused - echo the assistant
+            // content back and the server resumes automatically. Not counted against
+            // the client-side round-trip cap.
+            if (response.stopReason == "pause_turn" && pauseTurnsUsed < MAX_PAUSE_TURNS) {
+                pauseTurnsUsed++
+                messages = messages + assistantMessage(response.content)
+                continue
+            }
+
+            val toolUse = response.firstToolUse()
+            if (toolUse == null) {
+                val replyText = response.outputText()
+                    ?: throw AiProviderException.Unknown("Response contained neither text nor a tool call")
+                return AiReply.Text(
+                    Message(
+                        id = UUID.randomUUID().toString(),
+                        conversationId = conversationId,
+                        sender = Sender.AI,
+                        text = replyText,
+                        timestamp = Instant.now(),
+                    ),
+                )
+            }
+
+            val executor = executorsByName[toolUse.name]
+            if (executor != null && roundTripsUsed < MAX_TOOL_ROUND_TRIPS) {
+                roundTripsUsed++
+                val result = executor.execute(toolUse.inputJson)
+                // The assistant content is echoed verbatim - thinking blocks (Sonnet)
+                // must return unchanged, and every tool_use needs its tool_result.
+                messages = messages +
+                    assistantMessage(response.content) +
+                    toolResultMessage(toolUse.id, result)
+                continue
+            }
+
+            // Tools without an executor (calendar, alarms, SMS...) have a client-side
+            // effect the ViewModel must confirm with the user - handed back unresolved.
+            return AiReply.ToolCall(ToolCallRequest(toolUse.name, toolUse.inputJson))
+        }
+    }
+
+    // The dynamic-filtering web search variant requires Sonnet 5 tier models;
+    // Haiku 4.5 supports only the basic variant.
+    private fun hostedSearchTypeFor(modelId: String): String =
+        if (modelId == "claude-haiku-4-5") "web_search_20250305" else "web_search_20260209"
+
+    private companion object {
+        const val MAX_TOOL_ROUND_TRIPS = 4
+        const val MAX_PAUSE_TURNS = 5
+        const val MAX_OUTPUT_TOKENS = 8192
+    }
+}
