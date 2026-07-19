@@ -59,12 +59,14 @@
     <string name="pending_sms_title">Open SMS draft?</string>
     <string name="pending_navigation_title">Open navigation?</string>
     <string name="pending_open_calendar_title">Open calendar?</string>
+    <string name="pending_note_title">Save note?</string>
     <string name="timer_minutes">%1$d min</string>
     <string name="chat_alarm_summary">⏰ Alarm set for %1$s</string>
     <string name="chat_timer_summary">⏲️ Timer: %1$s</string>
     <string name="chat_sms_summary">✉️ SMS draft: %1$s</string>
     <string name="chat_navigation_summary">🧭 Navigation to: %1$s</string>
     <string name="chat_open_calendar_summary">📅 Calendar opened at %1$s</string>
+    <string name="chat_note_summary">📝 Note saved: %1$s</string>
 
     <string name="select">Select</string>
     <string name="selected_count">%1$d selected</string>

@@ -31,6 +31,7 @@ import com.piotrek.oneagentarmy.tools.calendar.OpenCalendarToolDefinition
 import com.piotrek.oneagentarmy.tools.clock.SetAlarmToolDefinition
 import com.piotrek.oneagentarmy.tools.clock.SetTimerToolDefinition
 import com.piotrek.oneagentarmy.tools.navigation.NavigateToolDefinition
+import com.piotrek.oneagentarmy.tools.notes.CreateNoteToolDefinition
 import com.piotrek.oneagentarmy.tools.sms.DraftSmsToolDefinition
 import okhttp3.OkHttpClient
 
@@ -59,6 +60,7 @@ class AppContainer(context: Context) {
             SetTimerToolDefinition,
             DraftSmsToolDefinition,
             NavigateToolDefinition,
+            CreateNoteToolDefinition,
             WebSearchToolDefinition,
             WeatherToolDefinition,
         ),
