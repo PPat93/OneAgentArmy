@@ -32,6 +32,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -179,34 +180,46 @@ fun ConversationListScreen(
                     Text(stringResource(R.string.empty_conversation_list))
                 }
             } else {
+                val pinnedConversations = conversations.filter { it.pinned }
+                val unpinnedConversations = conversations.filter { !it.pinned }
+                val renderConversationRow: @Composable (Conversation) -> Unit = { conversation ->
+                    ConversationRow(
+                        conversation = conversation,
+                        selectionMode = selectionMode,
+                        isSelected = conversation.id in selectedIds,
+                        onClick = {
+                            if (selectionMode) {
+                                selectedIds = if (conversation.id in selectedIds) {
+                                    selectedIds - conversation.id
+                                } else {
+                                    selectedIds + conversation.id
+                                }
+                            } else {
+                                onConversationClick(conversation.id)
+                            }
+                        },
+                        onRenameRequest = { renameDialogFor = conversation },
+                        onDeleteRequest = { deleteDialogFor = conversation },
+                        onPinRequest = { viewModel.setPinned(conversation.id, !conversation.pinned) },
+                        onSelectRequest = {
+                            selectionMode = true
+                            selectedIds = setOf(conversation.id)
+                        },
+                    )
+                }
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                 ) {
-                    items(conversations, key = { it.id }) { conversation ->
-                        ConversationRow(
-                            conversation = conversation,
-                            selectionMode = selectionMode,
-                            isSelected = conversation.id in selectedIds,
-                            onClick = {
-                                if (selectionMode) {
-                                    selectedIds = if (conversation.id in selectedIds) {
-                                        selectedIds - conversation.id
-                                    } else {
-                                        selectedIds + conversation.id
-                                    }
-                                } else {
-                                    onConversationClick(conversation.id)
-                                }
-                            },
-                            onRenameRequest = { renameDialogFor = conversation },
-                            onDeleteRequest = { deleteDialogFor = conversation },
-                            onPinRequest = { viewModel.setPinned(conversation.id, !conversation.pinned) },
-                            onSelectRequest = {
-                                selectionMode = true
-                                selectedIds = setOf(conversation.id)
-                            },
-                        )
+                    items(pinnedConversations, key = { it.id }) { conversation -> renderConversationRow(conversation) }
+                    if (pinnedConversations.isNotEmpty() && unpinnedConversations.isNotEmpty()) {
+                        item {
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                                color = MaterialTheme.colorScheme.outlineVariant,
+                            )
+                        }
                     }
+                    items(unpinnedConversations, key = { it.id }) { conversation -> renderConversationRow(conversation) }
                 }
             }
         }
