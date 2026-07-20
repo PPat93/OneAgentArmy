@@ -340,7 +340,7 @@ private fun ConversationRow(
                             Icon(
                                 Icons.Default.PushPin,
                                 contentDescription = null,
-                                tint = contentColor.copy(alpha = 0.65f),
+                                tint = MaterialTheme.colorScheme.tertiary,
                                 modifier = Modifier
                                     .padding(end = 4.dp)
                                     .size(16.dp),
