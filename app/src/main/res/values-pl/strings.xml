@@ -113,6 +113,9 @@
 
     <string name="settings_help_title">Co potrafi ta apka?</string>
     <string name="settings_help_subtitle">Krótki przewodnik po funkcjach</string>
+    <string name="settings_about_title">O aplikacji</string>
+    <string name="settings_about_subtitle">Kto to zrobił</string>
+    <string name="app_credit">ParroT woRKs by Piotr Paterek</string>
 
     <string name="help_section_providers_title">Dostawcy AI i modele</string>
     <string name="help_section_providers_body">Apka obsługuje trzech dostawców: OpenAI (ChatGPT), Google (Gemini) i Anthropic (Claude). Każdy ma trzy modele — od najtańszego po najmocniejszy. Aktywnego dostawcę przełączasz na głównym ekranie lub w Ustawieniach; model wybierasz osobno dla każdej rozmowy w czacie (domyślnie najtańszy dostępny).</string>

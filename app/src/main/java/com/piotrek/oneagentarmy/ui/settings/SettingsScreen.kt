@@ -39,6 +39,7 @@ fun SettingsScreen(
     onNavigateToTools: () -> Unit,
     onNavigateToFacts: () -> Unit,
     onNavigateToHelp: () -> Unit,
+    onNavigateToAbout: () -> Unit,
 ) {
     val chatFontScale by viewModel.chatFontScale.collectAsState()
     Scaffold(
@@ -83,6 +84,11 @@ fun SettingsScreen(
                 title = stringResource(R.string.settings_help_title),
                 subtitle = stringResource(R.string.settings_help_subtitle),
                 onClick = onNavigateToHelp,
+            )
+            SettingsMenuCard(
+                title = stringResource(R.string.settings_about_title),
+                subtitle = stringResource(R.string.settings_about_subtitle),
+                onClick = onNavigateToAbout,
             )
         }
     }
