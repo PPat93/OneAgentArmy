@@ -10,6 +10,8 @@
     <string name="send">Send</string>
     <string name="rename">Rename</string>
     <string name="delete">Delete</string>
+    <string name="pin">Pin</string>
+    <string name="unpin">Unpin</string>
     <string name="copy_message">Copy message</string>
     <string name="resend_message">Resend message</string>
     <string name="search">Search</string>
@@ -137,7 +139,7 @@
     <string name="help_section_personalization_body">In Settings you can change the chat font size (Small/Normal/Large/Extra large).</string>
 
     <string name="help_section_conversations_title">Managing conversations</string>
-    <string name="help_section_conversations_body">On the main screen: the magnifying glass searches the text of all conversations; long-press a conversation tile to rename or delete it (individually or in bulk).</string>
+    <string name="help_section_conversations_body">On the main screen: the magnifying glass searches the text of all conversations; long-press a conversation tile to rename, delete (individually or in bulk), or pin it. Conversations are sorted by their most recent message, with pinned ones always on top.</string>
     <string name="fact_new_title">New fact</string>
     <string name="fact_edit_title">Edit fact</string>
     <string name="fact_title_label">Title</string>

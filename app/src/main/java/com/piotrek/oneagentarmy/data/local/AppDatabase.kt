@@ -7,7 +7,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [ConversationEntity::class, MessageEntity::class, FactEntity::class, ConversationFactEntity::class],
-    version = 6,
+    version = 7,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -63,6 +63,17 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE messages ADD COLUMN attachmentPath TEXT")
                 db.execSQL("ALTER TABLE messages ADD COLUMN attachmentMime TEXT")
                 db.execSQL("ALTER TABLE messages ADD COLUMN attachmentName TEXT")
+            }
+        }
+
+        val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE conversations ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE conversations ADD COLUMN lastMessageAt INTEGER NOT NULL DEFAULT 0")
+                db.execSQL(
+                    "UPDATE conversations SET lastMessageAt = COALESCE(" +
+                        "(SELECT MAX(timestamp) FROM messages WHERE messages.conversationId = conversations.id), createdAt)",
+                )
             }
         }
 

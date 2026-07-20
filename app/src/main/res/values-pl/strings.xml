@@ -10,6 +10,8 @@
     <string name="send">Wyślij</string>
     <string name="rename">Zmień nazwę</string>
     <string name="delete">Usuń</string>
+    <string name="pin">Przypnij</string>
+    <string name="unpin">Odepnij</string>
     <string name="copy_message">Kopiuj wiadomość</string>
     <string name="resend_message">Wyślij ponownie</string>
     <string name="search">Szukaj</string>
@@ -137,7 +139,7 @@
     <string name="help_section_personalization_body">W Ustawieniach możesz zmienić wielkość czcionki w czacie (Mała/Normalna/Duża/Bardzo duża).</string>
 
     <string name="help_section_conversations_title">Zarządzanie rozmowami</string>
-    <string name="help_section_conversations_body">Na głównym ekranie: szkło powiększające otwiera wyszukiwanie po treści wszystkich rozmów, długie przytrzymanie kafelka rozmowy pozwala zmienić nazwę lub usunąć (pojedynczo albo grupowo).</string>
+    <string name="help_section_conversations_body">Na głównym ekranie: szkło powiększające otwiera wyszukiwanie po treści wszystkich rozmów, długie przytrzymanie kafelka rozmowy pozwala zmienić nazwę, usunąć (pojedynczo albo grupowo) albo przypiąć. Rozmowy sortowane są wg czasu ostatniej wiadomości, a przypięte są zawsze na górze.</string>
     <string name="fact_new_title">Nowy fakt</string>
     <string name="fact_edit_title">Edytuj fakt</string>
     <string name="fact_title_label">Tytuł</string>

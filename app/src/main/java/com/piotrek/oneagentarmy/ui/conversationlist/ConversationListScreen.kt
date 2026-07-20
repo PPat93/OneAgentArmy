@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
@@ -199,6 +200,7 @@ fun ConversationListScreen(
                             },
                             onRenameRequest = { renameDialogFor = conversation },
                             onDeleteRequest = { deleteDialogFor = conversation },
+                            onPinRequest = { viewModel.setPinned(conversation.id, !conversation.pinned) },
                             onSelectRequest = {
                                 selectionMode = true
                                 selectedIds = setOf(conversation.id)
@@ -293,6 +295,7 @@ private fun ConversationRow(
     onClick: () -> Unit,
     onRenameRequest: () -> Unit,
     onDeleteRequest: () -> Unit,
+    onPinRequest: () -> Unit,
     onSelectRequest: () -> Unit,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
@@ -332,12 +335,24 @@ private fun ConversationRow(
         ) {
             ListItem(
                 headlineContent = {
-                    Text(
-                        conversation.title,
-                        color = contentColor,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (conversation.pinned) {
+                            Icon(
+                                Icons.Default.PushPin,
+                                contentDescription = null,
+                                tint = contentColor.copy(alpha = 0.65f),
+                                modifier = Modifier
+                                    .padding(end = 4.dp)
+                                    .size(16.dp),
+                            )
+                        }
+                        Text(
+                            conversation.title,
+                            color = contentColor,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                 },
                 supportingContent = {
                     // Deliberately smaller and faded - at full contrast the metadata
@@ -359,6 +374,13 @@ private fun ConversationRow(
                 onClick = {
                     menuExpanded = false
                     onSelectRequest()
+                },
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(if (conversation.pinned) R.string.unpin else R.string.pin)) },
+                onClick = {
+                    menuExpanded = false
+                    onPinRequest()
                 },
             )
             DropdownMenuItem(

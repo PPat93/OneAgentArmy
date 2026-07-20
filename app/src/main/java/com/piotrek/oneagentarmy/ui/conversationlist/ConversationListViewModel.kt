@@ -56,4 +56,8 @@ class ConversationListViewModel(
         if (title.isBlank()) return
         viewModelScope.launch { repository.renameConversation(conversationId, title) }
     }
+
+    fun setPinned(conversationId: String, pinned: Boolean) {
+        viewModelScope.launch { repository.setPinned(conversationId, pinned) }
+    }
 }
