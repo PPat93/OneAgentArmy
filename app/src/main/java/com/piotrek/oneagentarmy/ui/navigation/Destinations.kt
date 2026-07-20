@@ -10,6 +10,7 @@ object Destinations {
     const val SETTINGS_TOOLS = "settings/tools"
     const val SETTINGS_FACTS = "settings/facts"
     const val SETTINGS_HELP = "settings/help"
+    const val SETTINGS_ABOUT = "settings/about"
     const val SEARCH = "search"
 
     fun chatRoute(conversationId: String, focusMessageId: String? = null): String =

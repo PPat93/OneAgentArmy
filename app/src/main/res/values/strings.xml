@@ -113,6 +113,9 @@
 
     <string name="settings_help_title">What can this app do?</string>
     <string name="settings_help_subtitle">A quick guide to the features</string>
+    <string name="settings_about_title">About</string>
+    <string name="settings_about_subtitle">Who made this</string>
+    <string name="app_credit">ParroT woRKs by Piotr Paterek</string>
 
     <string name="help_section_providers_title">AI providers and models</string>
     <string name="help_section_providers_body">The app supports three providers: OpenAI (ChatGPT), Google (Gemini), and Anthropic (Claude). Each offers three models, from cheapest to most capable. Switch the active provider on the main screen or in Settings; the model is chosen per conversation in the chat screen (defaults to the cheapest available).</string>
