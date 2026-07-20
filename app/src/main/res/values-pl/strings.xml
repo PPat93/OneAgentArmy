@@ -38,7 +38,7 @@
     <string name="api_key_label">Klucz API</string>
     <string name="coming_soon">Wkrótce</string>
     <string name="model_label">Model</string>
-    <string name="provider_chip_label">AI:</string>
+    <string name="provider_chip_label">Domyślne AI:</string>
     <string name="monthly_cost_label">W tym miesiącu: %1$s</string>
     <string name="chat_font_scale_title">Wielkość czcionki czatu</string>
     <string name="font_scale_small">Mała</string>
@@ -94,8 +94,8 @@
     <string name="delete_selected_title">Usunąć rozmowy?</string>
     <string name="delete_selected_text">Usunąć rozmowy (%1$d)? Tej operacji nie można cofnąć.</string>
 
-    <string name="settings_providers_title">Dostawcy AI i globalny model</string>
-    <string name="settings_providers_subtitle">Klucze API, aktywny dostawca, domyślny model</string>
+    <string name="settings_providers_title">Dostawcy AI</string>
+    <string name="settings_providers_subtitle">Klucze API, aktywny dostawca</string>
     <string name="settings_tools_title">Narzędzia</string>
     <string name="settings_tools_subtitle">Klucze narzędzi agenta (wyszukiwanie w necie)</string>
     <string name="tavily_api_key_label">Klucz API wyszukiwania (Tavily)</string>
