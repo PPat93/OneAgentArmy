@@ -7,7 +7,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [ConversationEntity::class, MessageEntity::class, FactEntity::class, ConversationFactEntity::class],
-    version = 5,
+    version = 6,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -54,6 +54,15 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE messages ADD COLUMN inputTokens INTEGER")
                 db.execSQL("ALTER TABLE messages ADD COLUMN outputTokens INTEGER")
                 db.execSQL("ALTER TABLE messages ADD COLUMN costUsd REAL")
+            }
+        }
+
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE messages ADD COLUMN attachmentType TEXT")
+                db.execSQL("ALTER TABLE messages ADD COLUMN attachmentPath TEXT")
+                db.execSQL("ALTER TABLE messages ADD COLUMN attachmentMime TEXT")
+                db.execSQL("ALTER TABLE messages ADD COLUMN attachmentName TEXT")
             }
         }
 

@@ -7,9 +7,12 @@ import com.piotrek.oneagentarmy.provider.ai.AiProvider
 import com.piotrek.oneagentarmy.provider.ai.AiProviderException
 import com.piotrek.oneagentarmy.provider.ai.AiProviderRegistry
 import com.piotrek.oneagentarmy.provider.ai.AiReply
+import com.piotrek.oneagentarmy.provider.ai.AttachmentReader
 import com.piotrek.oneagentarmy.provider.ai.TokenUsage
 import com.piotrek.oneagentarmy.provider.ai.buildSystemPrompt
 import com.piotrek.oneagentarmy.provider.ai.openai.dto.ResponsesRequest
+import com.piotrek.oneagentarmy.provider.ai.openai.dto.inputMessageItem
+import com.piotrek.oneagentarmy.provider.ai.openai.dto.inputMessageItemWithAttachment
 import com.piotrek.oneagentarmy.provider.ai.openai.dto.toTokenUsage
 import com.piotrek.oneagentarmy.provider.ai.openai.dto.firstFunctionCall
 import com.piotrek.oneagentarmy.provider.ai.openai.dto.functionCallOutputItem
@@ -31,6 +34,7 @@ class OpenAiProvider(
     private val settingsRepository: SettingsRepository,
     private val toolRegistry: ToolRegistry,
     executors: List<RoundTripToolExecutor>,
+    private val attachmentReader: AttachmentReader,
     private val clock: Clock = Clock.systemDefaultZone(),
 ) : AiProvider {
 
@@ -57,7 +61,7 @@ class OpenAiProvider(
             if (useHostedSearch) functionTools + webSearchToolJson() else functionTools
 
         val instructions = buildSystemPrompt(clock, contextFacts)
-        var input: List<JsonElement> = history.map { it.toInputItem() }
+        var input: List<JsonElement> = history.map { historyItem(it) }
         var roundTripsUsed = 0
         var usageTotal = TokenUsage.ZERO
 
@@ -116,7 +120,22 @@ class OpenAiProvider(
         }
     }
 
+    private suspend fun historyItem(message: Message): JsonElement {
+        val path = message.attachmentPath
+        if (message.sender != Sender.USER || path == null) return message.toInputItem()
+        val base64 = attachmentReader.readBase64(path)
+            ?: return inputMessageItem("user", (message.text + "\n\n$MISSING_ATTACHMENT_NOTE").trim())
+        return inputMessageItemWithAttachment(
+            text = message.text,
+            attachmentBase64 = base64,
+            mime = message.attachmentMime ?: "application/octet-stream",
+            isPdf = message.attachmentType == Message.ATTACHMENT_TYPE_PDF,
+            fileName = message.attachmentName ?: "file",
+        )
+    }
+
     private companion object {
         const val MAX_TOOL_ROUND_TRIPS = 4
+        const val MISSING_ATTACHMENT_NOTE = "[attachment no longer available]"
     }
 }

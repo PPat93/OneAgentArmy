@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStoreFile
 import androidx.room.Room
 import com.piotrek.oneagentarmy.data.local.AppDatabase
+import com.piotrek.oneagentarmy.data.local.AttachmentStore
 import com.piotrek.oneagentarmy.data.local.crypto.ApiKeyCipher
 import com.piotrek.oneagentarmy.data.repository.ConversationRepository
 import com.piotrek.oneagentarmy.data.repository.DataStoreSettingsRepository
@@ -17,6 +18,7 @@ import com.piotrek.oneagentarmy.data.repository.RoomFactRepository
 import com.piotrek.oneagentarmy.data.repository.SettingsRepository
 import com.piotrek.oneagentarmy.provider.ai.AiProvider
 import com.piotrek.oneagentarmy.provider.ai.AiProviderRegistry
+import com.piotrek.oneagentarmy.provider.ai.AttachmentReader
 import com.piotrek.oneagentarmy.provider.ai.ContextWindowStrategies
 import com.piotrek.oneagentarmy.provider.ai.ContextWindowStrategy
 import com.piotrek.oneagentarmy.provider.ai.RoutingAiProvider
@@ -49,10 +51,16 @@ class AppContainer(context: Context) {
             AppDatabase.MIGRATION_2_3,
             AppDatabase.MIGRATION_3_4,
             AppDatabase.MIGRATION_4_5,
+            AppDatabase.MIGRATION_5_6,
         )
         .build()
 
-    val conversationRepository: ConversationRepository = RoomConversationRepository(database.conversationDao())
+    val attachmentStore = AttachmentStore(context)
+
+    private val attachmentReader = AttachmentReader { path -> attachmentStore.readBase64(path) }
+
+    val conversationRepository: ConversationRepository =
+        RoomConversationRepository(database.conversationDao(), attachmentStore)
 
     val factRepository: FactRepository = RoomFactRepository(database.factDao())
 
@@ -95,18 +103,21 @@ class AppContainer(context: Context) {
                 settingsRepository = settingsRepository,
                 toolRegistry = toolRegistry,
                 executors = roundTripExecutors,
+                attachmentReader = attachmentReader,
             ),
             AiProviderRegistry.GEMINI to GeminiProvider(
                 apiClient = GeminiApiClient(okHttpClient),
                 settingsRepository = settingsRepository,
                 toolRegistry = toolRegistry,
                 executors = roundTripExecutors,
+                attachmentReader = attachmentReader,
             ),
             AiProviderRegistry.ANTHROPIC to AnthropicProvider(
                 apiClient = AnthropicApiClient(okHttpClient),
                 settingsRepository = settingsRepository,
                 toolRegistry = toolRegistry,
                 executors = roundTripExecutors,
+                attachmentReader = attachmentReader,
             ),
         ),
     )

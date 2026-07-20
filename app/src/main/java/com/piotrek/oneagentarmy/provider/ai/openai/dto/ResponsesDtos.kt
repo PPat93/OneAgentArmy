@@ -8,6 +8,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
 
@@ -74,6 +75,45 @@ fun ResponsesResponse.outputText(): String? =
 fun inputMessageItem(role: String, text: String): JsonObject = buildJsonObject {
     put("role", JsonPrimitive(role))
     put("content", JsonPrimitive(text))
+}
+
+// User message carrying a media attachment: content becomes a part array with the
+// media part first and the (optional) text part after.
+fun inputMessageItemWithAttachment(
+    text: String,
+    attachmentBase64: String,
+    mime: String,
+    isPdf: Boolean,
+    fileName: String,
+): JsonObject = buildJsonObject {
+    put("role", JsonPrimitive("user"))
+    put(
+        "content",
+        buildJsonArray {
+            add(
+                if (isPdf) {
+                    buildJsonObject {
+                        put("type", JsonPrimitive("input_file"))
+                        put("filename", JsonPrimitive(fileName))
+                        put("file_data", JsonPrimitive("data:$mime;base64,$attachmentBase64"))
+                    }
+                } else {
+                    buildJsonObject {
+                        put("type", JsonPrimitive("input_image"))
+                        put("image_url", JsonPrimitive("data:$mime;base64,$attachmentBase64"))
+                    }
+                },
+            )
+            if (text.isNotBlank()) {
+                add(
+                    buildJsonObject {
+                        put("type", JsonPrimitive("input_text"))
+                        put("text", JsonPrimitive(text))
+                    },
+                )
+            }
+        },
+    )
 }
 
 fun functionCallOutputItem(callId: String, output: String): JsonObject = buildJsonObject {

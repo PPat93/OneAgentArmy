@@ -34,6 +34,9 @@ interface ConversationDao {
     @Query("UPDATE conversations SET modelId = :modelId WHERE id = :id")
     suspend fun updateConversationModel(id: String, modelId: String)
 
+    @Query("SELECT attachmentPath FROM messages WHERE conversationId IN (:conversationIds) AND attachmentPath IS NOT NULL")
+    suspend fun attachmentPathsForConversations(conversationIds: List<String>): List<String>
+
     @Query("SELECT SUM(costUsd) FROM messages WHERE conversationId = :conversationId")
     fun observeConversationCost(conversationId: String): Flow<Double?>
 

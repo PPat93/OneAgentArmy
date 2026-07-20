@@ -45,9 +45,13 @@
     <string name="font_scale_normal">Normal</string>
     <string name="font_scale_large">Large</string>
     <string name="font_scale_xlarge">Extra large</string>
-    <string name="attach_file">Attach a text file (txt, md, csv)</string>
+    <string name="attach_file">Attach a file</string>
     <string name="remove_attachment">Remove attachment</string>
     <string name="error_attachment_too_large">The file is too large (limit ~30,000 characters). Trim it or send a fragment.</string>
+    <string name="attach_menu_image">Photo</string>
+    <string name="attach_menu_pdf">PDF file</string>
+    <string name="attach_menu_text">Text file (txt, md, csv)</string>
+    <string name="error_pdf_too_large">The PDF is too large (limit 5 MB).</string>
 
     <string name="model_gpt41_nano">GPT-4.1 nano - cheapest ($0.10 / $0.40 per 1M tokens)</string>
     <string name="model_gpt56_luna">GPT-5.6 Luna - better quality ($1.00 / $6.00 per 1M tokens)</string>

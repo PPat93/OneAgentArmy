@@ -1,7 +1,10 @@
 package com.piotrek.oneagentarmy.ui.chat
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.piotrek.oneagentarmy.data.local.AttachmentStore
+import com.piotrek.oneagentarmy.data.local.AttachmentTooLargeException
 import com.piotrek.oneagentarmy.data.repository.ConversationRepository
 import com.piotrek.oneagentarmy.data.repository.ExchangeRateRepository
 import com.piotrek.oneagentarmy.data.repository.FactRepository
@@ -61,11 +64,23 @@ sealed interface ChatError {
     data object ToolArguments : ChatError
     data object NoAppForAction : ChatError
     data object AttachmentTooLarge : ChatError
+    data object PdfTooLarge : ChatError
 }
 
-// Text file (txt/md/csv) staged for the next message - its content is inlined
-// into the message text on send.
-data class PendingAttachment(val name: String, val content: String)
+// Attachment staged for the next message: text files are inlined into the
+// message text on send; media (image/pdf) is stored locally and sent to the
+// API as a native multimodal block.
+sealed interface PendingAttachment {
+    val name: String
+
+    data class TextFile(override val name: String, val content: String) : PendingAttachment
+    data class Media(
+        val type: String,
+        val path: String,
+        val mime: String,
+        override val name: String,
+    ) : PendingAttachment
+}
 
 sealed interface PendingAction {
     data class CreateCalendarEvent(val draft: CalendarEventDraft) : PendingAction
@@ -85,6 +100,7 @@ class ChatViewModel(
     private val aiProvider: AiProvider,
     private val contextWindowStrategy: ContextWindowStrategy,
     private val exchangeRateRepository: ExchangeRateRepository,
+    private val attachmentStore: AttachmentStore,
 ) : ViewModel() {
 
     init {
@@ -173,8 +189,45 @@ class ChatViewModel(
             _error.value = ChatError.AttachmentTooLarge
             return
         }
-        _pendingAttachment.value = PendingAttachment(name, content)
+        _pendingAttachment.value = PendingAttachment.TextFile(name, content)
     }
+
+    fun attachImage(uri: Uri) {
+        viewModelScope.launch {
+            try {
+                val saved = attachmentStore.saveImage(uri)
+                _pendingAttachment.value = PendingAttachment.Media(
+                    type = Message.ATTACHMENT_TYPE_IMAGE,
+                    path = saved.path,
+                    mime = saved.mime,
+                    name = saved.name,
+                )
+            } catch (e: Exception) {
+                _error.value = ChatError.Unknown(e.message ?: "image attachment failed")
+            }
+        }
+    }
+
+    fun attachPdf(uri: Uri) {
+        viewModelScope.launch {
+            try {
+                val saved = attachmentStore.savePdf(uri)
+                _pendingAttachment.value = PendingAttachment.Media(
+                    type = Message.ATTACHMENT_TYPE_PDF,
+                    path = saved.path,
+                    mime = saved.mime,
+                    name = saved.name,
+                )
+            } catch (e: AttachmentTooLargeException) {
+                _error.value = ChatError.PdfTooLarge
+            } catch (e: Exception) {
+                _error.value = ChatError.Unknown(e.message ?: "pdf attachment failed")
+            }
+        }
+    }
+
+    // Resolves a stored attachment path for UI display (thumbnail decoding).
+    fun attachmentAbsolutePath(path: String): String = attachmentStore.absolutePath(path)
 
     fun clearAttachment() {
         _pendingAttachment.value = null
@@ -208,16 +261,17 @@ class ChatViewModel(
             // pending selections are persisted below.
             val selectedIds = selectedFactIds.value
 
-            // Attachment content is inlined into the message text - it becomes part of
-            // the conversation history and is replayed to the API like any other text.
-            val messageText = if (attachment == null) {
-                text
-            } else {
-                buildString {
+            // Text files are inlined into the message text (replayed like any other
+            // text); media attachments ride as metadata and are sent to the API as
+            // native multimodal blocks by the providers.
+            val messageText = when (attachment) {
+                null, is PendingAttachment.Media -> text
+                is PendingAttachment.TextFile -> buildString {
                     append("📎 ").append(attachment.name).append("\n\n").append(attachment.content)
                     if (text.isNotBlank()) append("\n\n").append(text)
                 }
             }
+            val media = attachment as? PendingAttachment.Media
             _pendingAttachment.value = null
 
             if (messages.value.isEmpty()) {
@@ -236,6 +290,10 @@ class ChatViewModel(
                 sender = Sender.USER,
                 text = messageText,
                 timestamp = Instant.now(),
+                attachmentType = media?.type,
+                attachmentPath = media?.path,
+                attachmentMime = media?.mime,
+                attachmentName = media?.name,
             )
             repository.addMessage(conversationId, userMessage)
 

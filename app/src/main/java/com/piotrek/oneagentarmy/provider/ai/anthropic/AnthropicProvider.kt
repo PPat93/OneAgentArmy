@@ -7,11 +7,13 @@ import com.piotrek.oneagentarmy.provider.ai.AiProvider
 import com.piotrek.oneagentarmy.provider.ai.AiProviderException
 import com.piotrek.oneagentarmy.provider.ai.AiProviderRegistry
 import com.piotrek.oneagentarmy.provider.ai.AiReply
+import com.piotrek.oneagentarmy.provider.ai.AttachmentReader
 import com.piotrek.oneagentarmy.provider.ai.anthropic.dto.MessagesRequest
 import com.piotrek.oneagentarmy.provider.ai.anthropic.dto.allToolUses
 import com.piotrek.oneagentarmy.provider.ai.anthropic.dto.assistantMessage
 import com.piotrek.oneagentarmy.provider.ai.anthropic.dto.functionToolJson
 import com.piotrek.oneagentarmy.provider.ai.anthropic.dto.historyMessage
+import com.piotrek.oneagentarmy.provider.ai.anthropic.dto.historyMessageWithAttachment
 import com.piotrek.oneagentarmy.provider.ai.anthropic.dto.outputText
 import com.piotrek.oneagentarmy.provider.ai.anthropic.dto.toolChoiceAutoNoParallel
 import com.piotrek.oneagentarmy.provider.ai.anthropic.dto.toolChoiceNone
@@ -35,6 +37,7 @@ class AnthropicProvider(
     private val settingsRepository: SettingsRepository,
     private val toolRegistry: ToolRegistry,
     executors: List<RoundTripToolExecutor>,
+    private val attachmentReader: AttachmentReader,
     private val clock: Clock = Clock.systemDefaultZone(),
 ) : AiProvider {
 
@@ -66,9 +69,7 @@ class AnthropicProvider(
             if (hostedSearchType != null) functionTools + webSearchToolJson(hostedSearchType) else functionTools
 
         val system = buildSystemPrompt(clock, contextFacts)
-        var messages: List<JsonElement> = history.map {
-            historyMessage(role = if (it.sender == Sender.USER) "user" else "assistant", text = it.text)
-        }
+        var messages: List<JsonElement> = history.map { historyMessageFor(it) }
         var roundTripsUsed = 0
         var pauseTurnsUsed = 0
         var usageTotal = TokenUsage.ZERO
@@ -152,6 +153,19 @@ class AnthropicProvider(
         }
     }
 
+    private suspend fun historyMessageFor(message: Message): JsonElement {
+        if (message.sender != Sender.USER) return historyMessage("assistant", message.text)
+        val path = message.attachmentPath ?: return historyMessage("user", message.text)
+        val base64 = attachmentReader.readBase64(path)
+            ?: return historyMessage("user", (message.text + "\n\n$MISSING_ATTACHMENT_NOTE").trim())
+        return historyMessageWithAttachment(
+            text = message.text,
+            attachmentBase64 = base64,
+            mime = message.attachmentMime ?: "application/octet-stream",
+            isPdf = message.attachmentType == Message.ATTACHMENT_TYPE_PDF,
+        )
+    }
+
     // The dynamic-filtering web search variant requires Sonnet 5 tier models;
     // Haiku 4.5 supports only the basic variant.
     private fun hostedSearchTypeFor(modelId: String): String =
@@ -161,5 +175,6 @@ class AnthropicProvider(
         const val MAX_TOOL_ROUND_TRIPS = 4
         const val MAX_PAUSE_TURNS = 5
         const val MAX_OUTPUT_TOKENS = 8192
+        const val MISSING_ATTACHMENT_NOTE = "[attachment no longer available]"
     }
 }

@@ -10,6 +10,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.piotrek.oneagentarmy.data.local.AttachmentStore
 import com.piotrek.oneagentarmy.data.repository.ConversationRepository
 import com.piotrek.oneagentarmy.data.repository.ExchangeRateRepository
 import com.piotrek.oneagentarmy.data.repository.FactRepository
@@ -38,6 +39,7 @@ fun OneAgentArmyNavHost(
     aiProvider: AiProvider,
     contextWindowStrategy: ContextWindowStrategy,
     exchangeRateRepository: ExchangeRateRepository,
+    attachmentStore: AttachmentStore,
     navController: NavHostController = rememberNavController(),
 ) {
     NavHost(navController = navController, startDestination = Destinations.CONVERSATION_LIST) {
@@ -83,6 +85,7 @@ fun OneAgentArmyNavHost(
                             aiProvider,
                             contextWindowStrategy,
                             exchangeRateRepository,
+                            attachmentStore,
                         )
                     }
                 },

@@ -16,6 +16,7 @@ import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -154,6 +155,13 @@ fun ChatScreen(
                 .onFailure { viewModel.reportAttachmentError(it.message ?: "attachment read failed") }
         }
     }
+    val imageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        uri?.let(viewModel::attachImage)
+    }
+    val pdfLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let(viewModel::attachPdf)
+    }
+    var attachMenuExpanded by remember { mutableStateOf(false) }
 
     // With reverseLayout, index 0 is the newest message and the list is anchored to the
     // bottom natively - immune to bubbles growing after async markdown parsing finishes.
@@ -325,6 +333,7 @@ fun ChatScreen(
                                 },
                                 usdToEur = usdToEur,
                                 fontScale = chatFontScale,
+                                resolveAttachmentPath = viewModel::attachmentAbsolutePath,
                             )
                             is ChatListItem.DateHeader -> DateHeaderRow(item.date)
                         }
@@ -345,9 +354,14 @@ fun ChatScreen(
             }
 
             pendingAttachment?.let { attachment ->
+                val chipPrefix = when (attachment) {
+                    is PendingAttachment.TextFile -> "📎"
+                    is PendingAttachment.Media ->
+                        if (attachment.type == Message.ATTACHMENT_TYPE_IMAGE) "🖼" else "📄"
+                }
                 AssistChip(
                     onClick = viewModel::clearAttachment,
-                    label = { Text("📎 ${attachment.name}", maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                    label = { Text("$chipPrefix ${attachment.name}", maxLines = 1, overflow = TextOverflow.Ellipsis) },
                     trailingIcon = {
                         Icon(
                             Icons.Default.Close,
@@ -363,15 +377,45 @@ fun ChatScreen(
                     .padding(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                IconButton(
-                    onClick = { attachLauncher.launch(TEXT_ATTACHMENT_MIME_TYPES) },
-                    enabled = !isSending,
-                ) {
-                    Icon(
-                        Icons.Default.AttachFile,
-                        contentDescription = stringResource(R.string.attach_file),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                Box {
+                    IconButton(
+                        onClick = { attachMenuExpanded = true },
+                        enabled = !isSending,
+                    ) {
+                        Icon(
+                            Icons.Default.AttachFile,
+                            contentDescription = stringResource(R.string.attach_file),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = attachMenuExpanded,
+                        onDismissRequest = { attachMenuExpanded = false },
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.attach_menu_image)) },
+                            onClick = {
+                                attachMenuExpanded = false
+                                imageLauncher.launch(
+                                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
+                                )
+                            },
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.attach_menu_pdf)) },
+                            onClick = {
+                                attachMenuExpanded = false
+                                pdfLauncher.launch(arrayOf("application/pdf"))
+                            },
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.attach_menu_text)) },
+                            onClick = {
+                                attachMenuExpanded = false
+                                attachLauncher.launch(TEXT_ATTACHMENT_MIME_TYPES)
+                            },
+                        )
+                    }
                 }
                 OutlinedTextField(
                     value = inputText,
@@ -557,6 +601,7 @@ private fun ChatErrorBanner(
         ChatError.ToolArguments -> stringResource(R.string.error_tool_arguments) to false
         ChatError.NoAppForAction -> stringResource(R.string.error_no_app_for_action) to false
         ChatError.AttachmentTooLarge -> stringResource(R.string.error_attachment_too_large) to false
+        ChatError.PdfTooLarge -> stringResource(R.string.error_pdf_too_large) to false
     }
 
     Card(
