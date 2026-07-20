@@ -93,11 +93,11 @@ private fun ChatFontScaleCard(
         1.15f to stringResource(R.string.font_scale_large),
         1.3f to stringResource(R.string.font_scale_xlarge),
     )
-    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
+    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
                 text = stringResource(R.string.chat_font_scale_title),
-                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                color = MaterialTheme.colorScheme.onTertiaryContainer,
                 style = MaterialTheme.typography.titleMedium,
             )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -123,24 +123,24 @@ private fun SettingsMenuCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
     ) {
         ListItem(
             headlineContent = {
                 Text(
                     title,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer,
                     style = MaterialTheme.typography.titleMedium,
                 )
             },
             supportingContent = {
-                Text(subtitle, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                Text(subtitle, color = MaterialTheme.colorScheme.onTertiaryContainer)
             },
             trailingContent = {
                 Icon(
                     Icons.AutoMirrored.Filled.KeyboardArrowRight,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                    tint = MaterialTheme.colorScheme.onTertiaryContainer,
                 )
             },
             colors = ListItemDefaults.colors(containerColor = Color.Transparent),

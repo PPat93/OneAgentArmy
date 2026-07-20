@@ -151,7 +151,7 @@ private fun FactRow(
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 4.dp)
             .clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
     ) {
         ListItem(
             leadingContent = {
@@ -159,14 +159,14 @@ private fun FactRow(
                     Icon(
                         Icons.Default.Public,
                         contentDescription = stringResource(R.string.fact_global_label),
-                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                        tint = MaterialTheme.colorScheme.onTertiaryContainer,
                     )
                 }
             },
             headlineContent = {
                 Text(
                     fact.title,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -174,7 +174,7 @@ private fun FactRow(
             supportingContent = {
                 Text(
                     fact.content,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )

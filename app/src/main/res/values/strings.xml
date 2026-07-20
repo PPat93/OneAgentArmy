@@ -38,7 +38,7 @@
     <string name="api_key_label">API key</string>
     <string name="coming_soon">Coming soon</string>
     <string name="model_label">Model</string>
-    <string name="provider_chip_label">AI:</string>
+    <string name="provider_chip_label">Default AI:</string>
     <string name="monthly_cost_label">This month: %1$s</string>
     <string name="chat_font_scale_title">Chat font size</string>
     <string name="font_scale_small">Small</string>
@@ -94,8 +94,8 @@
     <string name="delete_selected_title">Delete conversations?</string>
     <string name="delete_selected_text">Delete %1$d conversations? This cannot be undone.</string>
 
-    <string name="settings_providers_title">AI providers &amp; global model</string>
-    <string name="settings_providers_subtitle">API keys, active provider, default model</string>
+    <string name="settings_providers_title">AI providers</string>
+    <string name="settings_providers_subtitle">API keys, active provider</string>
     <string name="settings_tools_title">Tools</string>
     <string name="settings_tools_subtitle">Keys for agent tools (web search)</string>
     <string name="tavily_api_key_label">Web search API key (Tavily)</string>

@@ -67,11 +67,11 @@ fun SettingsToolsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
+            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
                         text = stringResource(R.string.search_provider_label),
-                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer,
                         style = MaterialTheme.typography.titleMedium,
                     )
                     SearchProviderOption(
@@ -131,7 +131,7 @@ private fun SearchProviderOption(
         RadioButton(selected = selected, onClick = onSelect)
         Text(
             text = label,
-            color = MaterialTheme.colorScheme.onSecondaryContainer,
+            color = MaterialTheme.colorScheme.onTertiaryContainer,
             style = MaterialTheme.typography.bodyLarge,
         )
     }
