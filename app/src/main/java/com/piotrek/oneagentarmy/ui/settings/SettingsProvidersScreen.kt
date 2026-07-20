@@ -128,6 +128,13 @@ private fun ProviderCard(
                 }
             }
 
+            Text(
+                text = stringResource(provider.taglineRes),
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(top = 4.dp),
+            )
+
             provider.noteRes?.let { noteRes ->
                 Text(
                     text = stringResource(noteRes),
