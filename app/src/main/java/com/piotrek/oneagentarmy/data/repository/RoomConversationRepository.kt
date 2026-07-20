@@ -27,12 +27,21 @@ class RoomConversationRepository(
         dao.observeMessages(conversationId).map { entities -> entities.map { it.toDomain() } }
 
     override suspend fun createConversation(id: String, title: String, modelId: String) {
-        val conversation = Conversation(id = id, title = title, createdAt = Instant.now(), modelId = modelId)
+        val now = Instant.now()
+        val conversation = Conversation(
+            id = id,
+            title = title,
+            createdAt = now,
+            modelId = modelId,
+            pinned = false,
+            lastMessageAt = now,
+        )
         dao.insertConversation(conversation.toEntity())
     }
 
     override suspend fun addMessage(conversationId: String, message: Message) {
         dao.insertMessage(message.toEntity())
+        dao.touchConversation(conversationId, message.timestamp.toEpochMilli())
     }
 
     override suspend fun deleteConversation(conversationId: String) {
@@ -55,6 +64,10 @@ class RoomConversationRepository(
 
     override suspend fun updateConversationModel(conversationId: String, modelId: String) {
         dao.updateConversationModel(conversationId, modelId)
+    }
+
+    override suspend fun setPinned(conversationId: String, pinned: Boolean) {
+        dao.setPinned(conversationId, pinned)
     }
 
     override fun observeConversationCost(conversationId: String): Flow<Double?> =

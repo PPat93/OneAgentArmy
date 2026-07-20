@@ -9,4 +9,6 @@ data class ConversationEntity(
     val title: String,
     val createdAt: Long,
     val modelId: String,
+    val pinned: Boolean = false,
+    val lastMessageAt: Long,
 )

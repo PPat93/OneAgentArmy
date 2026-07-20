@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ConversationDao {
-    @Query("SELECT * FROM conversations ORDER BY createdAt DESC")
+    @Query("SELECT * FROM conversations ORDER BY pinned DESC, lastMessageAt DESC")
     fun observeConversations(): Flow<List<ConversationEntity>>
 
     @Query("SELECT * FROM conversations WHERE id = :id")
@@ -33,6 +33,12 @@ interface ConversationDao {
 
     @Query("UPDATE conversations SET modelId = :modelId WHERE id = :id")
     suspend fun updateConversationModel(id: String, modelId: String)
+
+    @Query("UPDATE conversations SET lastMessageAt = :timestamp WHERE id = :id")
+    suspend fun touchConversation(id: String, timestamp: Long)
+
+    @Query("UPDATE conversations SET pinned = :pinned WHERE id = :id")
+    suspend fun setPinned(id: String, pinned: Boolean)
 
     @Query("SELECT attachmentPath FROM messages WHERE conversationId IN (:conversationIds) AND attachmentPath IS NOT NULL")
     suspend fun attachmentPathsForConversations(conversationIds: List<String>): List<String>

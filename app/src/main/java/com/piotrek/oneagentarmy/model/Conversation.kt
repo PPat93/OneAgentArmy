@@ -7,4 +7,6 @@ data class Conversation(
     val title: String,
     val createdAt: Instant,
     val modelId: String,
+    val pinned: Boolean,
+    val lastMessageAt: Instant,
 )

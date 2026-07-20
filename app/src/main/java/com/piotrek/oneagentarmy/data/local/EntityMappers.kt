@@ -11,6 +11,8 @@ fun ConversationEntity.toDomain() = Conversation(
     title = title,
     createdAt = Instant.ofEpochMilli(createdAt),
     modelId = modelId,
+    pinned = pinned,
+    lastMessageAt = Instant.ofEpochMilli(lastMessageAt),
 )
 
 fun Conversation.toEntity() = ConversationEntity(
@@ -18,6 +20,8 @@ fun Conversation.toEntity() = ConversationEntity(
     title = title,
     createdAt = createdAt.toEpochMilli(),
     modelId = modelId,
+    pinned = pinned,
+    lastMessageAt = lastMessageAt.toEpochMilli(),
 )
 
 fun MessageEntity.toDomain() = Message(
