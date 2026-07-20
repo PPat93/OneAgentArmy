@@ -25,6 +25,7 @@ import com.piotrek.oneagentarmy.ui.search.SearchScreen
 import com.piotrek.oneagentarmy.ui.search.SearchViewModel
 import com.piotrek.oneagentarmy.ui.settings.FactsViewModel
 import com.piotrek.oneagentarmy.ui.settings.SettingsFactsScreen
+import com.piotrek.oneagentarmy.ui.settings.SettingsHelpScreen
 import com.piotrek.oneagentarmy.ui.settings.SettingsProvidersScreen
 import com.piotrek.oneagentarmy.ui.settings.SettingsScreen
 import com.piotrek.oneagentarmy.ui.settings.SettingsToolsScreen
@@ -123,7 +124,11 @@ fun OneAgentArmyNavHost(
                 onNavigateToProviders = { navController.navigate(Destinations.SETTINGS_PROVIDERS) },
                 onNavigateToTools = { navController.navigate(Destinations.SETTINGS_TOOLS) },
                 onNavigateToFacts = { navController.navigate(Destinations.SETTINGS_FACTS) },
+                onNavigateToHelp = { navController.navigate(Destinations.SETTINGS_HELP) },
             )
+        }
+        composable(Destinations.SETTINGS_HELP) {
+            SettingsHelpScreen(onBack = { navController.popBackStack() })
         }
         composable(Destinations.SETTINGS_FACTS) {
             val viewModel: FactsViewModel = viewModel(

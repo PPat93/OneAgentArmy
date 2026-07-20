@@ -25,7 +25,10 @@ data class AiProviderInfo(
     // default model for new conversations (see defaultModelFor).
     val models: List<AiModelOption>,
     val isAvailable: Boolean,
-    // Optional informational note rendered in the provider's settings card
+    // Short one-line characterization shown under the provider name (price/quality
+    // tradeoff at a glance).
+    @StringRes val taglineRes: Int,
+    // Optional longer informational note rendered below the tagline
     // (e.g. Gemini's free-tier/privacy explanation).
     @StringRes val noteRes: Int? = null,
 )
@@ -46,6 +49,7 @@ object AiProviderRegistry {
                 AiModelOption("gpt-5.6-sol", R.string.model_gpt56_sol, "5.6 Sol", 5.00, 30.00, supportsHostedWebSearch = true),
             ),
             isAvailable = true,
+            taglineRes = R.string.provider_tagline_openai,
         ),
         AiProviderInfo(
             id = GEMINI,
@@ -61,6 +65,7 @@ object AiProviderRegistry {
                 AiModelOption("gemini-3.5-flash", R.string.model_gemini_35_flash, "3.5 Flash", 1.50, 9.00, supportsHostedWebSearch = true),
             ),
             isAvailable = true,
+            taglineRes = R.string.provider_tagline_gemini,
             noteRes = R.string.gemini_free_tier_note,
         ),
         AiProviderInfo(
@@ -74,6 +79,7 @@ object AiProviderRegistry {
                 AiModelOption("claude-opus-4-8", R.string.model_claude_opus_48, "Opus 4.8", 5.00, 25.00, supportsHostedWebSearch = true),
             ),
             isAvailable = true,
+            taglineRes = R.string.provider_tagline_anthropic,
         ),
     )
 

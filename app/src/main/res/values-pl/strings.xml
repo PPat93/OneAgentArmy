@@ -96,6 +96,9 @@
 
     <string name="settings_providers_title">Dostawcy AI</string>
     <string name="settings_providers_subtitle">Klucze API, aktywny dostawca</string>
+    <string name="provider_tagline_openai">Zbalansowany stosunek ceny do jakości.</string>
+    <string name="provider_tagline_gemini">Darmowy, ale udostępniasz im swoje wiadomości.</string>
+    <string name="provider_tagline_anthropic">Drogi, ale wybitny.</string>
     <string name="settings_tools_title">Narzędzia</string>
     <string name="settings_tools_subtitle">Klucze narzędzi agenta (wyszukiwanie w necie)</string>
     <string name="tavily_api_key_label">Klucz API wyszukiwania (Tavily)</string>
@@ -105,6 +108,36 @@
 
     <string name="settings_facts_title">Fakty kontekstowe</string>
     <string name="settings_facts_subtitle">Notatki wstrzykiwane do rozmów</string>
+
+    <string name="settings_help_title">Co potrafi ta apka?</string>
+    <string name="settings_help_subtitle">Krótki przewodnik po funkcjach</string>
+
+    <string name="help_section_providers_title">Dostawcy AI i modele</string>
+    <string name="help_section_providers_body">Apka obsługuje trzech dostawców: OpenAI (ChatGPT), Google (Gemini) i Anthropic (Claude). Każdy ma trzy modele — od najtańszego po najmocniejszy. Aktywnego dostawcę przełączasz na głównym ekranie lub w Ustawieniach; model wybierasz osobno dla każdej rozmowy w czacie (domyślnie najtańszy dostępny).</string>
+
+    <string name="help_section_keys_title">Klucze API</string>
+    <string name="help_section_keys_body">Do każdego dostawcy potrzebny jest własny klucz API — wpisujesz go w Ustawieniach → Dostawcy AI. Klucze są szyfrowane lokalnie (Android Keystore) i nigdy nie opuszczają telefonu poza bezpośrednim połączeniem z serwerem danego dostawcy — ta apka nie ma własnego backendu.</string>
+
+    <string name="help_section_costs_title">Koszty</string>
+    <string name="help_section_costs_body">Pod każdą odpowiedzią AI, pod tytułem rozmowy i na głównym ekranie widzisz szacunkowy koszt w euro. To przybliżenie liczone z cennika dostawcy i dziennego kursu EUR/USD — nie uwzględnia opłat za wbudowane wyszukiwanie (liczone per zapytanie) ani zniżek za cache.</string>
+
+    <string name="help_section_facts_title">Fakty kontekstowe</string>
+    <string name="help_section_facts_body">W Ustawieniach → Fakty kontekstowe możesz zapisać informacje o sobie, które AI ma znać — globalne (widoczne we wszystkich rozmowach) albo wybierane osobno dla każdej rozmowy z poziomu czatu.</string>
+
+    <string name="help_section_tools_title">Narzędzia asystenta</string>
+    <string name="help_section_tools_body">AI może poprosić o wykonanie akcji na telefonie: dodanie wydarzenia w kalendarzu, ustawienie alarmu lub minutnika, przygotowanie SMS-a, otwarcie nawigacji albo zapisanie notatki. Każda z nich pokazuje kartę do potwierdzenia — nic nie dzieje się bez Twojej zgody. Pogoda i wyszukiwanie w necie działają automatycznie, w tle. Źródło wyszukiwania (Tavily albo wbudowane u dostawcy) zmienisz w Ustawieniach → Narzędzia.</string>
+
+    <string name="help_section_attachments_title">Załączniki</string>
+    <string name="help_section_attachments_body">Do wiadomości możesz dołączyć zdjęcie, plik PDF albo plik tekstowy/CSV (spinacz obok pola wiadomości). Zdjęcia są automatycznie zmniejszane przed wysyłką.</string>
+
+    <string name="help_section_context_title">Kontekst rozmowy</string>
+    <string name="help_section_context_body">Każda wysłana wiadomość niesie ze sobą ostatnie 20 wiadomości z tej rozmowy — dzięki temu AI pamięta, o czym była mowa. To oznacza też, że raz załączony plik czy zdjęcie jest wysyłane ponownie przy każdej kolejnej wiadomości, dopóki mieści się w tych 20 — i za każdym razem wlicza się do kosztu.</string>
+
+    <string name="help_section_personalization_title">Personalizacja</string>
+    <string name="help_section_personalization_body">W Ustawieniach możesz zmienić wielkość czcionki w czacie (Mała/Normalna/Duża/Bardzo duża).</string>
+
+    <string name="help_section_conversations_title">Zarządzanie rozmowami</string>
+    <string name="help_section_conversations_body">Na głównym ekranie: szkło powiększające otwiera wyszukiwanie po treści wszystkich rozmów, długie przytrzymanie kafelka rozmowy pozwala zmienić nazwę lub usunąć (pojedynczo albo grupowo).</string>
     <string name="fact_new_title">Nowy fakt</string>
     <string name="fact_edit_title">Edytuj fakt</string>
     <string name="fact_title_label">Tytuł</string>

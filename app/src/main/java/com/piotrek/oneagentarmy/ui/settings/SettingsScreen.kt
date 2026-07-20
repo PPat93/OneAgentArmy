@@ -38,6 +38,7 @@ fun SettingsScreen(
     onNavigateToProviders: () -> Unit,
     onNavigateToTools: () -> Unit,
     onNavigateToFacts: () -> Unit,
+    onNavigateToHelp: () -> Unit,
 ) {
     val chatFontScale by viewModel.chatFontScale.collectAsState()
     Scaffold(
@@ -77,6 +78,11 @@ fun SettingsScreen(
             ChatFontScaleCard(
                 currentScale = chatFontScale,
                 onScaleSelected = viewModel::setChatFontScale,
+            )
+            SettingsMenuCard(
+                title = stringResource(R.string.settings_help_title),
+                subtitle = stringResource(R.string.settings_help_subtitle),
+                onClick = onNavigateToHelp,
             )
         }
     }

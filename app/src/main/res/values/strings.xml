@@ -96,6 +96,9 @@
 
     <string name="settings_providers_title">AI providers</string>
     <string name="settings_providers_subtitle">API keys, active provider</string>
+    <string name="provider_tagline_openai">Balanced price and quality.</string>
+    <string name="provider_tagline_gemini">Free, but you\'re sharing your messages with them.</string>
+    <string name="provider_tagline_anthropic">Expensive, but exceptional.</string>
     <string name="settings_tools_title">Tools</string>
     <string name="settings_tools_subtitle">Keys for agent tools (web search)</string>
     <string name="tavily_api_key_label">Web search API key (Tavily)</string>
@@ -105,6 +108,36 @@
 
     <string name="settings_facts_title">Context facts</string>
     <string name="settings_facts_subtitle">Reusable notes injected into conversations</string>
+
+    <string name="settings_help_title">What can this app do?</string>
+    <string name="settings_help_subtitle">A quick guide to the features</string>
+
+    <string name="help_section_providers_title">AI providers and models</string>
+    <string name="help_section_providers_body">The app supports three providers: OpenAI (ChatGPT), Google (Gemini), and Anthropic (Claude). Each offers three models, from cheapest to most capable. Switch the active provider on the main screen or in Settings; the model is chosen per conversation in the chat screen (defaults to the cheapest available).</string>
+
+    <string name="help_section_keys_title">API keys</string>
+    <string name="help_section_keys_body">Each provider needs its own API key, entered in Settings → AI providers. Keys are encrypted locally (Android Keystore) and never leave the phone except in direct calls to that provider\'s servers — this app has no backend of its own.</string>
+
+    <string name="help_section_costs_title">Costs</string>
+    <string name="help_section_costs_body">Below each AI reply, under the conversation title, and on the main screen you\'ll see an estimated cost in euros. It\'s an approximation based on the provider\'s pricing and the daily EUR/USD rate — it doesn\'t account for hosted search fees (billed per query) or cache discounts.</string>
+
+    <string name="help_section_facts_title">Context facts</string>
+    <string name="help_section_facts_body">In Settings → Context facts you can save information about yourself for the AI to know — global facts (visible in every conversation) or facts picked per conversation from the chat screen.</string>
+
+    <string name="help_section_tools_title">Assistant tools</string>
+    <string name="help_section_tools_body">The AI can ask to perform actions on your phone: add a calendar event, set an alarm or timer, draft an SMS, open navigation, or save a note. Each one shows a confirmation card first — nothing happens without your approval. Weather and web search run automatically in the background. Switch the search source (Tavily or the provider\'s built-in search) in Settings → Tools.</string>
+
+    <string name="help_section_attachments_title">Attachments</string>
+    <string name="help_section_attachments_body">You can attach a photo, a PDF, or a text/CSV file to a message (the paperclip next to the input field). Photos are automatically downscaled before sending.</string>
+
+    <string name="help_section_context_title">Conversation context</string>
+    <string name="help_section_context_body">Every message you send carries the last 20 messages of that conversation, so the AI remembers what was said. This also means an attached file or photo is resent with every following message as long as it\'s within those 20 — and counted toward the cost each time.</string>
+
+    <string name="help_section_personalization_title">Personalization</string>
+    <string name="help_section_personalization_body">In Settings you can change the chat font size (Small/Normal/Large/Extra large).</string>
+
+    <string name="help_section_conversations_title">Managing conversations</string>
+    <string name="help_section_conversations_body">On the main screen: the magnifying glass searches the text of all conversations; long-press a conversation tile to rename or delete it (individually or in bulk).</string>
     <string name="fact_new_title">New fact</string>
     <string name="fact_edit_title">Edit fact</string>
     <string name="fact_title_label">Title</string>
