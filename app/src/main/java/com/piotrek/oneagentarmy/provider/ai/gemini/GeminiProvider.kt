@@ -7,6 +7,7 @@ import com.piotrek.oneagentarmy.provider.ai.AiProvider
 import com.piotrek.oneagentarmy.provider.ai.AiProviderException
 import com.piotrek.oneagentarmy.provider.ai.AiProviderRegistry
 import com.piotrek.oneagentarmy.provider.ai.AiReply
+import com.piotrek.oneagentarmy.provider.ai.AttachmentReader
 import com.piotrek.oneagentarmy.provider.ai.TokenUsage
 import com.piotrek.oneagentarmy.provider.ai.buildSystemPrompt
 import com.piotrek.oneagentarmy.provider.ai.gemini.dto.InteractionsRequest
@@ -18,6 +19,7 @@ import com.piotrek.oneagentarmy.provider.ai.gemini.dto.googleSearchToolJson
 import com.piotrek.oneagentarmy.provider.ai.gemini.dto.modelOutputStep
 import com.piotrek.oneagentarmy.provider.ai.gemini.dto.outputText
 import com.piotrek.oneagentarmy.provider.ai.gemini.dto.userInputStep
+import com.piotrek.oneagentarmy.provider.ai.gemini.dto.userInputStepWithAttachment
 import com.piotrek.oneagentarmy.provider.ai.tools.RoundTripToolExecutor
 import com.piotrek.oneagentarmy.provider.ai.tools.ToolCallRequest
 import com.piotrek.oneagentarmy.provider.ai.tools.ToolRegistry
@@ -33,6 +35,7 @@ class GeminiProvider(
     private val settingsRepository: SettingsRepository,
     private val toolRegistry: ToolRegistry,
     executors: List<RoundTripToolExecutor>,
+    private val attachmentReader: AttachmentReader,
     private val clock: Clock = Clock.systemDefaultZone(),
 ) : AiProvider {
 
@@ -58,9 +61,7 @@ class GeminiProvider(
             if (useHostedSearch) functionTools + googleSearchToolJson() else functionTools
 
         val systemInstruction = buildSystemPrompt(clock, contextFacts)
-        var input: List<JsonElement> = history.map {
-            if (it.sender == Sender.USER) userInputStep(it.text) else modelOutputStep(it.text)
-        }
+        var input: List<JsonElement> = history.map { historyStepFor(it) }
         var roundTripsUsed = 0
         var usageTotal = TokenUsage.ZERO
 
@@ -117,7 +118,21 @@ class GeminiProvider(
         }
     }
 
+    private suspend fun historyStepFor(message: Message): JsonElement {
+        if (message.sender != Sender.USER) return modelOutputStep(message.text)
+        val path = message.attachmentPath ?: return userInputStep(message.text)
+        val base64 = attachmentReader.readBase64(path)
+            ?: return userInputStep((message.text + "\n\n$MISSING_ATTACHMENT_NOTE").trim())
+        return userInputStepWithAttachment(
+            text = message.text,
+            attachmentBase64 = base64,
+            mime = message.attachmentMime ?: "application/octet-stream",
+            isPdf = message.attachmentType == Message.ATTACHMENT_TYPE_PDF,
+        )
+    }
+
     private companion object {
         const val MAX_TOOL_ROUND_TRIPS = 4
+        const val MISSING_ATTACHMENT_NOTE = "[attachment no longer available]"
     }
 }

@@ -84,6 +84,43 @@ fun historyMessage(role: String, text: String): JsonObject = buildJsonObject {
     put("content", JsonPrimitive(text))
 }
 
+// User message carrying a media attachment: image/document source block first,
+// then the (optional) text block.
+fun historyMessageWithAttachment(
+    text: String,
+    attachmentBase64: String,
+    mime: String,
+    isPdf: Boolean,
+): JsonObject = buildJsonObject {
+    put("role", JsonPrimitive("user"))
+    put(
+        "content",
+        buildJsonArray {
+            add(
+                buildJsonObject {
+                    put("type", JsonPrimitive(if (isPdf) "document" else "image"))
+                    put(
+                        "source",
+                        buildJsonObject {
+                            put("type", JsonPrimitive("base64"))
+                            put("media_type", JsonPrimitive(mime))
+                            put("data", JsonPrimitive(attachmentBase64))
+                        },
+                    )
+                },
+            )
+            if (text.isNotBlank()) {
+                add(
+                    buildJsonObject {
+                        put("type", JsonPrimitive("text"))
+                        put("text", JsonPrimitive(text))
+                    },
+                )
+            }
+        },
+    )
+}
+
 // Echoes a response's content blocks back verbatim - required so thinking blocks
 // (Sonnet) and server-tool blocks return unchanged on the next request.
 fun assistantMessage(content: List<JsonObject>): JsonObject = buildJsonObject {

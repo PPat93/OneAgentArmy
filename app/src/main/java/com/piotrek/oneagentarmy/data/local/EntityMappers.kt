@@ -29,6 +29,10 @@ fun MessageEntity.toDomain() = Message(
     inputTokens = inputTokens,
     outputTokens = outputTokens,
     costUsd = costUsd,
+    attachmentType = attachmentType,
+    attachmentPath = attachmentPath,
+    attachmentMime = attachmentMime,
+    attachmentName = attachmentName,
 )
 
 fun Message.toEntity() = MessageEntity(
@@ -41,6 +45,10 @@ fun Message.toEntity() = MessageEntity(
     inputTokens = inputTokens,
     outputTokens = outputTokens,
     costUsd = costUsd,
+    attachmentType = attachmentType,
+    attachmentPath = attachmentPath,
+    attachmentMime = attachmentMime,
+    attachmentName = attachmentName,
 )
 
 fun FactEntity.toDomain() = Fact(

@@ -88,6 +88,37 @@ fun InteractionsResponse.outputText(): String? =
 
 fun userInputStep(text: String): JsonObject = historyStep("user_input", text)
 
+// User step carrying a media attachment: content mixes an image/document block
+// with the (optional) text block.
+fun userInputStepWithAttachment(
+    text: String,
+    attachmentBase64: String,
+    mime: String,
+    isPdf: Boolean,
+): JsonObject = buildJsonObject {
+    put("type", JsonPrimitive("user_input"))
+    put(
+        "content",
+        buildJsonArray {
+            add(
+                buildJsonObject {
+                    put("type", JsonPrimitive(if (isPdf) "document" else "image"))
+                    put("data", JsonPrimitive(attachmentBase64))
+                    put("mime_type", JsonPrimitive(mime))
+                },
+            )
+            if (text.isNotBlank()) {
+                add(
+                    buildJsonObject {
+                        put("type", JsonPrimitive("text"))
+                        put("text", JsonPrimitive(text))
+                    },
+                )
+            }
+        },
+    )
+}
+
 fun modelOutputStep(text: String): JsonObject = historyStep("model_output", text)
 
 fun functionResultStep(callId: String, result: String): JsonObject = buildJsonObject {

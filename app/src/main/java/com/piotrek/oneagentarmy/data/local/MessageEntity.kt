@@ -27,4 +27,8 @@ data class MessageEntity(
     val inputTokens: Long? = null,
     val outputTokens: Long? = null,
     val costUsd: Double? = null,
+    val attachmentType: String? = null,
+    val attachmentPath: String? = null,
+    val attachmentMime: String? = null,
+    val attachmentName: String? = null,
 )

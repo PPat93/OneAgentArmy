@@ -25,6 +25,7 @@ class MainActivity : ComponentActivity() {
                         aiProvider = container.aiProvider,
                         contextWindowStrategy = container.contextWindowStrategy,
                         exchangeRateRepository = container.exchangeRateRepository,
+                        attachmentStore = container.attachmentStore,
                     )
                 }
             }

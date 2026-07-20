@@ -15,4 +15,15 @@ data class Message(
     val inputTokens: Long? = null,
     val outputTokens: Long? = null,
     val costUsd: Double? = null,
-)
+    // Media attachment (image/pdf) sent with a user message; the file lives in
+    // the app-private attachments directory under attachmentPath.
+    val attachmentType: String? = null,
+    val attachmentPath: String? = null,
+    val attachmentMime: String? = null,
+    val attachmentName: String? = null,
+) {
+    companion object {
+        const val ATTACHMENT_TYPE_IMAGE = "image"
+        const val ATTACHMENT_TYPE_PDF = "pdf"
+    }
+}

@@ -39,6 +39,7 @@ import com.mikepenz.markdown.m3.markdownTypography
 import com.piotrek.oneagentarmy.R
 import com.piotrek.oneagentarmy.model.Message
 import com.piotrek.oneagentarmy.model.Sender
+import com.piotrek.oneagentarmy.ui.components.AttachmentImage
 import com.piotrek.oneagentarmy.ui.components.formatCostEur
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -50,6 +51,7 @@ fun ChatBubble(
     onResend: (() -> Unit)?,
     usdToEur: Double,
     fontScale: Float,
+    resolveAttachmentPath: (String) -> String,
     modifier: Modifier = Modifier,
 ) {
     val isUser = message.sender == Sender.USER
@@ -65,7 +67,7 @@ fun ChatBubble(
         Density(density.density, density.fontScale * fontScale)
     }
     CompositionLocalProvider(LocalDensity provides scaledDensity) {
-        ChatBubbleContent(message, onResend, usdToEur, isUser, clipboard, timeFormatter, modifier)
+        ChatBubbleContent(message, onResend, usdToEur, isUser, clipboard, timeFormatter, resolveAttachmentPath, modifier)
     }
 }
 
@@ -77,6 +79,7 @@ private fun ChatBubbleContent(
     isUser: Boolean,
     clipboard: ClipboardManager,
     timeFormatter: DateTimeFormatter,
+    resolveAttachmentPath: (String) -> String,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -103,45 +106,22 @@ private fun ChatBubbleContent(
                     )
                     .padding(horizontal = 12.dp, vertical = 8.dp),
             ) {
-                SelectionContainer {
-                    if (isUser) {
-                        Text(
-                            text = message.text,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        )
-                    } else {
-                        Markdown(
-                            content = message.text,
-                            colors = markdownColor(text = MaterialTheme.colorScheme.onTertiaryContainer),
-                            // Default heading sizes are tuned for full-screen articles and
-                            // look huge inside a chat bubble - scaled down to title/body roles.
-                            typography = markdownTypography(
-                                h1 = MaterialTheme.typography.titleLarge,
-                                h2 = MaterialTheme.typography.titleMedium,
-                                h3 = MaterialTheme.typography.titleSmall,
-                                h4 = MaterialTheme.typography.titleSmall,
-                                h5 = MaterialTheme.typography.bodyMedium,
-                                h6 = MaterialTheme.typography.bodyMedium,
-                            ),
-                            // The library's table cells default to maxLines = 1 with
-                            // ellipsis, silently truncating longer values - re-rendered
-                            // here with wrapping enabled.
-                            components = markdownComponents(
-                                table = { model ->
-                                    MarkdownTable(
-                                        content = model.content,
-                                        node = model.node,
-                                        style = model.typography.text,
-                                        headerBlock = { content, header, tableWidth, style ->
-                                            MarkdownTableHeader(content, header, tableWidth, style, maxLines = Int.MAX_VALUE)
-                                        },
-                                        rowBlock = { content, row, tableWidth, style ->
-                                            MarkdownTableRow(content, row, tableWidth, style, maxLines = Int.MAX_VALUE)
-                                        },
-                                    )
-                                },
-                            ),
-                        )
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    message.attachmentPath?.let { path ->
+                        when (message.attachmentType) {
+                            Message.ATTACHMENT_TYPE_IMAGE -> AttachmentImage(
+                                absolutePath = resolveAttachmentPath(path),
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                            Message.ATTACHMENT_TYPE_PDF -> Text(
+                                text = "📄 ${message.attachmentName ?: "PDF"}",
+                                color = if (isUser) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onTertiaryContainer,
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                        }
+                    }
+                    if (message.text.isNotBlank()) {
+                        BubbleText(message, isUser)
                     }
                 }
             }
@@ -159,6 +139,51 @@ private fun ChatBubbleContent(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 4.dp),
         )
+    }
+}
+
+@Composable
+private fun BubbleText(message: Message, isUser: Boolean) {
+    SelectionContainer {
+        if (isUser) {
+            Text(
+                text = message.text,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
+        } else {
+            Markdown(
+                content = message.text,
+                colors = markdownColor(text = MaterialTheme.colorScheme.onTertiaryContainer),
+                // Default heading sizes are tuned for full-screen articles and
+                // look huge inside a chat bubble - scaled down to title/body roles.
+                typography = markdownTypography(
+                    h1 = MaterialTheme.typography.titleLarge,
+                    h2 = MaterialTheme.typography.titleMedium,
+                    h3 = MaterialTheme.typography.titleSmall,
+                    h4 = MaterialTheme.typography.titleSmall,
+                    h5 = MaterialTheme.typography.bodyMedium,
+                    h6 = MaterialTheme.typography.bodyMedium,
+                ),
+                // The library's table cells default to maxLines = 1 with
+                // ellipsis, silently truncating longer values - re-rendered
+                // here with wrapping enabled.
+                components = markdownComponents(
+                    table = { model ->
+                        MarkdownTable(
+                            content = model.content,
+                            node = model.node,
+                            style = model.typography.text,
+                            headerBlock = { content, header, tableWidth, style ->
+                                MarkdownTableHeader(content, header, tableWidth, style, maxLines = Int.MAX_VALUE)
+                            },
+                            rowBlock = { content, row, tableWidth, style ->
+                                MarkdownTableRow(content, row, tableWidth, style, maxLines = Int.MAX_VALUE)
+                            },
+                        )
+                    },
+                ),
+            )
+        }
     }
 }
 

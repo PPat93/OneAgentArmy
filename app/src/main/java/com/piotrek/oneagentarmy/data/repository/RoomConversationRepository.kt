@@ -1,5 +1,6 @@
 package com.piotrek.oneagentarmy.data.repository
 
+import com.piotrek.oneagentarmy.data.local.AttachmentStore
 import com.piotrek.oneagentarmy.data.local.ConversationDao
 import com.piotrek.oneagentarmy.data.local.normalizeForSearch
 import com.piotrek.oneagentarmy.data.local.toDomain
@@ -13,6 +14,7 @@ import kotlinx.coroutines.flow.map
 
 class RoomConversationRepository(
     private val dao: ConversationDao,
+    private val attachmentStore: AttachmentStore,
 ) : ConversationRepository {
 
     override fun observeConversations(): Flow<List<Conversation>> =
@@ -34,11 +36,17 @@ class RoomConversationRepository(
     }
 
     override suspend fun deleteConversation(conversationId: String) {
+        // Attachment file paths must be captured before the CASCADE wipes the rows.
+        val attachmentPaths = dao.attachmentPathsForConversations(listOf(conversationId))
         dao.deleteConversation(conversationId)
+        attachmentStore.deleteAll(attachmentPaths)
     }
 
     override suspend fun deleteConversations(conversationIds: List<String>) {
-        if (conversationIds.isNotEmpty()) dao.deleteConversations(conversationIds)
+        if (conversationIds.isEmpty()) return
+        val attachmentPaths = dao.attachmentPathsForConversations(conversationIds)
+        dao.deleteConversations(conversationIds)
+        attachmentStore.deleteAll(attachmentPaths)
     }
 
     override suspend fun renameConversation(conversationId: String, title: String) {
