@@ -58,6 +58,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.parrotworks.oneagentarmy.R
+import com.parrotworks.oneagentarmy.model.PendingAttachment
 import com.parrotworks.oneagentarmy.model.Sender
 import com.parrotworks.oneagentarmy.provider.ai.AiProviderRegistry
 import com.parrotworks.oneagentarmy.tools.calendar.CalendarIntentBuilder
@@ -162,7 +163,7 @@ fun ChatScreen(
     val selectableFacts by viewModel.selectableFacts.collectAsState()
     val selectedFactIds by viewModel.selectedFactIds.collectAsState()
     val pendingAttachment by viewModel.pendingAttachment.collectAsState()
-    var inputText by remember { mutableStateOf("") }
+    val inputText by viewModel.draftText.collectAsState()
     var modelMenuExpanded by remember { mutableStateOf(false) }
     var factsMenuExpanded by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
@@ -459,7 +460,7 @@ fun ChatScreen(
                 }
                 OutlinedTextField(
                     value = inputText,
-                    onValueChange = { inputText = it },
+                    onValueChange = { viewModel.updateDraftText(it) },
                     modifier = Modifier.weight(1f),
                     placeholder = { Text(stringResource(R.string.message_placeholder)) },
                     enabled = !isSending,
@@ -469,10 +470,7 @@ fun ChatScreen(
                     WaveLoadingIndicator(modifier = Modifier.padding(12.dp))
                 } else {
                     IconButton(
-                        onClick = {
-                            viewModel.sendMessage(inputText)
-                            inputText = ""
-                        },
+                        onClick = { viewModel.sendMessage(inputText) },
                     ) {
                         Icon(
                             Icons.Default.Send,

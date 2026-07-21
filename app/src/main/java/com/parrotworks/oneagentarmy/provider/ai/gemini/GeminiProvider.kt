@@ -104,7 +104,7 @@ class GeminiProvider(
                 // All response steps are replayed verbatim - thought and function_call
                 // steps carry signatures the API requires back unchanged, and the
                 // function_call step must precede its result.
-                input = input + response.steps + functionResultStep(functionCall.id, result)
+                input = input + response.steps + functionResultStep(functionCall.id, functionCall.name, result)
                 continue
             }
 

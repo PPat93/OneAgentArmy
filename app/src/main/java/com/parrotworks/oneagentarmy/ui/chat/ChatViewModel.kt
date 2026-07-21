@@ -9,8 +9,10 @@ import com.parrotworks.oneagentarmy.data.repository.ConversationRepository
 import com.parrotworks.oneagentarmy.data.repository.ExchangeRateRepository
 import com.parrotworks.oneagentarmy.data.repository.FactRepository
 import com.parrotworks.oneagentarmy.data.repository.SettingsRepository
+import com.parrotworks.oneagentarmy.model.Draft
 import com.parrotworks.oneagentarmy.model.Fact
 import com.parrotworks.oneagentarmy.model.Message
+import com.parrotworks.oneagentarmy.model.PendingAttachment
 import com.parrotworks.oneagentarmy.model.Sender
 import com.parrotworks.oneagentarmy.provider.ai.AiModelOption
 import com.parrotworks.oneagentarmy.provider.ai.AiProvider
@@ -44,6 +46,8 @@ import com.parrotworks.oneagentarmy.tools.sms.parseSmsArgs
 import java.time.Instant
 import java.time.ZoneId
 import java.util.UUID
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -65,21 +69,6 @@ sealed interface ChatError {
     data object NoAppForAction : ChatError
     data object AttachmentTooLarge : ChatError
     data object PdfTooLarge : ChatError
-}
-
-// Attachment staged for the next message: text files are inlined into the
-// message text on send; media (image/pdf) is stored locally and sent to the
-// API as a native multimodal block.
-sealed interface PendingAttachment {
-    val name: String
-
-    data class TextFile(override val name: String, val content: String) : PendingAttachment
-    data class Media(
-        val type: String,
-        val path: String,
-        val mime: String,
-        override val name: String,
-    ) : PendingAttachment
 }
 
 sealed interface PendingAction {
@@ -105,6 +94,12 @@ class ChatViewModel(
 
     init {
         viewModelScope.launch { exchangeRateRepository.refreshIfStale() }
+        viewModelScope.launch {
+            repository.observeDraft(conversationId).first()?.let { draft ->
+                _draftText.value = draft.text
+                _pendingAttachment.value = draft.attachment
+            }
+        }
     }
 
     val usdToEur: StateFlow<Double> = exchangeRateRepository.usdToEur
@@ -184,12 +179,50 @@ class ChatViewModel(
     private val _pendingAttachment = MutableStateFlow<PendingAttachment?>(null)
     val pendingAttachment: StateFlow<PendingAttachment?> = _pendingAttachment.asStateFlow()
 
+    // Unsent message text, persisted to the drafts table so it survives the app being
+    // locked, backgrounded and reclaimed by the system, or fully closed. Kept in memory
+    // for instant typing feedback; writes to disk are debounced so every keystroke doesn't
+    // hit the database.
+    private val _draftText = MutableStateFlow("")
+    val draftText: StateFlow<String> = _draftText.asStateFlow()
+
+    private var draftSaveJob: Job? = null
+
+    fun updateDraftText(text: String) {
+        _draftText.value = text
+        scheduleDraftSave()
+    }
+
+    private fun scheduleDraftSave() {
+        draftSaveJob?.cancel()
+        draftSaveJob = viewModelScope.launch {
+            delay(DRAFT_SAVE_DEBOUNCE_MS)
+            persistDraft()
+        }
+    }
+
+    private suspend fun persistDraft() {
+        val text = _draftText.value
+        val attachment = _pendingAttachment.value
+        if (text.isBlank() && attachment == null) {
+            repository.clearDraft(conversationId)
+        } else {
+            repository.saveDraft(conversationId, Draft(text, attachment))
+        }
+    }
+
+    private fun persistDraftNow() {
+        draftSaveJob?.cancel()
+        viewModelScope.launch { persistDraft() }
+    }
+
     fun attachFile(name: String, content: String) {
         if (content.length > MAX_ATTACHMENT_CHARS) {
             _error.value = ChatError.AttachmentTooLarge
             return
         }
         _pendingAttachment.value = PendingAttachment.TextFile(name, content)
+        persistDraftNow()
     }
 
     fun attachImage(uri: Uri) {
@@ -202,6 +235,7 @@ class ChatViewModel(
                     mime = saved.mime,
                     name = saved.name,
                 )
+                persistDraftNow()
             } catch (e: Exception) {
                 _error.value = ChatError.Unknown(e.message ?: "image attachment failed")
             }
@@ -218,6 +252,7 @@ class ChatViewModel(
                     mime = saved.mime,
                     name = saved.name,
                 )
+                persistDraftNow()
             } catch (e: AttachmentTooLargeException) {
                 _error.value = ChatError.PdfTooLarge
             } catch (e: Exception) {
@@ -231,6 +266,7 @@ class ChatViewModel(
 
     fun clearAttachment() {
         _pendingAttachment.value = null
+        persistDraftNow()
     }
 
     fun reportAttachmentError(detail: String) {
@@ -254,11 +290,15 @@ class ChatViewModel(
         // isn't enough since both taps can land in the same frame.
         if (_isSending.value) return
 
+        draftSaveJob?.cancel()
+        _draftText.value = ""
+
         viewModelScope.launch {
             _error.value = null
             // A new user message supersedes any unconfirmed action - the model will
             // re-emit a corrected tool call if the user is refining the request.
             _pendingAction.value = null
+            repository.clearDraft(conversationId)
 
             val modelId = currentModelId()
             // Captured before any mutation - the combined flow may lag right after the
@@ -432,6 +472,10 @@ class ChatViewModel(
 // Inlined attachments ride along with every later request in the context window -
 // the cap keeps a single file from dominating token costs.
 private const val MAX_ATTACHMENT_CHARS = 30_000
+
+// Delay before a draft text change is written to disk - long enough that a normal typing
+// burst only triggers one write, short enough that a quick app-switch rarely loses anything.
+private const val DRAFT_SAVE_DEBOUNCE_MS = 500L
 
 private fun deriveTitle(messageText: String): String {
     val singleLine = messageText.replace('\n', ' ').trim()

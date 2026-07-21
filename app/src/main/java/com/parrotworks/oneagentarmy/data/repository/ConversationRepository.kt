@@ -1,6 +1,7 @@
 package com.parrotworks.oneagentarmy.data.repository
 
 import com.parrotworks.oneagentarmy.model.Conversation
+import com.parrotworks.oneagentarmy.model.Draft
 import com.parrotworks.oneagentarmy.model.Message
 import com.parrotworks.oneagentarmy.model.MessageSearchResult
 import java.time.Instant
@@ -10,6 +11,9 @@ interface ConversationRepository {
     fun observeConversations(): Flow<List<Conversation>>
     fun observeConversation(conversationId: String): Flow<Conversation?>
     fun observeMessages(conversationId: String): Flow<List<Message>>
+    fun observeDraft(conversationId: String): Flow<Draft?>
+    suspend fun saveDraft(conversationId: String, draft: Draft)
+    suspend fun clearDraft(conversationId: String)
     suspend fun createConversation(id: String, title: String, modelId: String)
     suspend fun addMessage(conversationId: String, message: Message)
     suspend fun deleteConversation(conversationId: String)

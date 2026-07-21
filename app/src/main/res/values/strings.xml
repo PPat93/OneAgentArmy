@@ -177,6 +177,9 @@
 
     <string name="help_section_sharing_title">Sharing</string>
     <string name="help_section_sharing_body">Tap the share icon next to Copy on any message to send it elsewhere.\n\nThe share icon in the chat\'s top bar sends the whole conversation as a plain-text transcript.</string>
+
+    <string name="help_section_drafts_title">Picking up where you left off</string>
+    <string name="help_section_drafts_body">A message you\'ve started typing (and any attachment you\'ve staged) is saved automatically, so switching away — or the app closing entirely — won\'t lose it.\n\nThe app also reopens on whichever screen you were last on, instead of jumping back to the conversation list.</string>
     <string name="fact_new_title">New fact</string>
     <string name="fact_edit_title">Edit fact</string>
     <string name="fact_title_label">Title</string>

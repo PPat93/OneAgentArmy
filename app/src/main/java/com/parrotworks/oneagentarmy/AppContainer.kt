@@ -54,6 +54,7 @@ class AppContainer(context: Context) {
             AppDatabase.MIGRATION_4_5,
             AppDatabase.MIGRATION_5_6,
             AppDatabase.MIGRATION_6_7,
+            AppDatabase.MIGRATION_7_8,
         )
         .build()
 
@@ -62,7 +63,7 @@ class AppContainer(context: Context) {
     private val attachmentReader = AttachmentReader { path -> attachmentStore.readBase64(path) }
 
     val conversationRepository: ConversationRepository =
-        RoomConversationRepository(database.conversationDao(), attachmentStore)
+        RoomConversationRepository(database.conversationDao(), database.draftDao(), attachmentStore)
 
     val factRepository: FactRepository = RoomFactRepository(database.factDao())
 
