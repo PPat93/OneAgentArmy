@@ -6,9 +6,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -18,20 +20,27 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.parrotworks.oneagentarmy.R
 import com.parrotworks.oneagentarmy.ui.lock.canUseAppLock
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,6 +56,8 @@ fun SettingsScreen(
     val chatFontScale by viewModel.chatFontScale.collectAsState()
     val appLockEnabled by viewModel.appLockEnabled.collectAsState()
     val appLockAvailable = canUseAppLock(LocalContext.current)
+    val spendingThresholdEur by viewModel.spendingThresholdEur.collectAsState()
+    var showThresholdDialog by remember { mutableStateOf(false) }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -90,6 +101,10 @@ fun SettingsScreen(
                 available = appLockAvailable,
                 onEnabledChange = viewModel::setAppLockEnabled,
             )
+            SpendingThresholdCard(
+                thresholdEur = spendingThresholdEur,
+                onClick = { showThresholdDialog = true },
+            )
             SettingsMenuCard(
                 title = stringResource(R.string.settings_help_title),
                 subtitle = stringResource(R.string.settings_help_subtitle),
@@ -101,6 +116,17 @@ fun SettingsScreen(
                 onClick = onNavigateToAbout,
             )
         }
+    }
+
+    if (showThresholdDialog) {
+        SpendingThresholdDialog(
+            currentThresholdEur = spendingThresholdEur,
+            onDismiss = { showThresholdDialog = false },
+            onConfirm = { newThreshold ->
+                viewModel.setSpendingThresholdEur(newThreshold)
+                showThresholdDialog = false
+            },
+        )
     }
 }
 
@@ -166,6 +192,83 @@ private fun AppLockCard(
             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
         )
     }
+}
+
+@Composable
+private fun SpendingThresholdCard(
+    thresholdEur: Double?,
+    onClick: () -> Unit,
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
+    ) {
+        ListItem(
+            headlineContent = {
+                Text(
+                    stringResource(R.string.spending_threshold_title),
+                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                    style = MaterialTheme.typography.titleMedium,
+                )
+            },
+            supportingContent = {
+                val subtitle = if (thresholdEur != null) {
+                    stringResource(R.string.spending_threshold_set, String.format(Locale.US, "%.2f", thresholdEur))
+                } else {
+                    stringResource(R.string.spending_threshold_unset)
+                }
+                Text(subtitle, color = MaterialTheme.colorScheme.onTertiaryContainer)
+            },
+            trailingContent = {
+                Icon(
+                    Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                )
+            },
+            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+        )
+    }
+}
+
+@Composable
+private fun SpendingThresholdDialog(
+    currentThresholdEur: Double?,
+    onDismiss: () -> Unit,
+    onConfirm: (Double?) -> Unit,
+) {
+    var text by remember {
+        mutableStateOf(currentThresholdEur?.let { String.format(Locale.US, "%.2f", it) } ?: "")
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.spending_threshold_dialog_title)) },
+        text = {
+            OutlinedTextField(
+                value = text,
+                onValueChange = { text = it },
+                singleLine = true,
+                label = { Text(stringResource(R.string.spending_threshold_field_label)) },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirm(text.toDoubleOrNull()?.takeIf { it > 0.0 }) }) {
+                Text(stringResource(R.string.save))
+            }
+        },
+        dismissButton = {
+            Row {
+                TextButton(onClick = { onConfirm(null) }) {
+                    Text(stringResource(R.string.spending_threshold_clear))
+                }
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
+            }
+        },
+    )
 }
 
 @Composable

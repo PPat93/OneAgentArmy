@@ -54,6 +54,7 @@ fun SettingsHelpScreen(onBack: () -> Unit) {
             HelpSection(R.string.help_section_context_title, R.string.help_section_context_body)
             HelpSection(R.string.help_section_personalization_title, R.string.help_section_personalization_body)
             HelpSection(R.string.help_section_conversations_title, R.string.help_section_conversations_body)
+            HelpSection(R.string.help_section_sharing_title, R.string.help_section_sharing_body)
         }
     }
 }

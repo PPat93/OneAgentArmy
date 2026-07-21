@@ -3,6 +3,7 @@ package com.parrotworks.oneagentarmy.data.repository
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -82,10 +83,24 @@ class DataStoreSettingsRepository(
         dataStore.edit { prefs -> prefs[APP_LOCK_ENABLED] = enabled }
     }
 
+    override fun observeSpendingThresholdEur(): Flow<Double?> =
+        dataStore.data.map { prefs -> prefs[SPENDING_THRESHOLD_EUR] }
+
+    override suspend fun setSpendingThresholdEur(thresholdEur: Double?) {
+        dataStore.edit { prefs ->
+            if (thresholdEur == null) {
+                prefs.remove(SPENDING_THRESHOLD_EUR)
+            } else {
+                prefs[SPENDING_THRESHOLD_EUR] = thresholdEur
+            }
+        }
+    }
+
     private companion object {
         val ACTIVE_PROVIDER = stringPreferencesKey("active_provider")
         val SEARCH_PROVIDER = stringPreferencesKey("search_provider")
         val CHAT_FONT_SCALE = floatPreferencesKey("chat_font_scale")
         val APP_LOCK_ENABLED = booleanPreferencesKey("app_lock_enabled")
+        val SPENDING_THRESHOLD_EUR = doublePreferencesKey("spending_threshold_eur")
     }
 }
