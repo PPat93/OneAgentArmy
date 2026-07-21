@@ -34,7 +34,7 @@ Most AI chat subscriptions bundle a flat monthly fee regardless of actual usage.
 ## Project layout
 
 ```
-app/src/main/java/com/piotrek/oneagentarmy/
+app/src/main/java/com/parrotworks/oneagentarmy/
 ├── AppContainer.kt              # composition root — manual DI
 ├── data/                        # Room entities/DAOs, repositories, DataStore
 ├── model/                       # domain models
