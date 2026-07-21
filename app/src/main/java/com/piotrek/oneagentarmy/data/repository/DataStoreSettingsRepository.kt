@@ -2,12 +2,14 @@ package com.piotrek.oneagentarmy.data.repository
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.piotrek.oneagentarmy.data.local.crypto.ApiKeyCipher
 import com.piotrek.oneagentarmy.data.local.crypto.EncryptedBlob
 import com.piotrek.oneagentarmy.provider.ai.AiProviderRegistry
+import java.security.GeneralSecurityException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -27,7 +29,14 @@ class DataStoreSettingsRepository(
         val prefs = dataStore.data.first()
         val iv = prefs[ivKey(providerId)] ?: return null
         val ciphertext = prefs[ciphertextKey(providerId)] ?: return null
-        return cipher.decrypt(EncryptedBlob(iv, ciphertext))
+        return try {
+            cipher.decrypt(EncryptedBlob(iv, ciphertext))
+        } catch (e: GeneralSecurityException) {
+            // The Keystore key that encrypted this blob doesn't exist anymore (e.g. this
+            // DataStore file was restored from a backup taken on a different device/install) -
+            // treat it the same as "no key saved" rather than crashing the caller.
+            null
+        }
     }
 
     override suspend fun saveApiKey(providerId: String, key: String) {
@@ -66,9 +75,17 @@ class DataStoreSettingsRepository(
         dataStore.edit { prefs -> prefs[CHAT_FONT_SCALE] = scale }
     }
 
+    override fun observeAppLockEnabled(): Flow<Boolean> =
+        dataStore.data.map { prefs -> prefs[APP_LOCK_ENABLED] ?: false }
+
+    override suspend fun setAppLockEnabled(enabled: Boolean) {
+        dataStore.edit { prefs -> prefs[APP_LOCK_ENABLED] = enabled }
+    }
+
     private companion object {
         val ACTIVE_PROVIDER = stringPreferencesKey("active_provider")
         val SEARCH_PROVIDER = stringPreferencesKey("search_provider")
         val CHAT_FONT_SCALE = floatPreferencesKey("chat_font_scale")
+        val APP_LOCK_ENABLED = booleanPreferencesKey("app_lock_enabled")
     }
 }

@@ -60,6 +60,7 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.androidx.datastore.preferences)
+    implementation(libs.androidx.biometric)
     debugImplementation(libs.compose.ui.tooling)
 
     testImplementation(libs.junit)
