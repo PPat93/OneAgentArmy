@@ -149,19 +149,31 @@
     <string name="help_section_facts_body">W Ustawieniach → Fakty kontekstowe możesz zapisać informacje o sobie, które AI ma znać — globalne (widoczne we wszystkich rozmowach) albo wybierane osobno dla każdej rozmowy z poziomu czatu.</string>
 
     <string name="help_section_tools_title">Narzędzia asystenta</string>
-    <string name="help_section_tools_body">AI może poprosić o wykonanie akcji na telefonie: dodanie wydarzenia w kalendarzu, ustawienie alarmu lub minutnika, przygotowanie SMS-a, otwarcie nawigacji albo zapisanie notatki. Każda z nich pokazuje kartę do potwierdzenia — nic nie dzieje się bez Twojej zgody. Pogoda i wyszukiwanie w necie działają automatycznie, w tle. Źródło wyszukiwania (Tavily albo wbudowane u dostawcy) zmienisz w Ustawieniach → Narzędzia.</string>
+    <string name="help_section_tools_body">AI może poprosić o wykonanie akcji na telefonie: dodanie wydarzenia w kalendarzu, ustawienie alarmu lub minutnika, przygotowanie SMS-a, otwarcie nawigacji albo zapisanie notatki. Każda z nich pokazuje kartę do potwierdzenia — nic nie dzieje się bez Twojej zgody.</string>
+
+    <string name="help_section_automation_title">Pogoda i wyszukiwanie w necie</string>
+    <string name="help_section_automation_body">Pogoda (przez Open-Meteo) i wyszukiwanie w internecie działają automatycznie w tle, kiedy AI ich potrzebuje — bez karty do potwierdzenia, nic nie musisz zatwierdzać. Źródło wyszukiwania wybierasz w Ustawieniach → Narzędzia: wbudowane u dostawcy albo Tavily (wymaga własnego klucza API). Nie każdy model wspiera wbudowane wyszukiwanie — apka wtedy automatycznie przełącza się na Tavily.</string>
 
     <string name="help_section_attachments_title">Załączniki</string>
-    <string name="help_section_attachments_body">Do wiadomości możesz dołączyć zdjęcie, plik PDF albo plik tekstowy/CSV (spinacz obok pola wiadomości). Zdjęcia są automatycznie zmniejszane przed wysyłką.</string>
+    <string name="help_section_attachments_body">Do wiadomości możesz dołączyć zdjęcie, plik PDF albo plik tekstowy/CSV (spinacz obok pola wiadomości). Zdjęcia są automatycznie zmniejszane przed wysyłką; pliki PDF są ograniczone do 5 MB.</string>
 
     <string name="help_section_context_title">Kontekst rozmowy</string>
     <string name="help_section_context_body">Każda wysłana wiadomość niesie ze sobą ostatnie 20 wiadomości z tej rozmowy — dzięki temu AI pamięta, o czym była mowa. To oznacza też, że raz załączony plik czy zdjęcie jest wysyłane ponownie przy każdej kolejnej wiadomości, dopóki mieści się w tych 20 — i za każdym razem wlicza się do kosztu.</string>
 
     <string name="help_section_personalization_title">Personalizacja</string>
-    <string name="help_section_personalization_body">W Ustawieniach możesz zmienić wielkość czcionki w czacie (Mała/Normalna/Duża/Bardzo duża). Możesz też wymagać odcisku palca, twarzy albo blokady ekranu przy otwieraniu apki (Ustawienia → Blokada aplikacji).</string>
+    <string name="help_section_personalization_body">W Ustawieniach możesz zmienić wielkość czcionki w czacie (Mała/Normalna/Duża/Bardzo duża).</string>
+
+    <string name="help_section_app_lock_title">Blokada aplikacji</string>
+    <string name="help_section_app_lock_body">Włącz blokadę aplikacji w Ustawieniach, żeby wymagać odcisku palca, twarzy albo własnej blokady ekranu telefonu (PIN/wzór/hasło) przy otwieraniu apki. Domyślnie wyłączona. Po włączeniu apka blokuje się ponownie za każdym razem gdy zejdzie do tła — nie tylko po restarcie. Przełącznik jest wyszarzony, jeśli telefon w ogóle nie ma ustawionej żadnej blokady ekranu.</string>
+
+    <string name="help_section_backup_title">Backup i zmiana telefonu</string>
+    <string name="help_section_backup_body">Historia rozmów jest częścią zwykłego automatycznego backupu Androida, więc wraca po zmianie telefonu albo reinstalacji. Zapisane klucze API są celowo wykluczone z tego backupu ze względów bezpieczeństwa — po przywróceniu trzeba je wpisać ponownie, ale nic innego nie ginie.</string>
 
     <string name="help_section_conversations_title">Zarządzanie rozmowami</string>
-    <string name="help_section_conversations_body">Na głównym ekranie: szkło powiększające otwiera wyszukiwanie po treści wszystkich rozmów, długie przytrzymanie kafelka rozmowy pozwala zmienić nazwę, usunąć (pojedynczo albo grupowo) albo przypiąć. Rozmowy sortowane są wg czasu ostatniej wiadomości, a przypięte są zawsze na górze.</string>
+    <string name="help_section_conversations_body">Długie przytrzymanie kafelka rozmowy na głównym ekranie pozwala zmienić nazwę, usunąć (pojedynczo albo grupowo, przez tryb zaznaczania) albo przypiąć. Rozmowy sortowane są wg czasu ostatniej wiadomości, a przypięte są zawsze na górze.</string>
+
+    <string name="help_section_search_title">Szukanie w rozmowach</string>
+    <string name="help_section_search_body">Szkło powiększające na głównym ekranie otwiera wyszukiwanie po treści wszystkich rozmów naraz. Kliknięcie wyniku otwiera tę rozmowę i przenosi dokładnie do pasującej wiadomości. (Ten ekran pomocy ma swoje własne, osobne pole wyszukiwania na górze strony.)</string>
 
     <string name="help_section_sharing_title">Udostępnianie</string>
     <string name="help_section_sharing_body">Dotknij ikony udostępniania obok Kopiuj przy dowolnej wiadomości, żeby wysłać ją gdzie indziej. Ikona udostępniania w pasku górnym czatu wysyła całą rozmowę jako zwykły tekst.</string>

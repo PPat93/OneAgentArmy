@@ -51,10 +51,14 @@ fun SettingsHelpScreen(onBack: () -> Unit) {
         HelpSectionText(stringResource(R.string.help_section_costs_title), stringResource(R.string.help_section_costs_body)),
         HelpSectionText(stringResource(R.string.help_section_facts_title), stringResource(R.string.help_section_facts_body)),
         HelpSectionText(stringResource(R.string.help_section_tools_title), stringResource(R.string.help_section_tools_body)),
+        HelpSectionText(stringResource(R.string.help_section_automation_title), stringResource(R.string.help_section_automation_body)),
         HelpSectionText(stringResource(R.string.help_section_attachments_title), stringResource(R.string.help_section_attachments_body)),
         HelpSectionText(stringResource(R.string.help_section_context_title), stringResource(R.string.help_section_context_body)),
         HelpSectionText(stringResource(R.string.help_section_personalization_title), stringResource(R.string.help_section_personalization_body)),
+        HelpSectionText(stringResource(R.string.help_section_app_lock_title), stringResource(R.string.help_section_app_lock_body)),
+        HelpSectionText(stringResource(R.string.help_section_backup_title), stringResource(R.string.help_section_backup_body)),
         HelpSectionText(stringResource(R.string.help_section_conversations_title), stringResource(R.string.help_section_conversations_body)),
+        HelpSectionText(stringResource(R.string.help_section_search_title), stringResource(R.string.help_section_search_body)),
         HelpSectionText(stringResource(R.string.help_section_sharing_title), stringResource(R.string.help_section_sharing_body)),
     )
 
