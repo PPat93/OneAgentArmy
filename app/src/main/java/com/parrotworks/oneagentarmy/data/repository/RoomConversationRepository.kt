@@ -8,6 +8,7 @@ import com.parrotworks.oneagentarmy.data.local.toEntity
 import com.parrotworks.oneagentarmy.model.Conversation
 import com.parrotworks.oneagentarmy.model.Message
 import com.parrotworks.oneagentarmy.model.MessageSearchResult
+import com.parrotworks.oneagentarmy.provider.ai.AiProviderRegistry
 import java.time.Instant
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -75,6 +76,15 @@ class RoomConversationRepository(
 
     override fun observeCostSince(since: Instant): Flow<Double?> =
         dao.observeCostSince(since.toEpochMilli())
+
+    override fun observeCostByProviderSince(since: Instant): Flow<Map<String, Double>> =
+        dao.observeCostByModelSince(since.toEpochMilli()).map { byModel ->
+            byModel.entries.fold(mutableMapOf<String, Double>()) { acc, (modelId, cost) ->
+                val providerId = AiProviderRegistry.providerIdForModel(modelId)
+                acc[providerId] = (acc[providerId] ?: 0.0) + (cost ?: 0.0)
+                acc
+            }
+        }
 
     override fun searchMessages(query: String): Flow<List<MessageSearchResult>> {
         val normalizedEscaped = normalizeForSearch(query)

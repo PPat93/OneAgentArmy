@@ -20,4 +20,5 @@ interface ConversationRepository {
     fun searchMessages(query: String): Flow<List<MessageSearchResult>>
     fun observeConversationCost(conversationId: String): Flow<Double?>
     fun observeCostSince(since: Instant): Flow<Double?>
+    fun observeCostByProviderSince(since: Instant): Flow<Map<String, Double>>
 }
