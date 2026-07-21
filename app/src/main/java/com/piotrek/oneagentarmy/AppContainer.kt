@@ -42,6 +42,7 @@ import com.piotrek.oneagentarmy.tools.clock.SetTimerToolDefinition
 import com.piotrek.oneagentarmy.tools.navigation.NavigateToolDefinition
 import com.piotrek.oneagentarmy.tools.notes.CreateNoteToolDefinition
 import com.piotrek.oneagentarmy.tools.sms.DraftSmsToolDefinition
+import java.util.concurrent.TimeUnit
 import okhttp3.OkHttpClient
 
 class AppContainer(context: Context) {
@@ -71,7 +72,14 @@ class AppContainer(context: Context) {
 
     val settingsRepository: SettingsRepository = DataStoreSettingsRepository(settingsDataStore, ApiKeyCipher())
 
-    private val okHttpClient = OkHttpClient()
+    // Defaults (10s connect/read/write) are too tight for non-streaming LLM responses -
+    // a slow/reasoning model, or a hosted-search round-trip, can easily leave the socket
+    // idle (zero bytes) for well over 10s while the provider is still "thinking".
+    private val okHttpClient = OkHttpClient.Builder()
+        .connectTimeout(15, TimeUnit.SECONDS)
+        .readTimeout(120, TimeUnit.SECONDS)
+        .writeTimeout(30, TimeUnit.SECONDS)
+        .build()
 
     val exchangeRateRepository = ExchangeRateRepository(okHttpClient, settingsDataStore)
 
