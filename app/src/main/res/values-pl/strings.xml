@@ -118,6 +118,9 @@
 
     <string name="settings_help_title">Co potrafi ta apka?</string>
     <string name="settings_help_subtitle">Krótki przewodnik po funkcjach</string>
+    <string name="settings_help_search_hint">Szukaj w pomocy…</string>
+    <string name="settings_help_search_clear">Wyczyść wyszukiwanie</string>
+    <string name="settings_help_search_empty">Nie znaleziono pasujących tematów.</string>
     <string name="settings_about_title">O aplikacji</string>
     <string name="settings_about_subtitle">Kto to zrobił</string>
     <string name="app_credit">ParroT woRKs by Piotr Paterek</string>
@@ -134,34 +137,46 @@
     <string name="spending_threshold_clear">Wyczyść</string>
 
     <string name="help_section_providers_title">Dostawcy AI i modele</string>
-    <string name="help_section_providers_body">Apka obsługuje trzech dostawców: OpenAI (ChatGPT), Google (Gemini) i Anthropic (Claude). Każdy ma trzy modele — od najtańszego po najmocniejszy. Aktywnego dostawcę przełączasz na głównym ekranie lub w Ustawieniach; model wybierasz osobno dla każdej rozmowy w czacie (domyślnie najtańszy dostępny).</string>
+    <string name="help_section_providers_body">Apka obsługuje trzech dostawców, każdy z trzema modelami (od najtańszego po najmocniejszy):\n• OpenAI (ChatGPT)\n• Google (Gemini)\n• Anthropic (Claude)\n\nAktywnego dostawcę przełączasz na głównym ekranie lub w Ustawieniach. Model wybierasz osobno dla każdej rozmowy w czacie (domyślnie najtańszy dostępny).</string>
 
     <string name="help_section_keys_title">Klucze API</string>
-    <string name="help_section_keys_body">Do każdego dostawcy potrzebny jest własny klucz API — wpisujesz go w Ustawieniach → Dostawcy AI. Klucze są szyfrowane lokalnie (Android Keystore) i nigdy nie opuszczają telefonu poza bezpośrednim połączeniem z serwerem danego dostawcy — ta apka nie ma własnego backendu.</string>
+    <string name="help_section_keys_body">Do każdego dostawcy potrzebny jest własny klucz API — wpisujesz go w Ustawieniach → Dostawcy AI.\n\nKlucze są szyfrowane lokalnie (Android Keystore) i nigdy nie opuszczają telefonu poza bezpośrednim połączeniem z serwerem danego dostawcy — ta apka nie ma własnego backendu.</string>
 
     <string name="help_section_costs_title">Koszty</string>
-    <string name="help_section_costs_body">Pod każdą odpowiedzią AI, pod tytułem rozmowy i na głównym ekranie widzisz szacunkowy koszt w euro. To przybliżenie liczone z cennika dostawcy i dziennego kursu EUR/USD — nie uwzględnia opłat za wbudowane wyszukiwanie (liczone per zapytanie) ani zniżek za cache. W Ustawieniach możesz ustawić miesięczny próg wydatków — suma na głównym ekranie zmieni się na czerwoną po jego przekroczeniu. Suma miesięczna to nie osobny licznik — to zsumowane wiadomości z bieżącego miesiąca kalendarzowego, więc sama wraca do zera o północy 1. dnia każdego miesiąca (czas lokalny telefonu); nie da się jej wyzerować ręcznie.</string>
+    <string name="help_section_costs_body">Pod każdą odpowiedzią AI, pod tytułem rozmowy i na głównym ekranie widzisz szacunkowy koszt w euro.\n\nTo przybliżenie liczone z cennika dostawcy i dziennego kursu EUR/USD — nie uwzględnia opłat za wbudowane wyszukiwanie (liczone per zapytanie) ani zniżek za cache.\n\n• W Ustawieniach możesz ustawić miesięczny próg wydatków — suma na głównym ekranie zmieni się na czerwoną po jego przekroczeniu.\n• Suma miesięczna to nie osobny licznik — to zsumowane wiadomości z bieżącego miesiąca kalendarzowego, więc sama wraca do zera o północy 1. dnia każdego miesiąca (czas lokalny telefonu). Nie da się jej wyzerować ręcznie.</string>
 
     <string name="help_section_facts_title">Fakty kontekstowe</string>
-    <string name="help_section_facts_body">W Ustawieniach → Fakty kontekstowe możesz zapisać informacje o sobie, które AI ma znać — globalne (widoczne we wszystkich rozmowach) albo wybierane osobno dla każdej rozmowy z poziomu czatu.</string>
+    <string name="help_section_facts_body">W Ustawieniach → Fakty kontekstowe możesz zapisać informacje o sobie, które AI ma znać.\n\n• Fakty globalne są widoczne we wszystkich rozmowach.\n• Fakty per rozmowa wybierasz osobno z poziomu czatu.</string>
 
     <string name="help_section_tools_title">Narzędzia asystenta</string>
-    <string name="help_section_tools_body">AI może poprosić o wykonanie akcji na telefonie: dodanie wydarzenia w kalendarzu, ustawienie alarmu lub minutnika, przygotowanie SMS-a, otwarcie nawigacji albo zapisanie notatki. Każda z nich pokazuje kartę do potwierdzenia — nic nie dzieje się bez Twojej zgody. Pogoda i wyszukiwanie w necie działają automatycznie, w tle. Źródło wyszukiwania (Tavily albo wbudowane u dostawcy) zmienisz w Ustawieniach → Narzędzia.</string>
+    <string name="help_section_tools_body">AI może poprosić o wykonanie akcji na telefonie:\n• Dodanie wydarzenia w kalendarzu\n• Ustawienie alarmu lub minutnika\n• Przygotowanie SMS-a\n• Otwarcie nawigacji\n• Zapisanie notatki\n\nKażda z nich pokazuje kartę do potwierdzenia — nic nie dzieje się bez Twojej zgody.</string>
+
+    <string name="help_section_automation_title">Pogoda i wyszukiwanie w necie</string>
+    <string name="help_section_automation_body">Pogoda (przez Open-Meteo) i wyszukiwanie w internecie działają automatycznie w tle, kiedy AI ich potrzebuje — bez karty do potwierdzenia, nic nie musisz zatwierdzać.\n\nŹródło wyszukiwania wybierasz w Ustawieniach → Narzędzia:\n• Wbudowane u dostawcy\n• Tavily (wymaga własnego klucza API)\n\nNie każdy model wspiera wbudowane wyszukiwanie — apka wtedy automatycznie przełącza się na Tavily.</string>
 
     <string name="help_section_attachments_title">Załączniki</string>
-    <string name="help_section_attachments_body">Do wiadomości możesz dołączyć zdjęcie, plik PDF albo plik tekstowy/CSV (spinacz obok pola wiadomości). Zdjęcia są automatycznie zmniejszane przed wysyłką.</string>
+    <string name="help_section_attachments_body">Do wiadomości możesz dołączyć zdjęcie, plik PDF albo plik tekstowy/CSV (spinacz obok pola wiadomości).\n\n• Zdjęcia są automatycznie zmniejszane przed wysyłką.\n• Pliki PDF są ograniczone do 5 MB.</string>
 
     <string name="help_section_context_title">Kontekst rozmowy</string>
-    <string name="help_section_context_body">Każda wysłana wiadomość niesie ze sobą ostatnie 20 wiadomości z tej rozmowy — dzięki temu AI pamięta, o czym była mowa. To oznacza też, że raz załączony plik czy zdjęcie jest wysyłane ponownie przy każdej kolejnej wiadomości, dopóki mieści się w tych 20 — i za każdym razem wlicza się do kosztu.</string>
+    <string name="help_section_context_body">Każda wysłana wiadomość niesie ze sobą ostatnie 20 wiadomości z tej rozmowy — dzięki temu AI pamięta, o czym była mowa.\n\nTo oznacza też, że raz załączony plik czy zdjęcie jest wysyłane ponownie przy każdej kolejnej wiadomości, dopóki mieści się w tych 20 — i za każdym razem wlicza się do kosztu.</string>
 
     <string name="help_section_personalization_title">Personalizacja</string>
-    <string name="help_section_personalization_body">W Ustawieniach możesz zmienić wielkość czcionki w czacie (Mała/Normalna/Duża/Bardzo duża). Możesz też wymagać odcisku palca, twarzy albo blokady ekranu przy otwieraniu apki (Ustawienia → Blokada aplikacji).</string>
+    <string name="help_section_personalization_body">W Ustawieniach możesz zmienić wielkość czcionki w czacie (Mała/Normalna/Duża/Bardzo duża).</string>
+
+    <string name="help_section_app_lock_title">Blokada aplikacji</string>
+    <string name="help_section_app_lock_body">Włącz blokadę aplikacji w Ustawieniach, żeby wymagać odcisku palca, twarzy albo własnej blokady ekranu telefonu (PIN/wzór/hasło) przy otwieraniu apki.\n\n• Domyślnie wyłączona.\n• Blokuje się ponownie za każdym razem gdy apka zejdzie do tła — nie tylko po restarcie.\n• Przełącznik jest wyszarzony, jeśli telefon w ogóle nie ma ustawionej żadnej blokady ekranu.</string>
+
+    <string name="help_section_backup_title">Backup i zmiana telefonu</string>
+    <string name="help_section_backup_body">Historia rozmów jest częścią zwykłego automatycznego backupu Androida, więc wraca po zmianie telefonu albo reinstalacji.\n\nZapisane klucze API są celowo wykluczone z tego backupu ze względów bezpieczeństwa — po przywróceniu trzeba je wpisać ponownie, ale nic innego nie ginie.</string>
 
     <string name="help_section_conversations_title">Zarządzanie rozmowami</string>
-    <string name="help_section_conversations_body">Na głównym ekranie: szkło powiększające otwiera wyszukiwanie po treści wszystkich rozmów, długie przytrzymanie kafelka rozmowy pozwala zmienić nazwę, usunąć (pojedynczo albo grupowo) albo przypiąć. Rozmowy sortowane są wg czasu ostatniej wiadomości, a przypięte są zawsze na górze.</string>
+    <string name="help_section_conversations_body">Długie przytrzymanie kafelka rozmowy na głównym ekranie pozwala:\n• Zmienić nazwę\n• Usunąć (pojedynczo albo grupowo, przez tryb zaznaczania)\n• Przypiąć\n\nRozmowy sortowane są wg czasu ostatniej wiadomości, a przypięte są zawsze na górze.</string>
+
+    <string name="help_section_search_title">Szukanie w rozmowach</string>
+    <string name="help_section_search_body">Szkło powiększające na głównym ekranie otwiera wyszukiwanie po treści wszystkich rozmów naraz.\n\nKliknięcie wyniku otwiera tę rozmowę i przenosi dokładnie do pasującej wiadomości.\n\n(Ten ekran pomocy ma swoje własne, osobne pole wyszukiwania na górze strony.)</string>
 
     <string name="help_section_sharing_title">Udostępnianie</string>
-    <string name="help_section_sharing_body">Dotknij ikony udostępniania obok Kopiuj przy dowolnej wiadomości, żeby wysłać ją gdzie indziej. Ikona udostępniania w pasku górnym czatu wysyła całą rozmowę jako zwykły tekst.</string>
+    <string name="help_section_sharing_body">Dotknij ikony udostępniania obok Kopiuj przy dowolnej wiadomości, żeby wysłać ją gdzie indziej.\n\nIkona udostępniania w pasku górnym czatu wysyła całą rozmowę jako zwykły tekst.</string>
     <string name="fact_new_title">Nowy fakt</string>
     <string name="fact_edit_title">Edytuj fakt</string>
     <string name="fact_title_label">Tytuł</string>
