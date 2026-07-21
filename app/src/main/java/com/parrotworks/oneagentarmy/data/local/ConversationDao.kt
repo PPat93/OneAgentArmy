@@ -2,6 +2,7 @@ package com.parrotworks.oneagentarmy.data.local
 
 import androidx.room.Dao
 import androidx.room.Insert
+import androidx.room.MapInfo
 import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
 
@@ -48,6 +49,18 @@ interface ConversationDao {
 
     @Query("SELECT SUM(costUsd) FROM messages WHERE timestamp >= :sinceMillis")
     fun observeCostSince(sinceMillis: Long): Flow<Double?>
+
+    @MapInfo(keyColumn = "modelId", valueColumn = "costUsd")
+    @Query(
+        """
+        SELECT conversations.modelId AS modelId, SUM(messages.costUsd) AS costUsd
+        FROM messages
+        JOIN conversations ON conversations.id = messages.conversationId
+        WHERE messages.timestamp >= :sinceMillis
+        GROUP BY conversations.modelId
+        """,
+    )
+    fun observeCostByModelSince(sinceMillis: Long): Flow<Map<String, Double?>>
 
     // Caller is responsible for normalizing (normalizeForSearch) and escaping %, _ and \
     // in the query (see RoomConversationRepository).

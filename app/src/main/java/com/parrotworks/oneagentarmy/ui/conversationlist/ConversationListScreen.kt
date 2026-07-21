@@ -62,6 +62,7 @@ import com.parrotworks.oneagentarmy.ui.components.formatCostEur
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -77,6 +78,7 @@ fun ConversationListScreen(
     val monthlyCost by viewModel.monthlyCost.collectAsState()
     val usdToEur by viewModel.usdToEur.collectAsState()
     val spendingThresholdEur by viewModel.spendingThresholdEur.collectAsState()
+    val costByProviderThisMonth by viewModel.costByProviderThisMonth.collectAsState()
     var renameDialogFor by remember { mutableStateOf<Conversation?>(null) }
     var deleteDialogFor by remember { mutableStateOf<Conversation?>(null) }
     var selectionMode by remember { mutableStateOf(false) }
@@ -120,8 +122,12 @@ fun ConversationListScreen(
                             Text(stringResource(R.string.app_name))
                             monthlyCost?.takeIf { it > 0.0 }?.let { cost ->
                                 val isOverThreshold = spendingThresholdEur?.let { cost * usdToEur >= it } ?: false
+                                val costLabel = stringResource(R.string.monthly_cost_label, formatCostEur(cost, usdToEur))
+                                val label = spendingThresholdEur?.let { threshold ->
+                                    "$costLabel / €${String.format(Locale.US, "%.2f", threshold)}"
+                                } ?: costLabel
                                 Text(
-                                    text = stringResource(R.string.monthly_cost_label, formatCostEur(cost, usdToEur)),
+                                    text = label,
                                     style = MaterialTheme.typography.labelSmall,
                                     color = if (isOverThreshold) {
                                         MaterialTheme.colorScheme.error
@@ -170,6 +176,8 @@ fun ConversationListScreen(
             ProviderChipRow(
                 activeProvider = activeProvider,
                 onProviderSelected = viewModel::setActiveProvider,
+                costByProvider = costByProviderThisMonth,
+                usdToEur = usdToEur,
             )
             if (conversations.isEmpty()) {
                 Box(
@@ -276,6 +284,8 @@ fun ConversationListScreen(
 private fun ProviderChipRow(
     activeProvider: String,
     onProviderSelected: (String) -> Unit,
+    costByProvider: Map<String, Double>,
+    usdToEur: Double,
 ) {
     Row(
         modifier = Modifier
@@ -290,10 +300,21 @@ private fun ProviderChipRow(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         AiProviderRegistry.providers.forEach { provider ->
+            val cost = costByProvider[provider.id]?.takeIf { it > 0.0 }
             FilterChip(
                 selected = provider.id == activeProvider,
                 onClick = { onProviderSelected(provider.id) },
-                label = { Text(provider.chipLabel) },
+                label = {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(provider.chipLabel)
+                        if (cost != null) {
+                            Text(
+                                text = formatCostEur(cost, usdToEur),
+                                style = MaterialTheme.typography.labelSmall,
+                            )
+                        }
+                    }
+                },
             )
         }
     }

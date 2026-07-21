@@ -36,9 +36,15 @@ class ConversationListViewModel(
     // Estimated spend since the 1st of the current calendar month (system timezone).
     // The boundary is captured at ViewModel creation - fine, the screen is recreated
     // far more often than once a month.
-    val monthlyCost: StateFlow<Double?> = repository.observeCostSince(
-        LocalDate.now().withDayOfMonth(1).atStartOfDay(ZoneId.systemDefault()).toInstant(),
-    ).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+    private val startOfMonth = LocalDate.now().withDayOfMonth(1).atStartOfDay(ZoneId.systemDefault()).toInstant()
+
+    val monthlyCost: StateFlow<Double?> = repository.observeCostSince(startOfMonth)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    // Same monthly window as monthlyCost, broken down by provider for the chip labels
+    // on the main screen.
+    val costByProviderThisMonth: StateFlow<Map<String, Double>> = repository.observeCostByProviderSince(startOfMonth)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
 
     val spendingThresholdEur: StateFlow<Double?> = settingsRepository.observeSpendingThresholdEur()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
