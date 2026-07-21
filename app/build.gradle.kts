@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.piotrek.oneagentarmy"
+    namespace = "com.parrotworks.oneagentarmy"
     compileSdk {
         version = release(37) {
             minorApiLevel = 1
