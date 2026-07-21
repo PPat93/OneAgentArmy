@@ -2,6 +2,7 @@ package com.parrotworks.oneagentarmy.data.repository
 
 import com.parrotworks.oneagentarmy.data.local.AttachmentStore
 import com.parrotworks.oneagentarmy.data.local.ConversationDao
+import com.parrotworks.oneagentarmy.data.local.CostEntryEntity
 import com.parrotworks.oneagentarmy.data.local.DraftDao
 import com.parrotworks.oneagentarmy.data.local.normalizeForSearch
 import com.parrotworks.oneagentarmy.data.local.toDomain
@@ -12,7 +13,9 @@ import com.parrotworks.oneagentarmy.model.Message
 import com.parrotworks.oneagentarmy.model.MessageSearchResult
 import com.parrotworks.oneagentarmy.provider.ai.AiProviderRegistry
 import java.time.Instant
+import java.util.UUID
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 class RoomConversationRepository(
@@ -57,6 +60,22 @@ class RoomConversationRepository(
     override suspend fun addMessage(conversationId: String, message: Message) {
         dao.insertMessage(message.toEntity())
         dao.touchConversation(conversationId, message.timestamp.toEpochMilli())
+        val costUsd = message.costUsd
+        if (costUsd != null) {
+            // Ledger entry is independent of the message row it came from - it must
+            // survive the conversation (and this message) later being deleted.
+            val modelId = dao.observeConversation(conversationId).first()?.modelId
+            if (modelId != null) {
+                dao.insertCostEntry(
+                    CostEntryEntity(
+                        id = UUID.randomUUID().toString(),
+                        timestamp = message.timestamp.toEpochMilli(),
+                        providerId = AiProviderRegistry.providerIdForModel(modelId),
+                        costUsd = costUsd,
+                    ),
+                )
+            }
+        }
     }
 
     override suspend fun deleteConversation(conversationId: String) {
@@ -92,12 +111,8 @@ class RoomConversationRepository(
         dao.observeCostSince(since.toEpochMilli())
 
     override fun observeCostByProviderSince(since: Instant): Flow<Map<String, Double>> =
-        dao.observeCostByModelSince(since.toEpochMilli()).map { byModel ->
-            byModel.entries.fold(mutableMapOf<String, Double>()) { acc, (modelId, cost) ->
-                val providerId = AiProviderRegistry.providerIdForModel(modelId)
-                acc[providerId] = (acc[providerId] ?: 0.0) + (cost ?: 0.0)
-                acc
-            }
+        dao.observeCostByProviderSince(since.toEpochMilli()).map { byProvider ->
+            byProvider.mapValues { (_, cost) -> cost ?: 0.0 }
         }
 
     override fun searchMessages(query: String): Flow<List<MessageSearchResult>> {

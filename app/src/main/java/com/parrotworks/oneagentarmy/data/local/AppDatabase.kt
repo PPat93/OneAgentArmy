@@ -4,6 +4,8 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.parrotworks.oneagentarmy.provider.ai.AiProviderRegistry
+import java.util.UUID
 
 @Database(
     entities = [
@@ -12,8 +14,9 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         FactEntity::class,
         ConversationFactEntity::class,
         DraftEntity::class,
+        CostEntryEntity::class,
     ],
-    version = 8,
+    version = 9,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -97,6 +100,40 @@ abstract class AppDatabase : RoomDatabase() {
                         "attachmentPath TEXT, " +
                         "attachmentMime TEXT)",
                 )
+            }
+        }
+
+        val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS cost_entries (" +
+                        "id TEXT NOT NULL PRIMARY KEY, " +
+                        "timestamp INTEGER NOT NULL, " +
+                        "providerId TEXT NOT NULL, " +
+                        "costUsd REAL NOT NULL)",
+                )
+                // Backfill from existing message history so upgrading doesn't zero out
+                // money already spent - provider resolution lives in Kotlin, not SQL.
+                db.query(
+                    "SELECT messages.timestamp, messages.costUsd, conversations.modelId " +
+                        "FROM messages JOIN conversations ON conversations.id = messages.conversationId " +
+                        "WHERE messages.costUsd IS NOT NULL",
+                ).use { cursor ->
+                    while (cursor.moveToNext()) {
+                        val timestamp = cursor.getLong(0)
+                        val costUsd = cursor.getDouble(1)
+                        val modelId = cursor.getString(2)
+                        db.execSQL(
+                            "INSERT INTO cost_entries (id, timestamp, providerId, costUsd) VALUES (?, ?, ?, ?)",
+                            arrayOf(
+                                UUID.randomUUID().toString(),
+                                timestamp,
+                                AiProviderRegistry.providerIdForModel(modelId),
+                                costUsd,
+                            ),
+                        )
+                    }
+                }
             }
         }
 
