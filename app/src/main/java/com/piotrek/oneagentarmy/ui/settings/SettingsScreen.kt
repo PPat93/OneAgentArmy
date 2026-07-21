@@ -19,6 +19,7 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -26,9 +27,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.piotrek.oneagentarmy.R
+import com.piotrek.oneagentarmy.ui.lock.canUseAppLock
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,6 +45,8 @@ fun SettingsScreen(
     onNavigateToAbout: () -> Unit,
 ) {
     val chatFontScale by viewModel.chatFontScale.collectAsState()
+    val appLockEnabled by viewModel.appLockEnabled.collectAsState()
+    val appLockAvailable = canUseAppLock(LocalContext.current)
     Scaffold(
         topBar = {
             TopAppBar(
@@ -79,6 +84,11 @@ fun SettingsScreen(
             ChatFontScaleCard(
                 currentScale = chatFontScale,
                 onScaleSelected = viewModel::setChatFontScale,
+            )
+            AppLockCard(
+                enabled = appLockEnabled,
+                available = appLockAvailable,
+                onEnabledChange = viewModel::setAppLockEnabled,
             )
             SettingsMenuCard(
                 title = stringResource(R.string.settings_help_title),
@@ -122,6 +132,39 @@ private fun ChatFontScaleCard(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun AppLockCard(
+    enabled: Boolean,
+    available: Boolean,
+    onEnabledChange: (Boolean) -> Unit,
+) {
+    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)) {
+        ListItem(
+            headlineContent = {
+                Text(
+                    stringResource(R.string.app_lock_title),
+                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                    style = MaterialTheme.typography.titleMedium,
+                )
+            },
+            supportingContent = {
+                Text(
+                    stringResource(if (available) R.string.app_lock_subtitle else R.string.app_lock_unavailable),
+                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                )
+            },
+            trailingContent = {
+                Switch(
+                    checked = enabled && available,
+                    onCheckedChange = onEnabledChange,
+                    enabled = available,
+                )
+            },
+            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+        )
     }
 }
 

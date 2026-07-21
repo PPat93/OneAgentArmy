@@ -35,6 +35,9 @@ class SettingsViewModel(
     val chatFontScale: StateFlow<Float> = repository.observeChatFontScale()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 1.0f)
 
+    val appLockEnabled: StateFlow<Boolean> = repository.observeAppLockEnabled()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
     fun saveApiKey(providerId: String, key: String) {
         if (key.isBlank()) return
         viewModelScope.launch { repository.saveApiKey(providerId, key) }
@@ -54,5 +57,9 @@ class SettingsViewModel(
 
     fun setSearchProvider(searchProviderId: String) {
         viewModelScope.launch { repository.setSearchProvider(searchProviderId) }
+    }
+
+    fun setAppLockEnabled(enabled: Boolean) {
+        viewModelScope.launch { repository.setAppLockEnabled(enabled) }
     }
 }

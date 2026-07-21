@@ -17,6 +17,9 @@ interface SettingsRepository {
     fun observeChatFontScale(): Flow<Float>
     suspend fun setChatFontScale(scale: Float)
 
+    fun observeAppLockEnabled(): Flow<Boolean>
+    suspend fun setAppLockEnabled(enabled: Boolean)
+
     companion object {
         // Active AI provider's hosted web search (e.g. OpenAI's web_search tool).
         const val SEARCH_PROVIDER_BUILT_IN = "provider"

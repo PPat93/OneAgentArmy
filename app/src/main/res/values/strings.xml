@@ -116,6 +116,11 @@
     <string name="settings_about_title">About</string>
     <string name="settings_about_subtitle">Who made this</string>
     <string name="app_credit">ParroT woRKs by Piotr Paterek</string>
+    <string name="app_lock_title">App lock</string>
+    <string name="app_lock_subtitle">Require your fingerprint, face, or screen lock to open the app</string>
+    <string name="app_lock_unavailable">Set a screen lock (PIN, pattern, fingerprint…) on your device to use this</string>
+    <string name="app_lock_prompt_title">Unlock OneAgentArmy</string>
+    <string name="app_lock_unlock_button">Unlock</string>
 
     <string name="help_section_providers_title">AI providers and models</string>
     <string name="help_section_providers_body">The app supports three providers: OpenAI (ChatGPT), Google (Gemini), and Anthropic (Claude). Each offers three models, from cheapest to most capable. Switch the active provider on the main screen or in Settings; the model is chosen per conversation in the chat screen (defaults to the cheapest available).</string>
