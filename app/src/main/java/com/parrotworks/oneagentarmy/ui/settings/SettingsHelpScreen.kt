@@ -59,6 +59,7 @@ fun SettingsHelpScreen(onBack: () -> Unit) {
         HelpSectionText(stringResource(R.string.help_section_conversations_title), stringResource(R.string.help_section_conversations_body)),
         HelpSectionText(stringResource(R.string.help_section_search_title), stringResource(R.string.help_section_search_body)),
         HelpSectionText(stringResource(R.string.help_section_sharing_title), stringResource(R.string.help_section_sharing_body)),
+        HelpSectionText(stringResource(R.string.help_section_drafts_title), stringResource(R.string.help_section_drafts_body)),
     )
 
     val normalizedQuery = normalizeForSearch(query)

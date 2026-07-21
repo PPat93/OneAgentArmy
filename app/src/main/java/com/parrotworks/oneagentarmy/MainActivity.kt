@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.fragment.app.FragmentActivity
+import androidx.navigation.compose.rememberNavController
 import com.parrotworks.oneagentarmy.ui.lock.AppLockGate
 import com.parrotworks.oneagentarmy.ui.navigation.OneAgentArmyNavHost
 import com.parrotworks.oneagentarmy.ui.theme.OneAgentArmyTheme
@@ -21,6 +22,11 @@ class MainActivity : FragmentActivity() {
         setContent {
             OneAgentArmyTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
+                    // Created here, above AppLockGate, so locking/unlocking (which
+                    // conditionally composes AppLockGate's content) doesn't tear down and
+                    // recreate the NavController - that would silently reset the back stack
+                    // to the start destination on every re-lock.
+                    val navController = rememberNavController()
                     AppLockGate(settingsRepository = container.settingsRepository) {
                         OneAgentArmyNavHost(
                             conversationRepository = container.conversationRepository,
@@ -30,6 +36,7 @@ class MainActivity : FragmentActivity() {
                             contextWindowStrategy = container.contextWindowStrategy,
                             exchangeRateRepository = container.exchangeRateRepository,
                             attachmentStore = container.attachmentStore,
+                            navController = navController,
                         )
                     }
                 }

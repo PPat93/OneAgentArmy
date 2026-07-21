@@ -50,6 +50,7 @@ Most AI chat subscriptions bundle a flat monthly fee regardless of actual usage.
 - **Full-text search** across all conversations, with matches deep-linking straight to the message.
 - **Sharing** — send a single reply or a whole conversation transcript through the native Android share sheet.
 - **Facts & personalization** — save durable facts about yourself once, attach them to conversations that should know about them, and adjust the chat font size to taste.
+- **Persistent drafts & screen restore** — an unsent message (and any staged attachment) is saved automatically and survives the app being backgrounded, locked, or killed by the system; reopening the app returns to whichever screen you were last on instead of the conversation list.
 - **Material 3 theming** built entirely from the app icon's own palette, with a searchable in-app help screen covering all of the above.
 
 ## Tech stack

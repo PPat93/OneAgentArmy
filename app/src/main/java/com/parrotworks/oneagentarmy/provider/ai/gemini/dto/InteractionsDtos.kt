@@ -121,9 +121,13 @@ fun userInputStepWithAttachment(
 
 fun modelOutputStep(text: String): JsonObject = historyStep("model_output", text)
 
-fun functionResultStep(callId: String, result: String): JsonObject = buildJsonObject {
+fun functionResultStep(callId: String, name: String, result: String): JsonObject = buildJsonObject {
     put("type", JsonPrimitive("function_result"))
-    put("id", JsonPrimitive(callId))
+    // "call_id" (not "id") is what the Interactions API's FunctionResultStep schema
+    // actually expects - the old "id" name is silently accepted by some model versions
+    // but rejected outright ("Unknown parameter 'id'") by newer ones (e.g. Gemini 3.1).
+    put("call_id", JsonPrimitive(callId))
+    put("name", JsonPrimitive(name))
     put("result", JsonPrimitive(result))
 }
 

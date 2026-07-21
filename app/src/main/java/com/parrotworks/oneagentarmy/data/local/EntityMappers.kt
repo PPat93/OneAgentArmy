@@ -1,8 +1,10 @@
 package com.parrotworks.oneagentarmy.data.local
 
 import com.parrotworks.oneagentarmy.model.Conversation
+import com.parrotworks.oneagentarmy.model.Draft
 import com.parrotworks.oneagentarmy.model.Fact
 import com.parrotworks.oneagentarmy.model.Message
+import com.parrotworks.oneagentarmy.model.PendingAttachment
 import com.parrotworks.oneagentarmy.model.Sender
 import java.time.Instant
 
@@ -69,4 +71,36 @@ fun Fact.toEntity() = FactEntity(
     content = content,
     isGlobal = isGlobal,
     createdAt = createdAt.toEpochMilli(),
+)
+
+fun DraftEntity.toDomain() = Draft(
+    text = text,
+    attachment = when (attachmentKind) {
+        "TEXT_FILE" -> PendingAttachment.TextFile(
+            name = attachmentName.orEmpty(),
+            content = attachmentContent.orEmpty(),
+        )
+        "MEDIA" -> PendingAttachment.Media(
+            type = attachmentMediaType.orEmpty(),
+            path = attachmentPath.orEmpty(),
+            mime = attachmentMime.orEmpty(),
+            name = attachmentName.orEmpty(),
+        )
+        else -> null
+    },
+)
+
+fun Draft.toEntity(conversationId: String) = DraftEntity(
+    conversationId = conversationId,
+    text = text,
+    attachmentKind = when (attachment) {
+        is PendingAttachment.TextFile -> "TEXT_FILE"
+        is PendingAttachment.Media -> "MEDIA"
+        null -> null
+    },
+    attachmentName = attachment?.name,
+    attachmentContent = (attachment as? PendingAttachment.TextFile)?.content,
+    attachmentMediaType = (attachment as? PendingAttachment.Media)?.type,
+    attachmentPath = (attachment as? PendingAttachment.Media)?.path,
+    attachmentMime = (attachment as? PendingAttachment.Media)?.mime,
 )

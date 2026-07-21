@@ -2,10 +2,12 @@ package com.parrotworks.oneagentarmy.data.repository
 
 import com.parrotworks.oneagentarmy.data.local.AttachmentStore
 import com.parrotworks.oneagentarmy.data.local.ConversationDao
+import com.parrotworks.oneagentarmy.data.local.DraftDao
 import com.parrotworks.oneagentarmy.data.local.normalizeForSearch
 import com.parrotworks.oneagentarmy.data.local.toDomain
 import com.parrotworks.oneagentarmy.data.local.toEntity
 import com.parrotworks.oneagentarmy.model.Conversation
+import com.parrotworks.oneagentarmy.model.Draft
 import com.parrotworks.oneagentarmy.model.Message
 import com.parrotworks.oneagentarmy.model.MessageSearchResult
 import com.parrotworks.oneagentarmy.provider.ai.AiProviderRegistry
@@ -15,6 +17,7 @@ import kotlinx.coroutines.flow.map
 
 class RoomConversationRepository(
     private val dao: ConversationDao,
+    private val draftDao: DraftDao,
     private val attachmentStore: AttachmentStore,
 ) : ConversationRepository {
 
@@ -26,6 +29,17 @@ class RoomConversationRepository(
 
     override fun observeMessages(conversationId: String): Flow<List<Message>> =
         dao.observeMessages(conversationId).map { entities -> entities.map { it.toDomain() } }
+
+    override fun observeDraft(conversationId: String): Flow<Draft?> =
+        draftDao.observeDraft(conversationId).map { it?.toDomain() }
+
+    override suspend fun saveDraft(conversationId: String, draft: Draft) {
+        draftDao.upsertDraft(draft.toEntity(conversationId))
+    }
+
+    override suspend fun clearDraft(conversationId: String) {
+        draftDao.deleteDraft(conversationId)
+    }
 
     override suspend fun createConversation(id: String, title: String, modelId: String) {
         val now = Instant.now()

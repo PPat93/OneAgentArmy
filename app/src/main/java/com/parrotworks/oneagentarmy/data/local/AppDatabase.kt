@@ -6,13 +6,20 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
-    entities = [ConversationEntity::class, MessageEntity::class, FactEntity::class, ConversationFactEntity::class],
-    version = 7,
+    entities = [
+        ConversationEntity::class,
+        MessageEntity::class,
+        FactEntity::class,
+        ConversationFactEntity::class,
+        DraftEntity::class,
+    ],
+    version = 8,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun conversationDao(): ConversationDao
     abstract fun factDao(): FactDao
+    abstract fun draftDao(): DraftDao
 
     companion object {
         val MIGRATION_1_2 = object : Migration(1, 2) {
@@ -73,6 +80,22 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL(
                     "UPDATE conversations SET lastMessageAt = COALESCE(" +
                         "(SELECT MAX(timestamp) FROM messages WHERE messages.conversationId = conversations.id), createdAt)",
+                )
+            }
+        }
+
+        val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS drafts (" +
+                        "conversationId TEXT NOT NULL PRIMARY KEY, " +
+                        "text TEXT NOT NULL, " +
+                        "attachmentKind TEXT, " +
+                        "attachmentName TEXT, " +
+                        "attachmentContent TEXT, " +
+                        "attachmentMediaType TEXT, " +
+                        "attachmentPath TEXT, " +
+                        "attachmentMime TEXT)",
                 )
             }
         }
