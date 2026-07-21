@@ -90,20 +90,17 @@ private fun ChatBubbleContent(
         modifier = modifier.fillMaxWidth(),
         horizontalAlignment = if (isUser) Alignment.End else Alignment.Start,
     ) {
+        // The action icons used to live in this row, next to the bubble - which shrank the
+        // bubble's available width by however much space they took up. They're now in the
+        // footer row below instead, so the bubble alone decides its own width.
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start,
-            verticalAlignment = Alignment.Bottom,
         ) {
-            if (isUser) {
-                onResend?.let { ResendButton(it) }
-                CopyButton { clipboard.setText(AnnotatedString(message.text)) }
-                ShareButton { shareText(context, message.text) }
-            }
             Box(
                 modifier = Modifier
-                    // Grows up to the full width left over by the action icons, but
-                    // short messages stay as narrow as their content.
+                    // Grows up to the full row width, but short messages stay as narrow
+                    // as their content.
                     .weight(1f, fill = false)
                     .background(
                         color = if (isUser) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.tertiaryContainer,
@@ -130,21 +127,30 @@ private fun ChatBubbleContent(
                     }
                 }
             }
-            if (!isUser) {
-                CopyButton { clipboard.setText(AnnotatedString(message.text)) }
-                ShareButton { shareText(context, message.text) }
-            }
         }
         val timeLine = buildString {
             append(timeFormatter.format(message.timestamp))
             message.costUsd?.let { append(" · ").append(formatCostEur(it, usdToEur)) }
         }
-        Text(
-            text = timeLine,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(horizontal = 4.dp),
-        )
+        // Time/cost and the action icons share this one footer line under the bubble,
+        // on opposite sides - not full-width (that would put them at the screen edges,
+        // not the bubble's own), just sized to their own content.
+        Row(
+            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (isUser) {
+                onResend?.let { ResendButton(it) }
+                CopyButton { clipboard.setText(AnnotatedString(message.text)) }
+                ShareButton { shareText(context, message.text) }
+                Text(timeLine, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            } else {
+                Text(timeLine, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                CopyButton { clipboard.setText(AnnotatedString(message.text)) }
+                ShareButton { shareText(context, message.text) }
+            }
+        }
     }
 }
 
