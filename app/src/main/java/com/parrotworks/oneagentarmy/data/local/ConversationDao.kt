@@ -47,20 +47,24 @@ interface ConversationDao {
     @Query("SELECT SUM(costUsd) FROM messages WHERE conversationId = :conversationId")
     fun observeConversationCost(conversationId: String): Flow<Double?>
 
-    @Query("SELECT SUM(costUsd) FROM messages WHERE timestamp >= :sinceMillis")
+    @Insert
+    suspend fun insertCostEntry(entity: CostEntryEntity)
+
+    // Sourced from the independent cost_entries ledger, not messages - deleting a
+    // conversation must not un-spend money already spent generating its AI replies.
+    @Query("SELECT SUM(costUsd) FROM cost_entries WHERE timestamp >= :sinceMillis")
     fun observeCostSince(sinceMillis: Long): Flow<Double?>
 
-    @MapInfo(keyColumn = "modelId", valueColumn = "costUsd")
+    @MapInfo(keyColumn = "providerId", valueColumn = "costUsd")
     @Query(
         """
-        SELECT conversations.modelId AS modelId, SUM(messages.costUsd) AS costUsd
-        FROM messages
-        JOIN conversations ON conversations.id = messages.conversationId
-        WHERE messages.timestamp >= :sinceMillis
-        GROUP BY conversations.modelId
+        SELECT providerId, SUM(costUsd) AS costUsd
+        FROM cost_entries
+        WHERE timestamp >= :sinceMillis
+        GROUP BY providerId
         """,
     )
-    fun observeCostByModelSince(sinceMillis: Long): Flow<Map<String, Double?>>
+    fun observeCostByProviderSince(sinceMillis: Long): Flow<Map<String, Double?>>
 
     // Caller is responsible for normalizing (normalizeForSearch) and escaping %, _ and \
     // in the query (see RoomConversationRepository).

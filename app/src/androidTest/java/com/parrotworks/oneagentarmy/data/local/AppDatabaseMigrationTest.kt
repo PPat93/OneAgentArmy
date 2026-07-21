@@ -38,6 +38,40 @@ class AppDatabaseMigrationTest {
         }
     }
 
+    @Test
+    fun migrate8To9_backfillsLedgerAndSurvivesConversationDeletion() {
+        helper.createDatabase(TEST_DB_NAME, 8).apply {
+            execSQL(
+                "INSERT INTO conversations (id, title, createdAt, modelId, pinned, lastMessageAt) " +
+                    "VALUES ('convo-1', 'Test', 1000, 'gpt-4.1-nano', 0, 1000)",
+            )
+            execSQL(
+                "INSERT INTO messages (id, conversationId, sender, text, textNormalized, timestamp, costUsd) " +
+                    "VALUES ('msg-1', 'convo-1', 'AI', 'hi', 'hi', 1000, 0.05)",
+            )
+            close()
+        }
+
+        val db = helper.runMigrationsAndValidate(TEST_DB_NAME, 9, true, AppDatabase.MIGRATION_8_9)
+
+        db.query("SELECT providerId, costUsd FROM cost_entries").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals("openai", cursor.getString(0))
+            assertEquals(0.05, cursor.getDouble(1), 0.0001)
+        }
+
+        // The whole point of the ledger: deleting the conversation and its cost-bearing
+        // message (what the real app's cascading FK does at runtime - not re-tested here,
+        // that's Room's own guarantee) must not erase the money already spent from the
+        // record.
+        db.execSQL("DELETE FROM messages WHERE conversationId = 'convo-1'")
+        db.execSQL("DELETE FROM conversations WHERE id = 'convo-1'")
+        db.query("SELECT COUNT(*) FROM cost_entries").use { cursor ->
+            cursor.moveToFirst()
+            assertEquals(1, cursor.getInt(0))
+        }
+    }
+
     private companion object {
         const val TEST_DB_NAME = "migration-test-app-db"
     }
