@@ -249,6 +249,10 @@ class ChatViewModel(
     fun sendMessage(text: String) {
         val attachment = _pendingAttachment.value
         if (text.isBlank() && attachment == null) return
+        // Guards against a double-send from a rapid double-tap slipping in before the Send
+        // button's `enabled = !isSending` has recomposed - relying on the UI state alone
+        // isn't enough since both taps can land in the same frame.
+        if (_isSending.value) return
 
         viewModelScope.launch {
             _error.value = null
@@ -304,6 +308,11 @@ class ChatViewModel(
     // Retry semantics: if the message is the last one in the conversation (its AI reply
     // never arrived), just re-request the reply; otherwise re-send it as a new message.
     fun resendMessage(message: Message) {
+        // The resend button has no `enabled = !isSending` guard in the UI (unlike Send),
+        // so this is the only thing stopping a rapid double-tap from firing two requests -
+        // duplicating the message and the API cost.
+        if (_isSending.value) return
+
         viewModelScope.launch {
             _error.value = null
 

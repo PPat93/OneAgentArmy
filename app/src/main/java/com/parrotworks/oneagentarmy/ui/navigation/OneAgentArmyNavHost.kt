@@ -54,13 +54,13 @@ fun OneAgentArmyNavHost(
             ConversationListScreen(
                 viewModel = viewModel,
                 onConversationClick = { conversationId ->
-                    navController.navigate(Destinations.chatRoute(conversationId))
+                    navController.navigateSafely(Destinations.chatRoute(conversationId))
                 },
                 onNewConversation = {
-                    navController.navigate(Destinations.chatRoute(UUID.randomUUID().toString()))
+                    navController.navigateSafely(Destinations.chatRoute(UUID.randomUUID().toString()))
                 },
-                onNavigateToSettings = { navController.navigate(Destinations.SETTINGS) },
-                onNavigateToSearch = { navController.navigate(Destinations.SEARCH) },
+                onNavigateToSettings = { navController.navigateSafely(Destinations.SETTINGS) },
+                onNavigateToSearch = { navController.navigateSafely(Destinations.SEARCH) },
             )
         }
         composable(
@@ -95,8 +95,8 @@ fun OneAgentArmyNavHost(
             ChatScreen(
                 viewModel = viewModel,
                 focusMessageId = focusMessageId,
-                onBack = { navController.popBackStack() },
-                onNavigateToSettings = { navController.navigate(Destinations.SETTINGS) },
+                onBack = { navController.popBackStackSafely() },
+                onNavigateToSettings = { navController.navigateSafely(Destinations.SETTINGS) },
             )
         }
         composable(Destinations.SEARCH) {
@@ -107,9 +107,9 @@ fun OneAgentArmyNavHost(
             )
             SearchScreen(
                 viewModel = viewModel,
-                onBack = { navController.popBackStack() },
+                onBack = { navController.popBackStackSafely() },
                 onResultClick = { conversationId, messageId ->
-                    navController.navigate(Destinations.chatRoute(conversationId, focusMessageId = messageId))
+                    navController.navigateSafely(Destinations.chatRoute(conversationId, focusMessageId = messageId))
                 },
             )
         }
@@ -121,19 +121,19 @@ fun OneAgentArmyNavHost(
             )
             SettingsScreen(
                 viewModel = viewModel,
-                onBack = { navController.popBackStack() },
-                onNavigateToProviders = { navController.navigate(Destinations.SETTINGS_PROVIDERS) },
-                onNavigateToTools = { navController.navigate(Destinations.SETTINGS_TOOLS) },
-                onNavigateToFacts = { navController.navigate(Destinations.SETTINGS_FACTS) },
-                onNavigateToHelp = { navController.navigate(Destinations.SETTINGS_HELP) },
-                onNavigateToAbout = { navController.navigate(Destinations.SETTINGS_ABOUT) },
+                onBack = { navController.popBackStackSafely() },
+                onNavigateToProviders = { navController.navigateSafely(Destinations.SETTINGS_PROVIDERS) },
+                onNavigateToTools = { navController.navigateSafely(Destinations.SETTINGS_TOOLS) },
+                onNavigateToFacts = { navController.navigateSafely(Destinations.SETTINGS_FACTS) },
+                onNavigateToHelp = { navController.navigateSafely(Destinations.SETTINGS_HELP) },
+                onNavigateToAbout = { navController.navigateSafely(Destinations.SETTINGS_ABOUT) },
             )
         }
         composable(Destinations.SETTINGS_HELP) {
-            SettingsHelpScreen(onBack = { navController.popBackStack() })
+            SettingsHelpScreen(onBack = { navController.popBackStackSafely() })
         }
         composable(Destinations.SETTINGS_ABOUT) {
-            SettingsAboutScreen(onBack = { navController.popBackStack() })
+            SettingsAboutScreen(onBack = { navController.popBackStackSafely() })
         }
         composable(Destinations.SETTINGS_FACTS) {
             val viewModel: FactsViewModel = viewModel(
@@ -143,7 +143,7 @@ fun OneAgentArmyNavHost(
             )
             SettingsFactsScreen(
                 viewModel = viewModel,
-                onBack = { navController.popBackStack() },
+                onBack = { navController.popBackStackSafely() },
             )
         }
         composable(Destinations.SETTINGS_PROVIDERS) {
@@ -154,7 +154,7 @@ fun OneAgentArmyNavHost(
             )
             SettingsProvidersScreen(
                 viewModel = viewModel,
-                onBack = { navController.popBackStack() },
+                onBack = { navController.popBackStackSafely() },
             )
         }
         composable(Destinations.SETTINGS_TOOLS) {
@@ -165,7 +165,7 @@ fun OneAgentArmyNavHost(
             )
             SettingsToolsScreen(
                 viewModel = viewModel,
-                onBack = { navController.popBackStack() },
+                onBack = { navController.popBackStackSafely() },
             )
         }
     }
