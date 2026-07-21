@@ -20,6 +20,9 @@ interface SettingsRepository {
     fun observeAppLockEnabled(): Flow<Boolean>
     suspend fun setAppLockEnabled(enabled: Boolean)
 
+    fun observeSpendingThresholdEur(): Flow<Double?>
+    suspend fun setSpendingThresholdEur(thresholdEur: Double?)
+
     companion object {
         // Active AI provider's hosted web search (e.g. OpenAI's web_search tool).
         const val SEARCH_PROVIDER_BUILT_IN = "provider"

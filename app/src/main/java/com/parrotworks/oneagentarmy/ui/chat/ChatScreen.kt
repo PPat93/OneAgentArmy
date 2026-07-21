@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -62,6 +63,7 @@ import com.parrotworks.oneagentarmy.provider.ai.AiProviderRegistry
 import com.parrotworks.oneagentarmy.tools.calendar.CalendarIntentBuilder
 import com.parrotworks.oneagentarmy.ui.components.WaveLoadingIndicator
 import com.parrotworks.oneagentarmy.ui.components.formatCostEur
+import com.parrotworks.oneagentarmy.ui.components.shareText
 import com.parrotworks.oneagentarmy.tools.calendar.buildOpenCalendarIntent
 import com.parrotworks.oneagentarmy.tools.clock.buildAlarmIntent
 import com.parrotworks.oneagentarmy.tools.clock.buildTimerIntent
@@ -98,6 +100,23 @@ private fun readTextAttachment(context: Context, uri: Uri): Pair<String, String>
         ?: throw IOException("Cannot open attachment")
     return name to content
 }
+
+private fun buildConversationTranscript(
+    title: String,
+    messages: List<Message>,
+    youLabel: String,
+    aiLabel: String,
+    attachmentPlaceholder: String,
+): String = buildString {
+    appendLine(title)
+    appendLine()
+    messages.forEach { message ->
+        val speaker = if (message.sender == Sender.USER) youLabel else aiLabel
+        val text = message.text.ifBlank { attachmentPlaceholder }
+        appendLine("$speaker: $text")
+        appendLine()
+    }
+}.trimEnd()
 
 // List rows for the chat LazyColumn: messages interleaved with day separators.
 private sealed interface ChatListItem {
@@ -148,6 +167,10 @@ fun ChatScreen(
     var factsMenuExpanded by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
     val attachContext = LocalContext.current
+    val shareTranscriptTitle = conversationTitle ?: stringResource(R.string.new_conversation)
+    val shareYouLabel = stringResource(R.string.share_transcript_you)
+    val shareAiLabel = stringResource(R.string.share_transcript_ai)
+    val shareAttachmentPlaceholder = stringResource(R.string.share_transcript_attachment)
     val attachLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) {
             runCatching { readTextAttachment(attachContext, uri) }
@@ -218,6 +241,23 @@ fun ChatScreen(
                     }
                 },
                 actions = {
+                    IconButton(
+                        onClick = {
+                            shareText(
+                                attachContext,
+                                buildConversationTranscript(
+                                    shareTranscriptTitle,
+                                    messages,
+                                    shareYouLabel,
+                                    shareAiLabel,
+                                    shareAttachmentPlaceholder,
+                                ),
+                            )
+                        },
+                        enabled = messages.isNotEmpty(),
+                    ) {
+                        Icon(Icons.Default.Share, contentDescription = stringResource(R.string.share_conversation))
+                    }
                     Box {
                         IconButton(onClick = { factsMenuExpanded = true }) {
                             Icon(

@@ -40,6 +40,9 @@ class ConversationListViewModel(
         LocalDate.now().withDayOfMonth(1).atStartOfDay(ZoneId.systemDefault()).toInstant(),
     ).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
+    val spendingThresholdEur: StateFlow<Double?> = settingsRepository.observeSpendingThresholdEur()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
     fun setActiveProvider(providerId: String) {
         viewModelScope.launch { settingsRepository.setActiveProvider(providerId) }
     }

@@ -38,6 +38,9 @@ class SettingsViewModel(
     val appLockEnabled: StateFlow<Boolean> = repository.observeAppLockEnabled()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
+    val spendingThresholdEur: StateFlow<Double?> = repository.observeSpendingThresholdEur()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
     fun saveApiKey(providerId: String, key: String) {
         if (key.isBlank()) return
         viewModelScope.launch { repository.saveApiKey(providerId, key) }
@@ -61,5 +64,9 @@ class SettingsViewModel(
 
     fun setAppLockEnabled(enabled: Boolean) {
         viewModelScope.launch { repository.setAppLockEnabled(enabled) }
+    }
+
+    fun setSpendingThresholdEur(thresholdEur: Double?) {
+        viewModelScope.launch { repository.setSpendingThresholdEur(thresholdEur) }
     }
 }

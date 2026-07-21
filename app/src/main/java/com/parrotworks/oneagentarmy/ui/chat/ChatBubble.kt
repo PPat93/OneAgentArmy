@@ -13,6 +13,7 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -24,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.res.stringResource
@@ -41,6 +43,7 @@ import com.parrotworks.oneagentarmy.model.Message
 import com.parrotworks.oneagentarmy.model.Sender
 import com.parrotworks.oneagentarmy.ui.components.AttachmentImage
 import com.parrotworks.oneagentarmy.ui.components.formatCostEur
+import com.parrotworks.oneagentarmy.ui.components.shareText
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -82,6 +85,7 @@ private fun ChatBubbleContent(
     resolveAttachmentPath: (String) -> String,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     Column(
         modifier = modifier.fillMaxWidth(),
         horizontalAlignment = if (isUser) Alignment.End else Alignment.Start,
@@ -94,6 +98,7 @@ private fun ChatBubbleContent(
             if (isUser) {
                 onResend?.let { ResendButton(it) }
                 CopyButton { clipboard.setText(AnnotatedString(message.text)) }
+                ShareButton { shareText(context, message.text) }
             }
             Box(
                 modifier = Modifier
@@ -127,6 +132,7 @@ private fun ChatBubbleContent(
             }
             if (!isUser) {
                 CopyButton { clipboard.setText(AnnotatedString(message.text)) }
+                ShareButton { shareText(context, message.text) }
             }
         }
         val timeLine = buildString {
@@ -193,6 +199,18 @@ private fun CopyButton(onClick: () -> Unit) {
         Icon(
             Icons.Default.ContentCopy,
             contentDescription = stringResource(R.string.copy_message),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(16.dp),
+        )
+    }
+}
+
+@Composable
+private fun ShareButton(onClick: () -> Unit) {
+    IconButton(onClick = onClick, modifier = Modifier.size(32.dp)) {
+        Icon(
+            Icons.Default.Share,
+            contentDescription = stringResource(R.string.share),
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(16.dp),
         )

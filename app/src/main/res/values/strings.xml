@@ -13,6 +13,11 @@
     <string name="pin">Pin</string>
     <string name="unpin">Unpin</string>
     <string name="copy_message">Copy message</string>
+    <string name="share">Share</string>
+    <string name="share_conversation">Share conversation</string>
+    <string name="share_transcript_you">You</string>
+    <string name="share_transcript_ai">AI</string>
+    <string name="share_transcript_attachment">[attachment]</string>
     <string name="resend_message">Resend message</string>
     <string name="search">Search</string>
     <string name="search_hint">Search messages…</string>
@@ -121,6 +126,12 @@
     <string name="app_lock_unavailable">Set a screen lock (PIN, pattern, fingerprint…) on your device to use this</string>
     <string name="app_lock_prompt_title">Unlock OneAgentArmy</string>
     <string name="app_lock_unlock_button">Unlock</string>
+    <string name="spending_threshold_title">Spending threshold</string>
+    <string name="spending_threshold_unset">Not set - the monthly total is always shown in the normal color</string>
+    <string name="spending_threshold_set">Warns above €%1$s / month</string>
+    <string name="spending_threshold_dialog_title">Monthly spending threshold</string>
+    <string name="spending_threshold_field_label">Amount in EUR</string>
+    <string name="spending_threshold_clear">Clear</string>
 
     <string name="help_section_providers_title">AI providers and models</string>
     <string name="help_section_providers_body">The app supports three providers: OpenAI (ChatGPT), Google (Gemini), and Anthropic (Claude). Each offers three models, from cheapest to most capable. Switch the active provider on the main screen or in Settings; the model is chosen per conversation in the chat screen (defaults to the cheapest available).</string>
@@ -129,7 +140,7 @@
     <string name="help_section_keys_body">Each provider needs its own API key, entered in Settings → AI providers. Keys are encrypted locally (Android Keystore) and never leave the phone except in direct calls to that provider\'s servers — this app has no backend of its own.</string>
 
     <string name="help_section_costs_title">Costs</string>
-    <string name="help_section_costs_body">Below each AI reply, under the conversation title, and on the main screen you\'ll see an estimated cost in euros. It\'s an approximation based on the provider\'s pricing and the daily EUR/USD rate — it doesn\'t account for hosted search fees (billed per query) or cache discounts.</string>
+    <string name="help_section_costs_body">Below each AI reply, under the conversation title, and on the main screen you\'ll see an estimated cost in euros. It\'s an approximation based on the provider\'s pricing and the daily EUR/USD rate — it doesn\'t account for hosted search fees (billed per query) or cache discounts. You can set a monthly spending threshold in Settings — the total on the main screen turns red once you cross it. The monthly total isn\'t a separate counter — it\'s the sum of that calendar month\'s messages, so it automatically goes back to zero at midnight on the 1st of each month (your phone\'s local time); there\'s no manual reset.</string>
 
     <string name="help_section_facts_title">Context facts</string>
     <string name="help_section_facts_body">In Settings → Context facts you can save information about yourself for the AI to know — global facts (visible in every conversation) or facts picked per conversation from the chat screen.</string>
@@ -144,10 +155,13 @@
     <string name="help_section_context_body">Every message you send carries the last 20 messages of that conversation, so the AI remembers what was said. This also means an attached file or photo is resent with every following message as long as it\'s within those 20 — and counted toward the cost each time.</string>
 
     <string name="help_section_personalization_title">Personalization</string>
-    <string name="help_section_personalization_body">In Settings you can change the chat font size (Small/Normal/Large/Extra large).</string>
+    <string name="help_section_personalization_body">In Settings you can change the chat font size (Small/Normal/Large/Extra large). You can also require your fingerprint, face, or screen lock to open the app (Settings → App lock).</string>
 
     <string name="help_section_conversations_title">Managing conversations</string>
     <string name="help_section_conversations_body">On the main screen: the magnifying glass searches the text of all conversations; long-press a conversation tile to rename, delete (individually or in bulk), or pin it. Conversations are sorted by their most recent message, with pinned ones always on top.</string>
+
+    <string name="help_section_sharing_title">Sharing</string>
+    <string name="help_section_sharing_body">Tap the share icon next to Copy on any message to send it elsewhere. The share icon in the chat\'s top bar sends the whole conversation as a plain-text transcript.</string>
     <string name="fact_new_title">New fact</string>
     <string name="fact_edit_title">Edit fact</string>
     <string name="fact_title_label">Title</string>

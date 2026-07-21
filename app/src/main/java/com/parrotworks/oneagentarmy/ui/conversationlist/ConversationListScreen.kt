@@ -76,6 +76,7 @@ fun ConversationListScreen(
     val activeProvider by viewModel.activeProvider.collectAsState()
     val monthlyCost by viewModel.monthlyCost.collectAsState()
     val usdToEur by viewModel.usdToEur.collectAsState()
+    val spendingThresholdEur by viewModel.spendingThresholdEur.collectAsState()
     var renameDialogFor by remember { mutableStateOf<Conversation?>(null) }
     var deleteDialogFor by remember { mutableStateOf<Conversation?>(null) }
     var selectionMode by remember { mutableStateOf(false) }
@@ -118,10 +119,15 @@ fun ConversationListScreen(
                         Column {
                             Text(stringResource(R.string.app_name))
                             monthlyCost?.takeIf { it > 0.0 }?.let { cost ->
+                                val isOverThreshold = spendingThresholdEur?.let { cost * usdToEur >= it } ?: false
                                 Text(
                                     text = stringResource(R.string.monthly_cost_label, formatCostEur(cost, usdToEur)),
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    color = if (isOverThreshold) {
+                                        MaterialTheme.colorScheme.error
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                    },
                                 )
                             }
                         }

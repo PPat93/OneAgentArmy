@@ -13,6 +13,11 @@
     <string name="pin">Przypnij</string>
     <string name="unpin">Odepnij</string>
     <string name="copy_message">Kopiuj wiadomość</string>
+    <string name="share">Udostępnij</string>
+    <string name="share_conversation">Udostępnij rozmowę</string>
+    <string name="share_transcript_you">Ty</string>
+    <string name="share_transcript_ai">AI</string>
+    <string name="share_transcript_attachment">[załącznik]</string>
     <string name="resend_message">Wyślij ponownie</string>
     <string name="search">Szukaj</string>
     <string name="search_hint">Szukaj w wiadomościach…</string>
@@ -121,6 +126,12 @@
     <string name="app_lock_unavailable">Ustaw blokadę ekranu (PIN, wzór, odcisk palca…) na urządzeniu, żeby z tego skorzystać</string>
     <string name="app_lock_prompt_title">Odblokuj OneAgentArmy</string>
     <string name="app_lock_unlock_button">Odblokuj</string>
+    <string name="spending_threshold_title">Próg wydatków</string>
+    <string name="spending_threshold_unset">Nie ustawiono - kwota miesięczna zawsze w normalnym kolorze</string>
+    <string name="spending_threshold_set">Ostrzega powyżej €%1$s / miesiąc</string>
+    <string name="spending_threshold_dialog_title">Miesięczny próg wydatków</string>
+    <string name="spending_threshold_field_label">Kwota w EUR</string>
+    <string name="spending_threshold_clear">Wyczyść</string>
 
     <string name="help_section_providers_title">Dostawcy AI i modele</string>
     <string name="help_section_providers_body">Apka obsługuje trzech dostawców: OpenAI (ChatGPT), Google (Gemini) i Anthropic (Claude). Każdy ma trzy modele — od najtańszego po najmocniejszy. Aktywnego dostawcę przełączasz na głównym ekranie lub w Ustawieniach; model wybierasz osobno dla każdej rozmowy w czacie (domyślnie najtańszy dostępny).</string>
@@ -129,7 +140,7 @@
     <string name="help_section_keys_body">Do każdego dostawcy potrzebny jest własny klucz API — wpisujesz go w Ustawieniach → Dostawcy AI. Klucze są szyfrowane lokalnie (Android Keystore) i nigdy nie opuszczają telefonu poza bezpośrednim połączeniem z serwerem danego dostawcy — ta apka nie ma własnego backendu.</string>
 
     <string name="help_section_costs_title">Koszty</string>
-    <string name="help_section_costs_body">Pod każdą odpowiedzią AI, pod tytułem rozmowy i na głównym ekranie widzisz szacunkowy koszt w euro. To przybliżenie liczone z cennika dostawcy i dziennego kursu EUR/USD — nie uwzględnia opłat za wbudowane wyszukiwanie (liczone per zapytanie) ani zniżek za cache.</string>
+    <string name="help_section_costs_body">Pod każdą odpowiedzią AI, pod tytułem rozmowy i na głównym ekranie widzisz szacunkowy koszt w euro. To przybliżenie liczone z cennika dostawcy i dziennego kursu EUR/USD — nie uwzględnia opłat za wbudowane wyszukiwanie (liczone per zapytanie) ani zniżek za cache. W Ustawieniach możesz ustawić miesięczny próg wydatków — suma na głównym ekranie zmieni się na czerwoną po jego przekroczeniu. Suma miesięczna to nie osobny licznik — to zsumowane wiadomości z bieżącego miesiąca kalendarzowego, więc sama wraca do zera o północy 1. dnia każdego miesiąca (czas lokalny telefonu); nie da się jej wyzerować ręcznie.</string>
 
     <string name="help_section_facts_title">Fakty kontekstowe</string>
     <string name="help_section_facts_body">W Ustawieniach → Fakty kontekstowe możesz zapisać informacje o sobie, które AI ma znać — globalne (widoczne we wszystkich rozmowach) albo wybierane osobno dla każdej rozmowy z poziomu czatu.</string>
@@ -144,10 +155,13 @@
     <string name="help_section_context_body">Każda wysłana wiadomość niesie ze sobą ostatnie 20 wiadomości z tej rozmowy — dzięki temu AI pamięta, o czym była mowa. To oznacza też, że raz załączony plik czy zdjęcie jest wysyłane ponownie przy każdej kolejnej wiadomości, dopóki mieści się w tych 20 — i za każdym razem wlicza się do kosztu.</string>
 
     <string name="help_section_personalization_title">Personalizacja</string>
-    <string name="help_section_personalization_body">W Ustawieniach możesz zmienić wielkość czcionki w czacie (Mała/Normalna/Duża/Bardzo duża).</string>
+    <string name="help_section_personalization_body">W Ustawieniach możesz zmienić wielkość czcionki w czacie (Mała/Normalna/Duża/Bardzo duża). Możesz też wymagać odcisku palca, twarzy albo blokady ekranu przy otwieraniu apki (Ustawienia → Blokada aplikacji).</string>
 
     <string name="help_section_conversations_title">Zarządzanie rozmowami</string>
     <string name="help_section_conversations_body">Na głównym ekranie: szkło powiększające otwiera wyszukiwanie po treści wszystkich rozmów, długie przytrzymanie kafelka rozmowy pozwala zmienić nazwę, usunąć (pojedynczo albo grupowo) albo przypiąć. Rozmowy sortowane są wg czasu ostatniej wiadomości, a przypięte są zawsze na górze.</string>
+
+    <string name="help_section_sharing_title">Udostępnianie</string>
+    <string name="help_section_sharing_body">Dotknij ikony udostępniania obok Kopiuj przy dowolnej wiadomości, żeby wysłać ją gdzie indziej. Ikona udostępniania w pasku górnym czatu wysyła całą rozmowę jako zwykły tekst.</string>
     <string name="fact_new_title">Nowy fakt</string>
     <string name="fact_edit_title">Edytuj fakt</string>
     <string name="fact_title_label">Tytuł</string>
