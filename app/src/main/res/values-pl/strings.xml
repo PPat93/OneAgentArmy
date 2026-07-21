@@ -118,6 +118,9 @@
 
     <string name="settings_help_title">Co potrafi ta apka?</string>
     <string name="settings_help_subtitle">Krótki przewodnik po funkcjach</string>
+    <string name="settings_help_search_hint">Szukaj w pomocy…</string>
+    <string name="settings_help_search_clear">Wyczyść wyszukiwanie</string>
+    <string name="settings_help_search_empty">Nie znaleziono pasujących tematów.</string>
     <string name="settings_about_title">O aplikacji</string>
     <string name="settings_about_subtitle">Kto to zrobił</string>
     <string name="app_credit">ParroT woRKs by Piotr Paterek</string>

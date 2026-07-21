@@ -118,6 +118,9 @@
 
     <string name="settings_help_title">What can this app do?</string>
     <string name="settings_help_subtitle">A quick guide to the features</string>
+    <string name="settings_help_search_hint">Search help topics…</string>
+    <string name="settings_help_search_clear">Clear search</string>
+    <string name="settings_help_search_empty">No matching topics found.</string>
     <string name="settings_about_title">About</string>
     <string name="settings_about_subtitle">Who made this</string>
     <string name="app_credit">ParroT woRKs by Piotr Paterek</string>
