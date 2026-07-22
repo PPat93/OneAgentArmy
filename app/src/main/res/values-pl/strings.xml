@@ -124,6 +124,7 @@
     <string name="context_window_size_dialog_explanation">Ile poprzednich wiadomości wysyłać ponownie jako kontekst przy każdej nowej wiadomości, domyślnie. Można nadpisać dla pojedynczej rozmowy.</string>
     <string name="context_window_size_field_label">Liczba wiadomości</string>
     <string name="context_window_size_warning">Duże okno kontekstu wysyła sporo historii (i ewentualny załącznik nadal w zasięgu) przy każdej wiadomości - to może podnieść koszt.</string>
+    <string name="context_window_size_max_exceeded">Maksimum to %1$d wiadomości.</string>
     <string name="context_window_override_dialog_title">Okno kontekstu dla tej rozmowy</string>
     <string name="context_window_override_dialog_explanation">Aktualnie używane %1$d wiadomości kontekstu. Ustaw liczbę, żeby nadpisać tylko tę rozmowę, albo użyj domyślnej.</string>
     <string name="context_window_override_use_default">Użyj domyślnej</string>

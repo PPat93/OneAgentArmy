@@ -34,5 +34,9 @@ interface SettingsRepository {
         // Number of previous messages resent as context on every new message - matches
         // the value this was hardcoded to before it became configurable.
         const val DEFAULT_CONTEXT_WINDOW_SIZE = 20
+
+        // Hard ceiling on both the global default and any per-conversation override -
+        // guards against a fat-fingered value (an extra zero or two), not a real use case.
+        const val MAX_CONTEXT_WINDOW_SIZE = 10_000
     }
 }

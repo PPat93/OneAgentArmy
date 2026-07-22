@@ -41,6 +41,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.parrotworks.oneagentarmy.R
+import com.parrotworks.oneagentarmy.data.repository.SettingsRepository
 import com.parrotworks.oneagentarmy.ui.lock.canUseAppLock
 
 // A number above this is still allowed (open field, not a hard cap) but shown with a cost
@@ -265,8 +266,13 @@ private fun ContextWindowSizeDialog(
                     label = { Text(stringResource(R.string.context_window_size_field_label)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 )
-                if ((parsed ?: 0) > CONTEXT_WINDOW_WARNING_THRESHOLD) {
-                    Text(
+                when {
+                    (parsed ?: 0) > SettingsRepository.MAX_CONTEXT_WINDOW_SIZE -> Text(
+                        stringResource(R.string.context_window_size_max_exceeded, SettingsRepository.MAX_CONTEXT_WINDOW_SIZE),
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    (parsed ?: 0) > CONTEXT_WINDOW_WARNING_THRESHOLD -> Text(
                         stringResource(R.string.context_window_size_warning),
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall,
@@ -276,8 +282,8 @@ private fun ContextWindowSizeDialog(
         },
         confirmButton = {
             TextButton(
-                onClick = { parsed?.takeIf { it > 0 }?.let(onConfirm) },
-                enabled = parsed != null && parsed > 0,
+                onClick = { parsed?.takeIf { it in 1..SettingsRepository.MAX_CONTEXT_WINDOW_SIZE }?.let(onConfirm) },
+                enabled = parsed != null && parsed in 1..SettingsRepository.MAX_CONTEXT_WINDOW_SIZE,
             ) {
                 Text(stringResource(R.string.save))
             }

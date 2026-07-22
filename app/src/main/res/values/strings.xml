@@ -124,6 +124,7 @@
     <string name="context_window_size_dialog_explanation">How many previous messages get resent as context on every new message, by default. Can be overridden per conversation.</string>
     <string name="context_window_size_field_label">Number of messages</string>
     <string name="context_window_size_warning">A large context window resends a lot of history (and any attachment still in range) on every message - this can add up in cost.</string>
+    <string name="context_window_size_max_exceeded">Maximum is %1$d messages.</string>
     <string name="context_window_override_dialog_title">Context window for this conversation</string>
     <string name="context_window_override_dialog_explanation">Currently using %1$d messages of context. Set a number to override just this conversation, or use the default.</string>
     <string name="context_window_override_use_default">Use default</string>

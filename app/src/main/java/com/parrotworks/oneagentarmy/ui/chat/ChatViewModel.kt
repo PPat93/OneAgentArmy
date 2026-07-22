@@ -353,6 +353,10 @@ class ChatViewModel(
                     factRepository.setFactSelected(conversationId, factId, true)
                 }
                 pendingFactIds.value = emptySet()
+                // Persist a context window override chosen before the conversation row existed.
+                pendingContextWindowOverride.value?.let { override ->
+                    repository.setContextWindowOverride(conversationId, override)
+                }
             }
 
             val userMessage = Message(

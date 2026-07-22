@@ -61,6 +61,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.parrotworks.oneagentarmy.R
+import com.parrotworks.oneagentarmy.data.repository.SettingsRepository
 import com.parrotworks.oneagentarmy.model.PendingAttachment
 import com.parrotworks.oneagentarmy.model.Sender
 import com.parrotworks.oneagentarmy.provider.ai.AiProviderRegistry
@@ -544,8 +545,13 @@ private fun ContextWindowOverrideDialog(
                     label = { Text(stringResource(R.string.context_window_size_field_label)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 )
-                if ((parsed ?: 0) > CONTEXT_WINDOW_WARNING_THRESHOLD) {
-                    Text(
+                when {
+                    (parsed ?: 0) > SettingsRepository.MAX_CONTEXT_WINDOW_SIZE -> Text(
+                        stringResource(R.string.context_window_size_max_exceeded, SettingsRepository.MAX_CONTEXT_WINDOW_SIZE),
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    (parsed ?: 0) > CONTEXT_WINDOW_WARNING_THRESHOLD -> Text(
                         stringResource(R.string.context_window_size_warning),
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall,
@@ -555,8 +561,8 @@ private fun ContextWindowOverrideDialog(
         },
         confirmButton = {
             TextButton(
-                onClick = { parsed?.takeIf { it > 0 }?.let { onConfirm(it) } },
-                enabled = parsed != null && parsed > 0,
+                onClick = { parsed?.takeIf { it in 1..SettingsRepository.MAX_CONTEXT_WINDOW_SIZE }?.let { onConfirm(it) } },
+                enabled = parsed != null && parsed in 1..SettingsRepository.MAX_CONTEXT_WINDOW_SIZE,
             ) {
                 Text(stringResource(R.string.save))
             }
