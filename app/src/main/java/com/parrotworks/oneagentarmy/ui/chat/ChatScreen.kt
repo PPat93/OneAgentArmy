@@ -25,8 +25,10 @@ import androidx.compose.material.icons.filled.AttachFile
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -55,6 +57,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.parrotworks.oneagentarmy.R
@@ -164,8 +167,11 @@ fun ChatScreen(
     val selectedFactIds by viewModel.selectedFactIds.collectAsState()
     val pendingAttachment by viewModel.pendingAttachment.collectAsState()
     val inputText by viewModel.draftText.collectAsState()
+    val contextWindowOverride by viewModel.contextWindowOverride.collectAsState()
+    val effectiveContextWindowSize by viewModel.effectiveContextWindowSize.collectAsState()
     var modelMenuExpanded by remember { mutableStateOf(false) }
     var factsMenuExpanded by remember { mutableStateOf(false) }
+    var contextWindowDialogVisible by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
     val attachContext = LocalContext.current
     val shareTranscriptTitle = conversationTitle ?: stringResource(R.string.new_conversation)
@@ -299,6 +305,17 @@ fun ChatScreen(
                                 }
                             }
                         }
+                    }
+                    IconButton(onClick = { contextWindowDialogVisible = true }) {
+                        Icon(
+                            Icons.Default.History,
+                            contentDescription = stringResource(R.string.context_window_size_title),
+                            tint = if (contextWindowOverride == null) {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            } else {
+                                MaterialTheme.colorScheme.primary
+                            },
+                        )
                     }
                     Box {
                         TextButton(onClick = { modelMenuExpanded = true }) {
@@ -482,6 +499,77 @@ fun ChatScreen(
             }
         }
     }
+
+    if (contextWindowDialogVisible) {
+        ContextWindowOverrideDialog(
+            override = contextWindowOverride,
+            effectiveSize = effectiveContextWindowSize,
+            onDismiss = { contextWindowDialogVisible = false },
+            onConfirm = { value ->
+                viewModel.setContextWindowOverride(value)
+                contextWindowDialogVisible = false
+            },
+        )
+    }
+}
+
+// Same warning threshold as the global default in Settings - a long context window means
+// more resent tokens, and resent attachments are re-billed on every turn until they age
+// out of the window.
+private const val CONTEXT_WINDOW_WARNING_THRESHOLD = 200
+
+@Composable
+private fun ContextWindowOverrideDialog(
+    override: Int?,
+    effectiveSize: Int,
+    onDismiss: () -> Unit,
+    onConfirm: (Int?) -> Unit,
+) {
+    var text by remember { mutableStateOf((override ?: effectiveSize).toString()) }
+    val parsed = text.toIntOrNull()
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.context_window_override_dialog_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    stringResource(R.string.context_window_override_dialog_explanation, effectiveSize),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                OutlinedTextField(
+                    value = text,
+                    onValueChange = { text = it },
+                    singleLine = true,
+                    label = { Text(stringResource(R.string.context_window_size_field_label)) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                )
+                if ((parsed ?: 0) > CONTEXT_WINDOW_WARNING_THRESHOLD) {
+                    Text(
+                        stringResource(R.string.context_window_size_warning),
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { parsed?.takeIf { it > 0 }?.let { onConfirm(it) } },
+                enabled = parsed != null && parsed > 0,
+            ) {
+                Text(stringResource(R.string.save))
+            }
+        },
+        dismissButton = {
+            Row {
+                TextButton(onClick = { onConfirm(null) }) {
+                    Text(stringResource(R.string.context_window_override_use_default))
+                }
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
+            }
+        },
+    )
 }
 
 private data class PendingActionUi(

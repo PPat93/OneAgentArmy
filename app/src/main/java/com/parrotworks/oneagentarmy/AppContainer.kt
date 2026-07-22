@@ -19,8 +19,6 @@ import com.parrotworks.oneagentarmy.data.repository.SettingsRepository
 import com.parrotworks.oneagentarmy.provider.ai.AiProvider
 import com.parrotworks.oneagentarmy.provider.ai.AiProviderRegistry
 import com.parrotworks.oneagentarmy.provider.ai.AttachmentReader
-import com.parrotworks.oneagentarmy.provider.ai.ContextWindowStrategies
-import com.parrotworks.oneagentarmy.provider.ai.ContextWindowStrategy
 import com.parrotworks.oneagentarmy.provider.ai.RoutingAiProvider
 import com.parrotworks.oneagentarmy.provider.ai.anthropic.AnthropicApiClient
 import com.parrotworks.oneagentarmy.provider.ai.anthropic.AnthropicProvider
@@ -56,6 +54,7 @@ class AppContainer(context: Context) {
             AppDatabase.MIGRATION_6_7,
             AppDatabase.MIGRATION_7_8,
             AppDatabase.MIGRATION_8_9,
+            AppDatabase.MIGRATION_9_10,
         )
         .build()
 
@@ -132,6 +131,4 @@ class AppContainer(context: Context) {
             ),
         ),
     )
-
-    val contextWindowStrategy: ContextWindowStrategy = ContextWindowStrategies.lastN(20)
 }

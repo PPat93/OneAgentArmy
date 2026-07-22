@@ -33,7 +33,6 @@ class MainActivity : FragmentActivity() {
                             settingsRepository = container.settingsRepository,
                             factRepository = container.factRepository,
                             aiProvider = container.aiProvider,
-                            contextWindowStrategy = container.contextWindowStrategy,
                             exchangeRateRepository = container.exchangeRateRepository,
                             attachmentStore = container.attachmentStore,
                             navController = navController,

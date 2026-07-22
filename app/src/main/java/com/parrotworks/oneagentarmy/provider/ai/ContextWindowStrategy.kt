@@ -7,8 +7,6 @@ fun interface ContextWindowStrategy {
 }
 
 object ContextWindowStrategies {
-    val FullHistory = ContextWindowStrategy { it }
-
     fun lastN(n: Int) = ContextWindowStrategy { history ->
         if (history.size <= n) history else history.takeLast(n)
     }

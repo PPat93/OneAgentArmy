@@ -19,7 +19,7 @@ import com.parrotworks.oneagentarmy.provider.ai.AiProvider
 import com.parrotworks.oneagentarmy.provider.ai.AiProviderException
 import com.parrotworks.oneagentarmy.provider.ai.AiProviderRegistry
 import com.parrotworks.oneagentarmy.provider.ai.AiReply
-import com.parrotworks.oneagentarmy.provider.ai.ContextWindowStrategy
+import com.parrotworks.oneagentarmy.provider.ai.ContextWindowStrategies
 import com.parrotworks.oneagentarmy.provider.ai.TokenUsage
 import com.parrotworks.oneagentarmy.provider.ai.tools.ToolCallRequest
 import com.parrotworks.oneagentarmy.tools.calendar.CREATE_CALENDAR_EVENT_TOOL
@@ -87,7 +87,6 @@ class ChatViewModel(
     private val settingsRepository: SettingsRepository,
     private val factRepository: FactRepository,
     private val aiProvider: AiProvider,
-    private val contextWindowStrategy: ContextWindowStrategy,
     private val exchangeRateRepository: ExchangeRateRepository,
     private val attachmentStore: AttachmentStore,
 ) : ViewModel() {
@@ -158,6 +157,34 @@ class ChatViewModel(
             } else {
                 pendingFactIds.value =
                     if (currentlySelected) pendingFactIds.value - factId else pendingFactIds.value + factId
+            }
+        }
+    }
+
+    // Override chosen before the conversation exists in the database - same trick as
+    // pendingModel/pendingFactIds.
+    private val pendingContextWindowOverride = MutableStateFlow<Int?>(null)
+
+    // Null means "use the global default" - surfaced as-is so the UI can show either the
+    // explicit override or a "default (N)" placeholder.
+    val contextWindowOverride: StateFlow<Int?> = combine(
+        repository.observeConversation(conversationId),
+        pendingContextWindowOverride,
+    ) { conversation, pending ->
+        if (conversation != null) conversation.contextWindowOverride else pending
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    val effectiveContextWindowSize: StateFlow<Int> = combine(
+        contextWindowOverride,
+        settingsRepository.observeContextWindowSize(),
+    ) { override, globalDefault -> override ?: globalDefault }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsRepository.DEFAULT_CONTEXT_WINDOW_SIZE)
+
+    fun setContextWindowOverride(value: Int?) {
+        viewModelScope.launch {
+            pendingContextWindowOverride.value = value
+            if (repository.observeConversation(conversationId).first() != null) {
+                repository.setContextWindowOverride(conversationId, value)
             }
         }
     }
@@ -405,7 +432,7 @@ class ChatViewModel(
     private suspend fun requestAiReply(history: List<Message>, modelId: String, selectedIds: Set<String>) {
         _isSending.value = true
         try {
-            val historyToSend = contextWindowStrategy.apply(history)
+            val historyToSend = ContextWindowStrategies.lastN(effectiveContextWindowSize.value).apply(history)
             when (val reply = aiProvider.sendMessage(historyToSend, modelId, activeFactContents(selectedIds))) {
                 is AiReply.Text -> repository.addMessage(conversationId, reply.message)
                 is AiReply.ToolCall -> {

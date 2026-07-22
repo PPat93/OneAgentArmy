@@ -72,6 +72,30 @@ class AppDatabaseMigrationTest {
         }
     }
 
+    @Test
+    fun migrate9To10_existingConversationsDefaultToNullMeaningUseGlobalSetting() {
+        helper.createDatabase(TEST_DB_NAME, 9).apply {
+            execSQL(
+                "INSERT INTO conversations (id, title, createdAt, modelId, pinned, lastMessageAt) " +
+                    "VALUES ('convo-1', 'Test', 1000, 'gpt-4.1-nano', 0, 1000)",
+            )
+            close()
+        }
+
+        val db = helper.runMigrationsAndValidate(TEST_DB_NAME, 10, true, AppDatabase.MIGRATION_9_10)
+
+        db.query("SELECT contextWindowOverride FROM conversations WHERE id = 'convo-1'").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertTrue(cursor.isNull(0))
+        }
+
+        db.execSQL("UPDATE conversations SET contextWindowOverride = 50 WHERE id = 'convo-1'")
+        db.query("SELECT contextWindowOverride FROM conversations WHERE id = 'convo-1'").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals(50, cursor.getInt(0))
+        }
+    }
+
     private companion object {
         const val TEST_DB_NAME = "migration-test-app-db"
     }

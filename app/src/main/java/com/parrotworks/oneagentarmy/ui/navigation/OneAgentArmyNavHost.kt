@@ -16,7 +16,6 @@ import com.parrotworks.oneagentarmy.data.repository.ExchangeRateRepository
 import com.parrotworks.oneagentarmy.data.repository.FactRepository
 import com.parrotworks.oneagentarmy.data.repository.SettingsRepository
 import com.parrotworks.oneagentarmy.provider.ai.AiProvider
-import com.parrotworks.oneagentarmy.provider.ai.ContextWindowStrategy
 import com.parrotworks.oneagentarmy.ui.chat.ChatScreen
 import com.parrotworks.oneagentarmy.ui.chat.ChatViewModel
 import com.parrotworks.oneagentarmy.ui.conversationlist.ConversationListScreen
@@ -25,6 +24,7 @@ import com.parrotworks.oneagentarmy.ui.search.SearchScreen
 import com.parrotworks.oneagentarmy.ui.search.SearchViewModel
 import com.parrotworks.oneagentarmy.ui.settings.FactsViewModel
 import com.parrotworks.oneagentarmy.ui.settings.SettingsAboutScreen
+import com.parrotworks.oneagentarmy.ui.settings.SettingsChatScreen
 import com.parrotworks.oneagentarmy.ui.settings.SettingsFactsScreen
 import com.parrotworks.oneagentarmy.ui.settings.SettingsHelpScreen
 import com.parrotworks.oneagentarmy.ui.settings.SettingsProvidersScreen
@@ -39,7 +39,6 @@ fun OneAgentArmyNavHost(
     settingsRepository: SettingsRepository,
     factRepository: FactRepository,
     aiProvider: AiProvider,
-    contextWindowStrategy: ContextWindowStrategy,
     exchangeRateRepository: ExchangeRateRepository,
     attachmentStore: AttachmentStore,
     navController: NavHostController = rememberNavController(),
@@ -85,7 +84,6 @@ fun OneAgentArmyNavHost(
                             settingsRepository,
                             factRepository,
                             aiProvider,
-                            contextWindowStrategy,
                             exchangeRateRepository,
                             attachmentStore,
                         )
@@ -125,8 +123,20 @@ fun OneAgentArmyNavHost(
                 onNavigateToProviders = { navController.navigateSafely(Destinations.SETTINGS_PROVIDERS) },
                 onNavigateToTools = { navController.navigateSafely(Destinations.SETTINGS_TOOLS) },
                 onNavigateToFacts = { navController.navigateSafely(Destinations.SETTINGS_FACTS) },
+                onNavigateToChat = { navController.navigateSafely(Destinations.SETTINGS_CHAT) },
                 onNavigateToHelp = { navController.navigateSafely(Destinations.SETTINGS_HELP) },
                 onNavigateToAbout = { navController.navigateSafely(Destinations.SETTINGS_ABOUT) },
+            )
+        }
+        composable(Destinations.SETTINGS_CHAT) {
+            val viewModel: SettingsViewModel = viewModel(
+                factory = viewModelFactory {
+                    initializer { SettingsViewModel(settingsRepository, conversationRepository) }
+                },
+            )
+            SettingsChatScreen(
+                viewModel = viewModel,
+                onBack = { navController.popBackStackSafely() },
             )
         }
         composable(Destinations.SETTINGS_HELP) {

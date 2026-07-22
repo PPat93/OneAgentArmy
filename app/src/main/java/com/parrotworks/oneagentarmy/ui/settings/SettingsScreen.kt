@@ -16,7 +16,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -24,7 +23,6 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -36,12 +34,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.parrotworks.oneagentarmy.R
-import com.parrotworks.oneagentarmy.ui.lock.canUseAppLock
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -52,15 +48,12 @@ fun SettingsScreen(
     onNavigateToProviders: () -> Unit,
     onNavigateToTools: () -> Unit,
     onNavigateToFacts: () -> Unit,
+    onNavigateToChat: () -> Unit,
     onNavigateToHelp: () -> Unit,
     onNavigateToAbout: () -> Unit,
 ) {
-    val chatFontScale by viewModel.chatFontScale.collectAsState()
-    val appLockEnabled by viewModel.appLockEnabled.collectAsState()
-    val appLockAvailable = canUseAppLock(LocalContext.current)
     val spendingThresholdEur by viewModel.spendingThresholdEur.collectAsState()
     var showThresholdDialog by remember { mutableStateOf(false) }
-    var showDeleteAllDialog by remember { mutableStateOf(false) }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -96,14 +89,10 @@ fun SettingsScreen(
                 subtitle = stringResource(R.string.settings_facts_subtitle),
                 onClick = onNavigateToFacts,
             )
-            ChatFontScaleCard(
-                currentScale = chatFontScale,
-                onScaleSelected = viewModel::setChatFontScale,
-            )
-            AppLockCard(
-                enabled = appLockEnabled,
-                available = appLockAvailable,
-                onEnabledChange = viewModel::setAppLockEnabled,
+            SettingsMenuCard(
+                title = stringResource(R.string.settings_chat_title),
+                subtitle = stringResource(R.string.settings_chat_subtitle),
+                onClick = onNavigateToChat,
             )
             SpendingThresholdCard(
                 thresholdEur = spendingThresholdEur,
@@ -119,7 +108,6 @@ fun SettingsScreen(
                 subtitle = stringResource(R.string.settings_about_subtitle),
                 onClick = onNavigateToAbout,
             )
-            DeleteAllConversationsCard(onClick = { showDeleteAllDialog = true })
         }
     }
 
@@ -131,99 +119,6 @@ fun SettingsScreen(
                 viewModel.setSpendingThresholdEur(newThreshold)
                 showThresholdDialog = false
             },
-        )
-    }
-
-    if (showDeleteAllDialog) {
-        AlertDialog(
-            onDismissRequest = { showDeleteAllDialog = false },
-            title = { Text(stringResource(R.string.delete_all_conversations_dialog_title)) },
-            text = { Text(stringResource(R.string.delete_all_conversations_dialog_text)) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.deleteAllConversations()
-                        showDeleteAllDialog = false
-                    },
-                ) {
-                    Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteAllDialog = false }) {
-                    Text(stringResource(R.string.cancel))
-                }
-            },
-        )
-    }
-}
-
-@Composable
-private fun ChatFontScaleCard(
-    currentScale: Float,
-    onScaleSelected: (Float) -> Unit,
-) {
-    val options = listOf(
-        0.85f to stringResource(R.string.font_scale_small),
-        1.0f to stringResource(R.string.font_scale_normal),
-        1.15f to stringResource(R.string.font_scale_large),
-        1.3f to stringResource(R.string.font_scale_xlarge),
-    )
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = stringResource(R.string.chat_font_scale_title),
-                color = MaterialTheme.colorScheme.onTertiaryContainer,
-                style = MaterialTheme.typography.titleMedium,
-            )
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                options.forEach { (scale, label) ->
-                    FilterChip(
-                        selected = scale == currentScale,
-                        onClick = { onScaleSelected(scale) },
-                        label = { Text(label) },
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun AppLockCard(
-    enabled: Boolean,
-    available: Boolean,
-    onEnabledChange: (Boolean) -> Unit,
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
-    ) {
-        ListItem(
-            headlineContent = {
-                Text(
-                    stringResource(R.string.app_lock_title),
-                    color = MaterialTheme.colorScheme.onTertiaryContainer,
-                    style = MaterialTheme.typography.titleMedium,
-                )
-            },
-            supportingContent = {
-                Text(
-                    stringResource(if (available) R.string.app_lock_subtitle else R.string.app_lock_unavailable),
-                    color = MaterialTheme.colorScheme.onTertiaryContainer,
-                )
-            },
-            trailingContent = {
-                Switch(
-                    checked = enabled && available,
-                    onCheckedChange = onEnabledChange,
-                    enabled = available,
-                )
-            },
-            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
         )
     }
 }
@@ -303,33 +198,6 @@ private fun SpendingThresholdDialog(
             }
         },
     )
-}
-
-@Composable
-private fun DeleteAllConversationsCard(onClick: () -> Unit) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
-    ) {
-        ListItem(
-            headlineContent = {
-                Text(
-                    stringResource(R.string.settings_delete_all_title),
-                    color = MaterialTheme.colorScheme.onErrorContainer,
-                    style = MaterialTheme.typography.titleMedium,
-                )
-            },
-            supportingContent = {
-                Text(
-                    stringResource(R.string.settings_delete_all_subtitle),
-                    color = MaterialTheme.colorScheme.onErrorContainer,
-                )
-            },
-            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-        )
-    }
 }
 
 @Composable

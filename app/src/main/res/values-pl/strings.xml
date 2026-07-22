@@ -116,6 +116,18 @@
     <string name="settings_facts_title">Fakty kontekstowe</string>
     <string name="settings_facts_subtitle">Notatki wstrzykiwane do rozmów</string>
 
+    <string name="settings_chat_title">Czat i wygląd</string>
+    <string name="settings_chat_subtitle">Rozmiar czcionki, blokada, kontekst, usuwanie wszystkiego</string>
+    <string name="context_window_size_title">Rozmiar okna kontekstu</string>
+    <string name="context_window_size_current">%1$d poprzednich wiadomości wysyłanych ponownie z każdą nową</string>
+    <string name="context_window_size_dialog_title">Rozmiar okna kontekstu</string>
+    <string name="context_window_size_dialog_explanation">Ile poprzednich wiadomości wysyłać ponownie jako kontekst przy każdej nowej wiadomości, domyślnie. Można nadpisać dla pojedynczej rozmowy.</string>
+    <string name="context_window_size_field_label">Liczba wiadomości</string>
+    <string name="context_window_size_warning">Duże okno kontekstu wysyła sporo historii (i ewentualny załącznik nadal w zasięgu) przy każdej wiadomości - to może podnieść koszt.</string>
+    <string name="context_window_override_dialog_title">Okno kontekstu dla tej rozmowy</string>
+    <string name="context_window_override_dialog_explanation">Aktualnie używane %1$d wiadomości kontekstu. Ustaw liczbę, żeby nadpisać tylko tę rozmowę, albo użyj domyślnej.</string>
+    <string name="context_window_override_use_default">Użyj domyślnej</string>
+
     <string name="settings_help_title">Co potrafi ta apka?</string>
     <string name="settings_help_subtitle">Krótki przewodnik po funkcjach</string>
     <string name="settings_help_search_hint">Szukaj w pomocy…</string>
@@ -162,7 +174,7 @@
     <string name="help_section_attachments_body">Do wiadomości możesz dołączyć zdjęcie, plik PDF albo plik tekstowy/CSV (spinacz obok pola wiadomości).\n\n• Zdjęcia są automatycznie zmniejszane przed wysyłką.\n• Pliki PDF są ograniczone do 5 MB.</string>
 
     <string name="help_section_context_title">Kontekst rozmowy</string>
-    <string name="help_section_context_body">Każda wysłana wiadomość niesie ze sobą ostatnie 20 wiadomości z tej rozmowy — dzięki temu AI pamięta, o czym była mowa.\n\nTo oznacza też, że raz załączony plik czy zdjęcie jest wysyłane ponownie przy każdej kolejnej wiadomości, dopóki mieści się w tych 20 — i za każdym razem wlicza się do kosztu.</string>
+    <string name="help_section_context_body">Każda wysłana wiadomość niesie ze sobą pewną liczbę poprzednich wiadomości z tej rozmowy (domyślnie 20) — dzięki temu AI pamięta, o czym była mowa. Domyślną wartość zmienisz w Ustawienia → Czat i wygląd, albo nadpiszesz tylko dla jednej rozmowy ikoną zegara w tym czacie.\n\nTo oznacza też, że raz załączony plik czy zdjęcie jest wysyłane ponownie przy każdej kolejnej wiadomości, dopóki mieści się w tym oknie — i za każdym razem wlicza się do kosztu, więc bardzo duże okno może podnieść rachunek.</string>
 
     <string name="help_section_personalization_title">Personalizacja</string>
     <string name="help_section_personalization_body">W Ustawieniach możesz zmienić wielkość czcionki w czacie (Mała/Normalna/Duża/Bardzo duża).</string>

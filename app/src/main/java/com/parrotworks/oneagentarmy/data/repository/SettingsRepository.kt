@@ -23,9 +23,16 @@ interface SettingsRepository {
     fun observeSpendingThresholdEur(): Flow<Double?>
     suspend fun setSpendingThresholdEur(thresholdEur: Double?)
 
+    fun observeContextWindowSize(): Flow<Int>
+    suspend fun setContextWindowSize(size: Int)
+
     companion object {
         // Active AI provider's hosted web search (e.g. OpenAI's web_search tool).
         const val SEARCH_PROVIDER_BUILT_IN = "provider"
         const val SEARCH_PROVIDER_TAVILY = "tavily"
+
+        // Number of previous messages resent as context on every new message - matches
+        // the value this was hardcoded to before it became configurable.
+        const val DEFAULT_CONTEXT_WINDOW_SIZE = 20
     }
 }
