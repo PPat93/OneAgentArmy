@@ -123,6 +123,10 @@
     <string name="settings_help_search_empty">Nie znaleziono pasujących tematów.</string>
     <string name="settings_about_title">O aplikacji</string>
     <string name="settings_about_subtitle">Kto to zrobił</string>
+    <string name="settings_delete_all_title">Usuń wszystkie rozmowy</string>
+    <string name="settings_delete_all_subtitle">Trwale usuwa całą historię czatu</string>
+    <string name="delete_all_conversations_dialog_title">Usunąć wszystkie rozmowy?</string>
+    <string name="delete_all_conversations_dialog_text">To trwale usunie każdą rozmowę, wiadomość i załącznik. Tej operacji nie można cofnąć.</string>
     <string name="app_credit">ParroT woRKs by Piotr Paterek</string>
     <string name="app_lock_title">Blokada aplikacji</string>
     <string name="app_lock_subtitle">Wymagaj odcisku palca, twarzy albo blokady ekranu przy otwieraniu apki</string>

@@ -123,6 +123,10 @@
     <string name="settings_help_search_empty">No matching topics found.</string>
     <string name="settings_about_title">About</string>
     <string name="settings_about_subtitle">Who made this</string>
+    <string name="settings_delete_all_title">Delete all conversations</string>
+    <string name="settings_delete_all_subtitle">Permanently erase your entire chat history</string>
+    <string name="delete_all_conversations_dialog_title">Delete all conversations?</string>
+    <string name="delete_all_conversations_dialog_text">This permanently deletes every conversation, message, and attachment. This cannot be undone.</string>
     <string name="app_credit">ParroT woRKs by Piotr Paterek</string>
     <string name="app_lock_title">App lock</string>
     <string name="app_lock_subtitle">Require your fingerprint, face, or screen lock to open the app</string>

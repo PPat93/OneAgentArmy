@@ -116,7 +116,7 @@ fun OneAgentArmyNavHost(
         composable(Destinations.SETTINGS) {
             val viewModel: SettingsViewModel = viewModel(
                 factory = viewModelFactory {
-                    initializer { SettingsViewModel(settingsRepository) }
+                    initializer { SettingsViewModel(settingsRepository, conversationRepository) }
                 },
             )
             SettingsScreen(
@@ -149,7 +149,7 @@ fun OneAgentArmyNavHost(
         composable(Destinations.SETTINGS_PROVIDERS) {
             val viewModel: SettingsViewModel = viewModel(
                 factory = viewModelFactory {
-                    initializer { SettingsViewModel(settingsRepository) }
+                    initializer { SettingsViewModel(settingsRepository, conversationRepository) }
                 },
             )
             SettingsProvidersScreen(
@@ -160,7 +160,7 @@ fun OneAgentArmyNavHost(
         composable(Destinations.SETTINGS_TOOLS) {
             val viewModel: SettingsViewModel = viewModel(
                 factory = viewModelFactory {
-                    initializer { SettingsViewModel(settingsRepository) }
+                    initializer { SettingsViewModel(settingsRepository, conversationRepository) }
                 },
             )
             SettingsToolsScreen(

@@ -18,6 +18,7 @@ interface ConversationRepository {
     suspend fun addMessage(conversationId: String, message: Message)
     suspend fun deleteConversation(conversationId: String)
     suspend fun deleteConversations(conversationIds: List<String>)
+    suspend fun deleteAllConversations()
     suspend fun renameConversation(conversationId: String, title: String)
     suspend fun updateConversationModel(conversationId: String, modelId: String)
     suspend fun setPinned(conversationId: String, pinned: Boolean)

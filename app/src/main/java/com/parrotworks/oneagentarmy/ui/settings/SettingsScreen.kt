@@ -60,6 +60,7 @@ fun SettingsScreen(
     val appLockAvailable = canUseAppLock(LocalContext.current)
     val spendingThresholdEur by viewModel.spendingThresholdEur.collectAsState()
     var showThresholdDialog by remember { mutableStateOf(false) }
+    var showDeleteAllDialog by remember { mutableStateOf(false) }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -118,6 +119,7 @@ fun SettingsScreen(
                 subtitle = stringResource(R.string.settings_about_subtitle),
                 onClick = onNavigateToAbout,
             )
+            DeleteAllConversationsCard(onClick = { showDeleteAllDialog = true })
         }
     }
 
@@ -128,6 +130,29 @@ fun SettingsScreen(
             onConfirm = { newThreshold ->
                 viewModel.setSpendingThresholdEur(newThreshold)
                 showThresholdDialog = false
+            },
+        )
+    }
+
+    if (showDeleteAllDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteAllDialog = false },
+            title = { Text(stringResource(R.string.delete_all_conversations_dialog_title)) },
+            text = { Text(stringResource(R.string.delete_all_conversations_dialog_text)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.deleteAllConversations()
+                        showDeleteAllDialog = false
+                    },
+                ) {
+                    Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteAllDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
             },
         )
     }
@@ -278,6 +303,33 @@ private fun SpendingThresholdDialog(
             }
         },
     )
+}
+
+@Composable
+private fun DeleteAllConversationsCard(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+    ) {
+        ListItem(
+            headlineContent = {
+                Text(
+                    stringResource(R.string.settings_delete_all_title),
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    style = MaterialTheme.typography.titleMedium,
+                )
+            },
+            supportingContent = {
+                Text(
+                    stringResource(R.string.settings_delete_all_subtitle),
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                )
+            },
+            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+        )
+    }
 }
 
 @Composable
