@@ -92,6 +92,10 @@ class RoomConversationRepository(
         attachmentStore.deleteAll(attachmentPaths)
     }
 
+    override suspend fun deleteAllConversations() {
+        deleteConversations(dao.observeConversations().first().map { it.id })
+    }
+
     override suspend fun renameConversation(conversationId: String, title: String) {
         dao.renameConversation(conversationId, title)
     }

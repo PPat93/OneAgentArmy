@@ -2,6 +2,7 @@ package com.parrotworks.oneagentarmy.ui.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.parrotworks.oneagentarmy.data.repository.ConversationRepository
 import com.parrotworks.oneagentarmy.data.repository.SettingsRepository
 import com.parrotworks.oneagentarmy.provider.ai.AiProviderRegistry
 import com.parrotworks.oneagentarmy.provider.ai.tools.websearch.TAVILY_KEY_ID
@@ -14,6 +15,7 @@ import kotlinx.coroutines.launch
 
 class SettingsViewModel(
     private val repository: SettingsRepository,
+    private val conversationRepository: ConversationRepository,
 ) : ViewModel() {
 
     val activeProvider: StateFlow<String> = repository.observeActiveProvider()
@@ -68,5 +70,9 @@ class SettingsViewModel(
 
     fun setSpendingThresholdEur(thresholdEur: Double?) {
         viewModelScope.launch { repository.setSpendingThresholdEur(thresholdEur) }
+    }
+
+    fun deleteAllConversations() {
+        viewModelScope.launch { conversationRepository.deleteAllConversations() }
     }
 }
