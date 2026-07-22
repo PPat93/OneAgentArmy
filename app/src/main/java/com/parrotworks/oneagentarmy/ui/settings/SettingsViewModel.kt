@@ -43,6 +43,9 @@ class SettingsViewModel(
     val spendingThresholdEur: StateFlow<Double?> = repository.observeSpendingThresholdEur()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
+    val contextWindowSize: StateFlow<Int> = repository.observeContextWindowSize()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsRepository.DEFAULT_CONTEXT_WINDOW_SIZE)
+
     fun saveApiKey(providerId: String, key: String) {
         if (key.isBlank()) return
         viewModelScope.launch { repository.saveApiKey(providerId, key) }
@@ -74,5 +77,9 @@ class SettingsViewModel(
 
     fun deleteAllConversations() {
         viewModelScope.launch { conversationRepository.deleteAllConversations() }
+    }
+
+    fun setContextWindowSize(size: Int) {
+        viewModelScope.launch { repository.setContextWindowSize(size) }
     }
 }

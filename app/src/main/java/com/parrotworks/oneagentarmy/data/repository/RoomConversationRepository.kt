@@ -108,6 +108,10 @@ class RoomConversationRepository(
         dao.setPinned(conversationId, pinned)
     }
 
+    override suspend fun setContextWindowOverride(conversationId: String, value: Int?) {
+        dao.setContextWindowOverride(conversationId, value)
+    }
+
     override fun observeConversationCost(conversationId: String): Flow<Double?> =
         dao.observeConversationCost(conversationId)
 

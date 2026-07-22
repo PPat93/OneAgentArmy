@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.floatPreferencesKey
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.parrotworks.oneagentarmy.data.local.crypto.ApiKeyCipher
 import com.parrotworks.oneagentarmy.data.local.crypto.EncryptedBlob
@@ -96,11 +97,19 @@ class DataStoreSettingsRepository(
         }
     }
 
+    override fun observeContextWindowSize(): Flow<Int> =
+        dataStore.data.map { prefs -> prefs[CONTEXT_WINDOW_SIZE] ?: SettingsRepository.DEFAULT_CONTEXT_WINDOW_SIZE }
+
+    override suspend fun setContextWindowSize(size: Int) {
+        dataStore.edit { prefs -> prefs[CONTEXT_WINDOW_SIZE] = size }
+    }
+
     private companion object {
         val ACTIVE_PROVIDER = stringPreferencesKey("active_provider")
         val SEARCH_PROVIDER = stringPreferencesKey("search_provider")
         val CHAT_FONT_SCALE = floatPreferencesKey("chat_font_scale")
         val APP_LOCK_ENABLED = booleanPreferencesKey("app_lock_enabled")
         val SPENDING_THRESHOLD_EUR = doublePreferencesKey("spending_threshold_eur")
+        val CONTEXT_WINDOW_SIZE = intPreferencesKey("context_window_size")
     }
 }

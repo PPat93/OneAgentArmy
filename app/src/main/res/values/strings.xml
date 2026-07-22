@@ -116,6 +116,19 @@
     <string name="settings_facts_title">Context facts</string>
     <string name="settings_facts_subtitle">Reusable notes injected into conversations</string>
 
+    <string name="settings_chat_title">Chat &amp; display</string>
+    <string name="settings_chat_subtitle">Font size, app lock, context window, delete all</string>
+    <string name="context_window_size_title">Context window size</string>
+    <string name="context_window_size_current">%1$d previous messages resent with every new message</string>
+    <string name="context_window_size_dialog_title">Context window size</string>
+    <string name="context_window_size_dialog_explanation">How many previous messages get resent as context on every new message, by default. Can be overridden per conversation.</string>
+    <string name="context_window_size_field_label">Number of messages</string>
+    <string name="context_window_size_warning">A large context window resends a lot of history (and any attachment still in range) on every message - this can add up in cost.</string>
+    <string name="context_window_size_max_exceeded">Maximum is %1$d messages.</string>
+    <string name="context_window_override_dialog_title">Context window for this conversation</string>
+    <string name="context_window_override_dialog_explanation">Currently using %1$d messages of context. Set a number to override just this conversation, or use the default.</string>
+    <string name="context_window_override_use_default">Use default</string>
+
     <string name="settings_help_title">What can this app do?</string>
     <string name="settings_help_subtitle">A quick guide to the features</string>
     <string name="settings_help_search_hint">Search help topics…</string>
@@ -162,7 +175,7 @@
     <string name="help_section_attachments_body">You can attach a photo, a PDF, or a text/CSV file to a message (the paperclip next to the input field).\n\n• Photos are automatically downscaled before sending.\n• PDFs are capped at 5 MB.</string>
 
     <string name="help_section_context_title">Conversation context</string>
-    <string name="help_section_context_body">Every message you send carries the last 20 messages of that conversation, so the AI remembers what was said.\n\nThis also means an attached file or photo is resent with every following message as long as it\'s within those 20 — and counted toward the cost each time.</string>
+    <string name="help_section_context_body">Every message you send carries a number of previous messages from that conversation (20 by default), so the AI remembers what was said. Change the default in Settings → Chat &amp; display, or override it for just one conversation from the clock icon in that chat.\n\nThis also means an attached file or photo is resent with every following message as long as it\'s within that window — and counted toward the cost each time, so a very large window can add up.</string>
 
     <string name="help_section_personalization_title">Personalization</string>
     <string name="help_section_personalization_body">In Settings you can change the chat font size (Small/Normal/Large/Extra large).</string>

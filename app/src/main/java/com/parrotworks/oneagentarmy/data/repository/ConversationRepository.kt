@@ -22,6 +22,7 @@ interface ConversationRepository {
     suspend fun renameConversation(conversationId: String, title: String)
     suspend fun updateConversationModel(conversationId: String, modelId: String)
     suspend fun setPinned(conversationId: String, pinned: Boolean)
+    suspend fun setContextWindowOverride(conversationId: String, value: Int?)
     fun searchMessages(query: String): Flow<List<MessageSearchResult>>
     fun observeConversationCost(conversationId: String): Flow<Double?>
     fun observeCostSince(since: Instant): Flow<Double?>

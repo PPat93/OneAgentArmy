@@ -41,6 +41,9 @@ interface ConversationDao {
     @Query("UPDATE conversations SET pinned = :pinned WHERE id = :id")
     suspend fun setPinned(id: String, pinned: Boolean)
 
+    @Query("UPDATE conversations SET contextWindowOverride = :value WHERE id = :id")
+    suspend fun setContextWindowOverride(id: String, value: Int?)
+
     @Query("SELECT attachmentPath FROM messages WHERE conversationId IN (:conversationIds) AND attachmentPath IS NOT NULL")
     suspend fun attachmentPathsForConversations(conversationIds: List<String>): List<String>
 

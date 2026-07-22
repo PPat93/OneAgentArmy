@@ -15,6 +15,7 @@ fun ConversationEntity.toDomain() = Conversation(
     modelId = modelId,
     pinned = pinned,
     lastMessageAt = Instant.ofEpochMilli(lastMessageAt),
+    contextWindowOverride = contextWindowOverride,
 )
 
 fun Conversation.toEntity() = ConversationEntity(
@@ -24,6 +25,7 @@ fun Conversation.toEntity() = ConversationEntity(
     modelId = modelId,
     pinned = pinned,
     lastMessageAt = lastMessageAt.toEpochMilli(),
+    contextWindowOverride = contextWindowOverride,
 )
 
 fun MessageEntity.toDomain() = Message(

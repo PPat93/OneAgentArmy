@@ -16,7 +16,7 @@ import java.util.UUID
         DraftEntity::class,
         CostEntryEntity::class,
     ],
-    version = 9,
+    version = 10,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -134,6 +134,14 @@ abstract class AppDatabase : RoomDatabase() {
                         )
                     }
                 }
+            }
+        }
+
+        val MIGRATION_9_10 = object : Migration(9, 10) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Nullable, no DEFAULT needed - null means "use the global Settings value",
+                // which is exactly what every existing conversation should keep meaning.
+                db.execSQL("ALTER TABLE conversations ADD COLUMN contextWindowOverride INTEGER")
             }
         }
 
