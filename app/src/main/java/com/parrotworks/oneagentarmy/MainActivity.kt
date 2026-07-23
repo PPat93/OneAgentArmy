@@ -35,6 +35,7 @@ class MainActivity : FragmentActivity() {
                             aiProvider = container.aiProvider,
                             exchangeRateRepository = container.exchangeRateRepository,
                             attachmentStore = container.attachmentStore,
+                            modelRegistryRepository = container.modelRegistryRepository,
                             navController = navController,
                         )
                     }

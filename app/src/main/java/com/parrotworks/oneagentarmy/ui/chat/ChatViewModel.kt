@@ -133,9 +133,14 @@ class ChatViewModel(
         conversation?.modelId ?: pending ?: AiProviderRegistry.defaultModelFor(activeProvider)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
-    val availableModels: StateFlow<List<AiModelOption>> = settingsRepository.observeActiveProvider()
-        .map { AiProviderRegistry.byId(it)?.models.orEmpty() }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    // Combined with the registry flow so the picker updates live when a remote model
+    // catalog refresh lands (not just on the next screen open).
+    val availableModels: StateFlow<List<AiModelOption>> = combine(
+        settingsRepository.observeActiveProvider(),
+        AiProviderRegistry.providersFlow,
+    ) { providerId, providers ->
+        providers.firstOrNull { it.id == providerId }?.models.orEmpty()
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     // Selectable (non-global) facts shown in the chat's fact picker.
     val selectableFacts: StateFlow<List<Fact>> = factRepository.observeFacts()

@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-07-23",
+  "providers": [
+    {
+      "id": "openai",
+      "models": [
+        {
+          "id": "gpt-4.1-nano",
+          "label": "GPT-4.1 nano - cheapest ($0.10 / $0.40 per 1M tokens)",
+          "labelPl": "GPT-4.1 nano - najtańszy ($0.10 / $0.40 za 1M tokenów)",
+          "shortLabel": "4.1 nano",
+          "inputUsdPerMTok": 0.10,
+          "outputUsdPerMTok": 0.40,
+          "supportsHostedWebSearch": false
+        },
+        {
+          "id": "gpt-5.6-luna",
+          "label": "GPT-5.6 Luna - better quality ($1.00 / $6.00 per 1M tokens)",
+          "labelPl": "GPT-5.6 Luna - lepsza jakość ($1.00 / $6.00 za 1M tokenów)",
+          "shortLabel": "5.6 Luna",
+          "inputUsdPerMTok": 1.00,
+          "outputUsdPerMTok": 6.00,
+          "supportsHostedWebSearch": true
+        },
+        {
+          "id": "gpt-5.6-sol",
+          "label": "GPT-5.6 Sol - flagship ($5.00 / $30.00 per 1M tokens)",
+          "labelPl": "GPT-5.6 Sol - flagowy ($5.00 / $30.00 za 1M tokenów)",
+          "shortLabel": "5.6 Sol",
+          "inputUsdPerMTok": 5.00,
+          "outputUsdPerMTok": 30.00,
+          "supportsHostedWebSearch": true
+        }
+      ]
+    },
+    {
+      "id": "gemini",
+      "models": [
+        {
+          "id": "gemini-3.1-flash-lite",
+          "label": "Gemini 3.1 Flash-Lite - cheapest ($0.25 / $1.50 per 1M tokens, free tier eligible)",
+          "labelPl": "Gemini 3.1 Flash-Lite - najtańszy ($0.25 / $1.50 za 1M tokenów, dostępny w darmowym tierze)",
+          "shortLabel": "3.1 Lite",
+          "inputUsdPerMTok": 0.25,
+          "outputUsdPerMTok": 1.50,
+          "supportsHostedWebSearch": false
+        },
+        {
+          "id": "gemini-3-flash-preview",
+          "label": "Gemini 3 Flash - balanced ($0.50 / $3.00 per 1M tokens, free tier eligible)",
+          "labelPl": "Gemini 3 Flash - zbalansowany ($0.50 / $3.00 za 1M tokenów, dostępny w darmowym tierze)",
+          "shortLabel": "3 Flash",
+          "inputUsdPerMTok": 0.50,
+          "outputUsdPerMTok": 3.00,
+          "supportsHostedWebSearch": true
+        },
+        {
+          "id": "gemini-3.5-flash",
+          "label": "Gemini 3.5 Flash - better quality ($1.50 / $9.00 per 1M tokens)",
+          "labelPl": "Gemini 3.5 Flash - lepsza jakość ($1.50 / $9.00 za 1M tokenów)",
+          "shortLabel": "3.5 Flash",
+          "inputUsdPerMTok": 1.50,
+          "outputUsdPerMTok": 9.00,
+          "supportsHostedWebSearch": true
+        }
+      ]
+    },
+    {
+      "id": "anthropic",
+      "models": [
+        {
+          "id": "claude-haiku-4-5",
+          "label": "Claude Haiku 4.5 - cheapest ($1.00 / $5.00 per 1M tokens)",
+          "labelPl": "Claude Haiku 4.5 - najtańszy ($1.00 / $5.00 za 1M tokenów)",
+          "shortLabel": "Haiku 4.5",
+          "inputUsdPerMTok": 1.00,
+          "outputUsdPerMTok": 5.00,
+          "supportsHostedWebSearch": true
+        },
+        {
+          "id": "claude-sonnet-5",
+          "label": "Claude Sonnet 5 - better quality ($2.00 / $10.00 per 1M tokens until Aug 2026, then $3.00 / $15.00)",
+          "labelPl": "Claude Sonnet 5 - lepsza jakość ($2.00 / $10.00 za 1M tokenów do sie 2026, potem $3.00 / $15.00)",
+          "shortLabel": "Sonnet 5",
+          "inputUsdPerMTok": 2.00,
+          "outputUsdPerMTok": 10.00,
+          "supportsHostedWebSearch": true
+        },
+        {
+          "id": "claude-opus-4-8",
+          "label": "Claude Opus 4.8 - flagship ($5.00 / $25.00 per 1M tokens)",
+          "labelPl": "Claude Opus 4.8 - flagowy ($5.00 / $25.00 za 1M tokenów)",
+          "shortLabel": "Opus 4.8",
+          "inputUsdPerMTok": 5.00,
+          "outputUsdPerMTok": 25.00,
+          "supportsHostedWebSearch": true
+        }
+      ]
+    }
+  ]
+}

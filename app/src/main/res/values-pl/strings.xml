@@ -68,16 +68,7 @@
     <string name="attach_menu_text">Plik tekstowy (txt, md, csv)</string>
     <string name="error_pdf_too_large">PDF jest za duży (limit 5 MB).</string>
 
-    <string name="model_gpt41_nano">GPT-4.1 nano - najtańszy ($0.10 / $0.40 za 1M tokenów)</string>
-    <string name="model_gpt56_luna">GPT-5.6 Luna - lepsza jakość ($1.00 / $6.00 za 1M tokenów)</string>
-    <string name="model_gpt56_sol">GPT-5.6 Sol - flagowy ($5.00 / $30.00 za 1M tokenów)</string>
-    <string name="model_gemini_31_flash_lite">Gemini 3.1 Flash-Lite - najtańszy ($0.25 / $1.50 za 1M tokenów, dostępny w darmowym tierze)</string>
-    <string name="model_claude_opus_48">Claude Opus 4.8 - flagowy ($5.00 / $25.00 za 1M tokenów)</string>
     <string name="gemini_free_tier_note">Klucz z projektu Google Cloud bez billingu działa w darmowym tierze: modele Flash są darmowe w ramach dziennych limitów, ale Google może używać treści rozmów do treningu. Klucz z podpiętym billingiem jest płatny i wyłączony z treningu.</string>
-    <string name="model_gemini_3_flash">Gemini 3 Flash - zbalansowany ($0.50 / $3.00 za 1M tokenów, dostępny w darmowym tierze)</string>
-    <string name="model_gemini_35_flash">Gemini 3.5 Flash - lepsza jakość ($1.50 / $9.00 za 1M tokenów)</string>
-    <string name="model_claude_haiku_45">Claude Haiku 4.5 - najtańszy ($1.00 / $5.00 za 1M tokenów)</string>
-    <string name="model_claude_sonnet_5">Claude Sonnet 5 - lepsza jakość ($2.00 / $10.00 za 1M tokenów do sie 2026, potem $3.00 / $15.00)</string>
 
     <string name="pending_calendar_title">Dodać wydarzenie do kalendarza?</string>
     <string name="pending_confirm">Dodaj</string>
@@ -117,6 +108,15 @@
     <string name="settings_tools_title">Narzędzia</string>
     <string name="settings_tools_subtitle">Klucze narzędzi agenta (wyszukiwanie w necie)</string>
     <string name="tavily_api_key_label">Klucz API wyszukiwania (Tavily)</string>
+    <string name="model_catalog_title">Katalog modeli</string>
+    <string name="model_catalog_subtitle">Listę modeli i ceny można aktualizować z repo aplikacji na GitHubie bez instalowania nowej wersji.</string>
+    <string name="model_catalog_synced_at">Ostatnia aktualizacja: %1$s</string>
+    <string name="model_catalog_never_synced">Nigdy nie aktualizowano - używana jest wbudowana lista modeli.</string>
+    <string name="model_catalog_refresh_success">Katalog modeli zaktualizowany.</string>
+    <string name="model_catalog_refresh_error">Aktualizacja nieudana: %1$s</string>
+    <string name="model_catalog_refresh">Odśwież teraz</string>
+    <string name="model_catalog_refreshing">Odświeżanie…</string>
+
     <string name="search_provider_label">Źródło wyszukiwania w necie</string>
     <string name="search_provider_built_in">Wbudowane wyszukiwanie aktywnego dostawcy: %1$s</string>
     <string name="search_provider_tavily">Tavily</string>
@@ -162,7 +162,7 @@
     <string name="spending_threshold_clear">Wyczyść</string>
 
     <string name="help_section_providers_title">Dostawcy AI i modele</string>
-    <string name="help_section_providers_body">Apka obsługuje trzech dostawców, każdy z trzema modelami (od najtańszego po najmocniejszy):\n• OpenAI (ChatGPT)\n• Google (Gemini)\n• Anthropic (Claude)\n\nAktywnego dostawcę przełączasz na głównym ekranie lub w Ustawieniach. Model wybierasz osobno dla każdej rozmowy w czacie (domyślnie najtańszy dostępny).</string>
+    <string name="help_section_providers_body">Apka obsługuje trzech dostawców, każdy z trzema modelami (od najtańszego po najmocniejszy):\n• OpenAI (ChatGPT)\n• Google (Gemini)\n• Anthropic (Claude)\n\nAktywnego dostawcę przełączasz na głównym ekranie lub w Ustawieniach. Model wybierasz osobno dla każdej rozmowy w czacie (domyślnie najtańszy dostępny).\n\nListy modeli i ceny zmieniają się z czasem — kliknij "Odśwież teraz" w Ustawienia → Dostawcy AI, żeby pobrać aktualny katalog bez aktualizowania apki.</string>
 
     <string name="help_section_keys_title">Klucze API</string>
     <string name="help_section_keys_body">Do każdego dostawcy potrzebny jest własny klucz API — wpisujesz go w Ustawieniach → Dostawcy AI.\n\nKlucze są szyfrowane lokalnie (Android Keystore) i nigdy nie opuszczają telefonu poza bezpośrednim połączeniem z serwerem danego dostawcy — ta apka nie ma własnego backendu.</string>

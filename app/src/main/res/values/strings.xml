@@ -68,16 +68,7 @@
     <string name="attach_menu_text">Text file (txt, md, csv)</string>
     <string name="error_pdf_too_large">The PDF is too large (limit 5 MB).</string>
 
-    <string name="model_gpt41_nano">GPT-4.1 nano - cheapest ($0.10 / $0.40 per 1M tokens)</string>
-    <string name="model_gpt56_luna">GPT-5.6 Luna - better quality ($1.00 / $6.00 per 1M tokens)</string>
-    <string name="model_gpt56_sol">GPT-5.6 Sol - flagship ($5.00 / $30.00 per 1M tokens)</string>
-    <string name="model_gemini_31_flash_lite">Gemini 3.1 Flash-Lite - cheapest ($0.25 / $1.50 per 1M tokens, free tier eligible)</string>
-    <string name="model_claude_opus_48">Claude Opus 4.8 - flagship ($5.00 / $25.00 per 1M tokens)</string>
     <string name="gemini_free_tier_note">A key from a Google Cloud project without billing uses the free tier: Flash models are free within daily limits, but Google may use conversation content for training. A key with billing enabled is paid and excluded from training.</string>
-    <string name="model_gemini_3_flash">Gemini 3 Flash - balanced ($0.50 / $3.00 per 1M tokens, free tier eligible)</string>
-    <string name="model_gemini_35_flash">Gemini 3.5 Flash - better quality ($1.50 / $9.00 per 1M tokens)</string>
-    <string name="model_claude_haiku_45">Claude Haiku 4.5 - cheapest ($1.00 / $5.00 per 1M tokens)</string>
-    <string name="model_claude_sonnet_5">Claude Sonnet 5 - better quality ($2.00 / $10.00 per 1M tokens until Aug 2026, then $3.00 / $15.00)</string>
 
     <string name="pending_calendar_title">Add calendar event?</string>
     <string name="pending_confirm">Add</string>
@@ -117,6 +108,15 @@
     <string name="settings_tools_title">Tools</string>
     <string name="settings_tools_subtitle">Keys for agent tools (web search)</string>
     <string name="tavily_api_key_label">Web search API key (Tavily)</string>
+    <string name="model_catalog_title">Model catalog</string>
+    <string name="model_catalog_subtitle">Model lists and prices can be updated from the app\'s GitHub repo without installing a new version.</string>
+    <string name="model_catalog_synced_at">Last updated: %1$s</string>
+    <string name="model_catalog_never_synced">Never updated - using the built-in model list.</string>
+    <string name="model_catalog_refresh_success">Model catalog updated.</string>
+    <string name="model_catalog_refresh_error">Update failed: %1$s</string>
+    <string name="model_catalog_refresh">Refresh now</string>
+    <string name="model_catalog_refreshing">Refreshing…</string>
+
     <string name="search_provider_label">Web search source</string>
     <string name="search_provider_built_in">Built-in search of the active provider: %1$s</string>
     <string name="search_provider_tavily">Tavily</string>
@@ -162,7 +162,7 @@
     <string name="spending_threshold_clear">Clear</string>
 
     <string name="help_section_providers_title">AI providers and models</string>
-    <string name="help_section_providers_body">The app supports three providers, each with three models (cheapest to most capable):\n• OpenAI (ChatGPT)\n• Google (Gemini)\n• Anthropic (Claude)\n\nSwitch the active provider on the main screen or in Settings. The model is chosen per conversation in the chat screen (defaults to the cheapest available).</string>
+    <string name="help_section_providers_body">The app supports three providers, each with three models (cheapest to most capable):\n• OpenAI (ChatGPT)\n• Google (Gemini)\n• Anthropic (Claude)\n\nSwitch the active provider on the main screen or in Settings. The model is chosen per conversation in the chat screen (defaults to the cheapest available).\n\nModel lists and prices can change over time — tap "Refresh now" under Settings → AI providers to fetch the latest catalog without updating the app.</string>
 
     <string name="help_section_keys_title">API keys</string>
     <string name="help_section_keys_body">Each provider needs its own API key, entered in Settings → AI providers.\n\nKeys are encrypted locally (Android Keystore) and never leave the phone except in direct calls to that provider\'s servers — this app has no backend of its own.</string>
