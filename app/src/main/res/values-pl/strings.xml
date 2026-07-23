@@ -116,6 +116,10 @@
     <string name="model_catalog_refresh_error">Aktualizacja nieudana: %1$s</string>
     <string name="model_catalog_refresh">Odśwież teraz</string>
     <string name="model_catalog_refreshing">Odświeżanie…</string>
+    <string name="model_catalog_availability_ok">Wszystkie modele z katalogu są dostępne u dostawców.</string>
+    <string name="model_catalog_availability_missing">⚠ %1$s nie wymienia już: %2$s — możliwe wycofanie. (Dla modeli preview to może być fałszywy alarm.)</string>
+    <string name="model_catalog_availability_failed">Nie udało się sprawdzić dostępności dla: %1$s</string>
+    <string name="model_catalog_dropped">⚠ Pominięto błędne wpisy katalogu: %1$s — sprawdź models.json (pusty id albo ujemna cena).</string>
 
     <string name="search_provider_label">Źródło wyszukiwania w necie</string>
     <string name="search_provider_built_in">Wbudowane wyszukiwanie aktywnego dostawcy: %1$s</string>
@@ -162,7 +166,7 @@
     <string name="spending_threshold_clear">Wyczyść</string>
 
     <string name="help_section_providers_title">Dostawcy AI i modele</string>
-    <string name="help_section_providers_body">Apka obsługuje trzech dostawców, każdy z trzema modelami (od najtańszego po najmocniejszy):\n• OpenAI (ChatGPT)\n• Google (Gemini)\n• Anthropic (Claude)\n\nAktywnego dostawcę przełączasz na głównym ekranie lub w Ustawieniach. Model wybierasz osobno dla każdej rozmowy w czacie (domyślnie najtańszy dostępny).\n\nListy modeli i ceny zmieniają się z czasem — kliknij "Odśwież teraz" w Ustawienia → Dostawcy AI, żeby pobrać aktualny katalog bez aktualizowania apki.</string>
+    <string name="help_section_providers_body">Apka obsługuje trzech dostawców, każdy z trzema modelami (od najtańszego po najmocniejszy):\n• OpenAI (ChatGPT)\n• Google (Gemini)\n• Anthropic (Claude)\n\nAktywnego dostawcę przełączasz na głównym ekranie lub w Ustawieniach. Model wybierasz osobno dla każdej rozmowy w czacie (domyślnie najtańszy dostępny).\n\nListy modeli i ceny zmieniają się z czasem — kliknij "Odśwież teraz" w Ustawienia → Dostawcy AI, żeby pobrać aktualny katalog bez aktualizowania apki. Odświeżenie sprawdza też aktualną listę modeli u każdego dostawcy i ostrzega, jeśli któryś model z katalogu wygląda na wycofany.</string>
 
     <string name="help_section_keys_title">Klucze API</string>
     <string name="help_section_keys_body">Do każdego dostawcy potrzebny jest własny klucz API — wpisujesz go w Ustawieniach → Dostawcy AI.\n\nKlucze są szyfrowane lokalnie (Android Keystore) i nigdy nie opuszczają telefonu poza bezpośrednim połączeniem z serwerem danego dostawcy — ta apka nie ma własnego backendu.</string>

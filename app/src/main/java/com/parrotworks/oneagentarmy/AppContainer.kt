@@ -118,7 +118,7 @@ class AppContainer(context: Context) {
 
     val exchangeRateRepository = ExchangeRateRepository(okHttpClient, settingsDataStore)
 
-    val modelRegistryRepository = ModelRegistryRepository(okHttpClient, settingsDataStore)
+    val modelRegistryRepository = ModelRegistryRepository(okHttpClient, settingsDataStore, settingsRepository)
 
     init {
         // Re-apply the last fetched model catalog so a refresh done once sticks across

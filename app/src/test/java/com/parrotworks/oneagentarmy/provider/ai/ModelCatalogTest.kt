@@ -51,10 +51,11 @@ class ModelCatalogTest {
     fun `merge replaces models for a provider present in the catalog`() {
         val merged = mergeCatalog(AiProviderRegistry.builtInProviders, parseModelCatalog(catalogJson(validOpenAiProvider)))
 
-        val openai = merged.first { it.id == AiProviderRegistry.OPENAI }
+        val openai = merged.providers.first { it.id == AiProviderRegistry.OPENAI }
         assertEquals(listOf("gpt-x"), openai.models.map { it.id })
         // Provider identity stays compiled-in even when models are replaced.
         assertEquals("OpenAI (ChatGPT)", openai.displayName)
+        assertTrue(merged.droppedModelIds.isEmpty())
     }
 
     @Test
@@ -62,7 +63,7 @@ class ModelCatalogTest {
         val merged = mergeCatalog(AiProviderRegistry.builtInProviders, parseModelCatalog(catalogJson(validOpenAiProvider)))
 
         val builtInGemini = AiProviderRegistry.builtInProviders.first { it.id == AiProviderRegistry.GEMINI }
-        assertEquals(builtInGemini.models, merged.first { it.id == AiProviderRegistry.GEMINI }.models)
+        assertEquals(builtInGemini.models, merged.providers.first { it.id == AiProviderRegistry.GEMINI }.models)
     }
 
     @Test
@@ -75,11 +76,12 @@ class ModelCatalogTest {
 
         val merged = mergeCatalog(AiProviderRegistry.builtInProviders, parseModelCatalog(json))
 
-        assertEquals(AiProviderRegistry.builtInProviders, merged)
+        assertEquals(AiProviderRegistry.builtInProviders, merged.providers)
+        assertTrue(merged.droppedModelIds.isEmpty())
     }
 
     @Test
-    fun `merge filters out invalid models and keeps built-in when nothing valid remains`() {
+    fun `merge filters out invalid models keeps built-in and reports the dropped ids`() {
         val json = catalogJson(
             """{"id": "openai", "models": [
                 {"id": "", "label": "blank id", "shortLabel": "B", "inputUsdPerMTok": 1.0, "outputUsdPerMTok": 1.0},
@@ -89,14 +91,34 @@ class ModelCatalogTest {
 
         val merged = mergeCatalog(AiProviderRegistry.builtInProviders, parseModelCatalog(json))
 
-        assertEquals(AiProviderRegistry.builtInProviders, merged)
+        assertEquals(AiProviderRegistry.builtInProviders, merged.providers)
+        assertEquals(listOf("(missing id)", "neg"), merged.droppedModelIds)
+    }
+
+    @Test
+    fun `merge reports a dropped id while still applying the valid models beside it`() {
+        val json = catalogJson(
+            """{"id": "openai", "models": [
+                {"id": "gpt-good", "label": "Good", "shortLabel": "G", "inputUsdPerMTok": 1.0, "outputUsdPerMTok": 2.0},
+                {"id": "gpt-bad", "label": "Bad", "shortLabel": "B", "inputUsdPerMTok": -1.0, "outputUsdPerMTok": 2.0}
+            ]}""",
+        )
+
+        val merged = mergeCatalog(AiProviderRegistry.builtInProviders, parseModelCatalog(json))
+
+        assertEquals(
+            listOf("gpt-good"),
+            merged.providers.first { it.id == AiProviderRegistry.OPENAI }.models.map { it.id },
+        )
+        assertEquals(listOf("gpt-bad"), merged.droppedModelIds)
     }
 
     @Test
     fun `merge with an empty catalog changes nothing`() {
         val merged = mergeCatalog(AiProviderRegistry.builtInProviders, parseModelCatalog(catalogJson("")))
 
-        assertEquals(AiProviderRegistry.builtInProviders, merged)
+        assertEquals(AiProviderRegistry.builtInProviders, merged.providers)
+        assertTrue(merged.droppedModelIds.isEmpty())
     }
 
     @Test
@@ -113,8 +135,9 @@ class ModelCatalogTest {
         // must reproduce it - catching any drift between the two.
         assertEquals(
             AiProviderRegistry.builtInProviders.map { p -> p.models },
-            merged.map { p -> p.models },
+            merged.providers.map { p -> p.models },
         )
+        assertTrue(merged.droppedModelIds.isEmpty())
     }
 
     @Test

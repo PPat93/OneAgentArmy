@@ -175,8 +175,12 @@ object AiProviderRegistry {
     val providers: List<AiProviderInfo>
         get() = _providersFlow.value
 
-    fun applyRemoteCatalog(catalog: ModelCatalog) {
-        _providersFlow.value = mergeCatalog(builtInProviders, catalog)
+    // Returns the ids of catalog models rejected by validation, so callers can surface
+    // them instead of letting a bad edit silently shrink a model picker.
+    fun applyRemoteCatalog(catalog: ModelCatalog): List<String> {
+        val result = mergeCatalog(builtInProviders, catalog)
+        _providersFlow.value = result.providers
+        return result.droppedModelIds
     }
 
     fun byId(id: String): AiProviderInfo? = providers.firstOrNull { it.id == id }
@@ -205,15 +209,26 @@ object AiProviderRegistry {
     }
 }
 
+data class CatalogMergeResult(
+    val providers: List<AiProviderInfo>,
+    // Catalog models rejected by validation (blank id, negative price) - not applied,
+    // but reported so the bad entry in models.json gets noticed and fixed.
+    val droppedModelIds: List<String>,
+)
+
 // Pure so it can be unit-tested without mutating the global registry. Per provider:
 // the remote model list wins only when it is present and has at least one valid model,
 // otherwise the compiled-in list stays - a broken or partial catalog can never leave
 // a provider with no models. Remote-only providers (unknown ids) are ignored.
-fun mergeCatalog(builtIn: List<AiProviderInfo>, catalog: ModelCatalog): List<AiProviderInfo> =
-    builtIn.map { provider ->
-        val remoteModels = catalog.providers.firstOrNull { it.id == provider.id }
-            ?.models
-            ?.filter { it.id.isNotBlank() && it.inputUsdPerMTok >= 0.0 && it.outputUsdPerMTok >= 0.0 }
-            .orEmpty()
-        if (remoteModels.isEmpty()) provider else provider.copy(models = remoteModels.map { it.toOption() })
+fun mergeCatalog(builtIn: List<AiProviderInfo>, catalog: ModelCatalog): CatalogMergeResult {
+    val dropped = mutableListOf<String>()
+    val providers = builtIn.map { provider ->
+        val remoteEntries = catalog.providers.firstOrNull { it.id == provider.id }?.models.orEmpty()
+        val (valid, invalid) = remoteEntries.partition {
+            it.id.isNotBlank() && it.inputUsdPerMTok >= 0.0 && it.outputUsdPerMTok >= 0.0
+        }
+        dropped += invalid.map { it.id.ifBlank { "(missing id)" } }
+        if (valid.isEmpty()) provider else provider.copy(models = valid.map { it.toOption() })
     }
+    return CatalogMergeResult(providers, dropped)
+}

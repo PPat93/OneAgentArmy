@@ -142,12 +142,60 @@ private fun ModelCatalogCard(
                 modifier = Modifier.padding(top = 4.dp),
             )
             when (refreshState) {
-                CatalogRefreshState.Success -> Text(
-                    text = stringResource(R.string.model_catalog_refresh_success),
-                    color = MaterialTheme.colorScheme.onTertiaryContainer,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(top = 4.dp),
-                )
+                is CatalogRefreshState.Success -> {
+                    Text(
+                        text = stringResource(R.string.model_catalog_refresh_success),
+                        color = MaterialTheme.colorScheme.onTertiaryContainer,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(top = 4.dp),
+                    )
+                    if (refreshState.droppedModelIds.isNotEmpty()) {
+                        Text(
+                            text = stringResource(
+                                R.string.model_catalog_dropped,
+                                refreshState.droppedModelIds.joinToString(", "),
+                            ),
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(top = 4.dp),
+                        )
+                    }
+                    val availability = refreshState.availability
+                    availability.warnings.forEach { warning ->
+                        Text(
+                            text = stringResource(
+                                R.string.model_catalog_availability_missing,
+                                warning.providerName,
+                                warning.missingModelIds.joinToString(", "),
+                            ),
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(top = 4.dp),
+                        )
+                    }
+                    if (availability.failedProviderNames.isNotEmpty()) {
+                        Text(
+                            text = stringResource(
+                                R.string.model_catalog_availability_failed,
+                                availability.failedProviderNames.joinToString(", "),
+                            ),
+                            color = MaterialTheme.colorScheme.onTertiaryContainer,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(top = 4.dp),
+                        )
+                    }
+                    if (availability.checkedProviderCount > 0 &&
+                        availability.warnings.isEmpty() &&
+                        availability.failedProviderNames.isEmpty()
+                    ) {
+                        Text(
+                            text = stringResource(R.string.model_catalog_availability_ok),
+                            color = MaterialTheme.colorScheme.onTertiaryContainer,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(top = 4.dp),
+                        )
+                    }
+                }
                 is CatalogRefreshState.Error -> Text(
                     text = stringResource(R.string.model_catalog_refresh_error, refreshState.detail),
                     color = MaterialTheme.colorScheme.error,
