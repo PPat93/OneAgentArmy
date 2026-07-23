@@ -19,7 +19,10 @@ import kotlinx.coroutines.launch
 sealed interface CatalogRefreshState {
     data object Idle : CatalogRefreshState
     data object Running : CatalogRefreshState
-    data object Success : CatalogRefreshState
+    data class Success(
+        val availability: ModelRegistryRepository.AvailabilityReport,
+        val droppedModelIds: List<String>,
+    ) : CatalogRefreshState
     data class Error(val detail: String) : CatalogRefreshState
 }
 
@@ -112,7 +115,10 @@ class SettingsViewModel(
         viewModelScope.launch {
             _catalogRefreshState.value = CatalogRefreshState.Running
             _catalogRefreshState.value = when (val result = modelRegistryRepository.refresh()) {
-                is ModelRegistryRepository.RefreshResult.Success -> CatalogRefreshState.Success
+                // Availability is checked against the just-applied catalog, so a model
+                // that was both retired and removed from the catalog no longer warns.
+                is ModelRegistryRepository.RefreshResult.Success ->
+                    CatalogRefreshState.Success(modelRegistryRepository.checkAvailability(), result.droppedModelIds)
                 is ModelRegistryRepository.RefreshResult.Error -> CatalogRefreshState.Error(result.detail)
             }
         }

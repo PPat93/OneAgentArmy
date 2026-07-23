@@ -116,6 +116,10 @@
     <string name="model_catalog_refresh_error">Update failed: %1$s</string>
     <string name="model_catalog_refresh">Refresh now</string>
     <string name="model_catalog_refreshing">Refreshing…</string>
+    <string name="model_catalog_availability_ok">All catalog models are listed by their providers.</string>
+    <string name="model_catalog_availability_missing">⚠ %1$s no longer lists: %2$s — possibly retired. (Preview models can be a false alarm.)</string>
+    <string name="model_catalog_availability_failed">Availability check failed for: %1$s</string>
+    <string name="model_catalog_dropped">⚠ Ignored invalid catalog entries: %1$s — check models.json (blank id or negative price).</string>
 
     <string name="search_provider_label">Web search source</string>
     <string name="search_provider_built_in">Built-in search of the active provider: %1$s</string>
@@ -162,7 +166,7 @@
     <string name="spending_threshold_clear">Clear</string>
 
     <string name="help_section_providers_title">AI providers and models</string>
-    <string name="help_section_providers_body">The app supports three providers, each with three models (cheapest to most capable):\n• OpenAI (ChatGPT)\n• Google (Gemini)\n• Anthropic (Claude)\n\nSwitch the active provider on the main screen or in Settings. The model is chosen per conversation in the chat screen (defaults to the cheapest available).\n\nModel lists and prices can change over time — tap "Refresh now" under Settings → AI providers to fetch the latest catalog without updating the app.</string>
+    <string name="help_section_providers_body">The app supports three providers, each with three models (cheapest to most capable):\n• OpenAI (ChatGPT)\n• Google (Gemini)\n• Anthropic (Claude)\n\nSwitch the active provider on the main screen or in Settings. The model is chosen per conversation in the chat screen (defaults to the cheapest available).\n\nModel lists and prices can change over time — tap "Refresh now" under Settings → AI providers to fetch the latest catalog without updating the app. The refresh also checks each provider\'s live model list and warns if a catalog model seems to have been retired.</string>
 
     <string name="help_section_keys_title">API keys</string>
     <string name="help_section_keys_body">Each provider needs its own API key, entered in Settings → AI providers.\n\nKeys are encrypted locally (Android Keystore) and never leave the phone except in direct calls to that provider\'s servers — this app has no backend of its own.</string>

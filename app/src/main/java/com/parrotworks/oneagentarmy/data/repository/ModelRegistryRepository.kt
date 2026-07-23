@@ -6,7 +6,9 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.parrotworks.oneagentarmy.provider.ai.AiProviderRegistry
+import com.parrotworks.oneagentarmy.provider.ai.ModelAvailabilityChecker
 import com.parrotworks.oneagentarmy.provider.ai.SUPPORTED_CATALOG_SCHEMA_VERSION
+import com.parrotworks.oneagentarmy.provider.ai.missingModelIds
 import com.parrotworks.oneagentarmy.provider.ai.parseModelCatalog
 import java.io.IOException
 import kotlinx.coroutines.Dispatchers
@@ -24,10 +26,45 @@ import okhttp3.Request
 class ModelRegistryRepository(
     private val okHttpClient: OkHttpClient,
     private val dataStore: DataStore<Preferences>,
+    private val settingsRepository: SettingsRepository,
 ) {
     sealed interface RefreshResult {
-        data object Success : RefreshResult
+        data class Success(val droppedModelIds: List<String>) : RefreshResult
         data class Error(val detail: String) : RefreshResult
+    }
+
+    data class AvailabilityWarning(val providerName: String, val missingModelIds: List<String>)
+
+    data class AvailabilityReport(
+        val checkedProviderCount: Int,
+        val warnings: List<AvailabilityWarning>,
+        // Providers whose listing call failed (bad key, network...) - reported separately
+        // from warnings so a failed check isn't mistaken for a retired model.
+        val failedProviderNames: List<String>,
+    )
+
+    private val availabilityChecker = ModelAvailabilityChecker(okHttpClient)
+
+    // Cross-checks every catalog model against what its provider actually lists.
+    // Providers without a saved API key are skipped (their listing endpoints require one).
+    suspend fun checkAvailability(): AvailabilityReport {
+        var checked = 0
+        val warnings = mutableListOf<AvailabilityWarning>()
+        val failures = mutableListOf<String>()
+        for (provider in AiProviderRegistry.providers) {
+            val apiKey = settingsRepository.getApiKey(provider.id) ?: continue
+            when (val result = availabilityChecker.listAvailable(provider.id, apiKey)) {
+                is ModelAvailabilityChecker.ProviderCheck.Available -> {
+                    checked++
+                    val missing = missingModelIds(provider.models, result.modelIds)
+                    if (missing.isNotEmpty()) {
+                        warnings += AvailabilityWarning(provider.displayName, missing)
+                    }
+                }
+                is ModelAvailabilityChecker.ProviderCheck.Failed -> failures += provider.displayName
+            }
+        }
+        return AvailabilityReport(checked, warnings, failures)
     }
 
     val lastSyncedAtMillis: Flow<Long?> = dataStore.data.map { prefs -> prefs[CATALOG_SYNCED_AT_MILLIS] }
@@ -68,12 +105,12 @@ class ModelRegistryRepository(
             )
         }
 
-        AiProviderRegistry.applyRemoteCatalog(catalog)
+        val droppedModelIds = AiProviderRegistry.applyRemoteCatalog(catalog)
         dataStore.edit { prefs ->
             prefs[CATALOG_JSON] = body
             prefs[CATALOG_SYNCED_AT_MILLIS] = System.currentTimeMillis()
         }
-        RefreshResult.Success
+        RefreshResult.Success(droppedModelIds)
     }
 
     private companion object {

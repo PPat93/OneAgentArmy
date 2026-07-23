@@ -37,7 +37,7 @@ Most AI chat subscriptions bundle a flat monthly fee regardless of actual usage.
 ## Features
 
 - **Three AI providers, one app** — OpenAI (Responses API), Google Gemini (Interactions API), and Anthropic Claude (Messages API), each with three model tiers (cheap / mid / flagship). Every conversation remembers its own model, independent of whichever provider is set as the app-wide default for new chats.
-- **Remotely updatable model catalog** — model lists and prices live in [models.json](models.json) in this repo; the app fetches it on demand (Settings → AI providers → Refresh) and caches the result, so a deprecated model or a price change is fixed by editing one JSON file on GitHub — no new APK needed. Compiled-in defaults remain as the offline fallback.
+- **Remotely updatable model catalog** — model lists and prices live in [models.json](models.json) in this repo; the app fetches it on demand (Settings → AI providers → Refresh) and caches the result, so a deprecated model or a price change is fixed by editing one JSON file on GitHub — no new APK needed. Compiled-in defaults remain as the offline fallback. The same refresh also cross-checks every catalog model against each provider's live model listing and warns if one is no longer listed (warning-only — listings can lag for preview models, so nothing is ever auto-removed).
 - **Tool calling** — two flavors:
   - Client-side tools with a confirmation card: calendar events, alarms, timers, SMS drafts, navigation, notes. Nothing is sent until you tap confirm, and the tool-call turn itself never touches local storage.
   - Transparent, provider-side round-trips: live weather (Open-Meteo) and web search, invisible to the rest of the app.
