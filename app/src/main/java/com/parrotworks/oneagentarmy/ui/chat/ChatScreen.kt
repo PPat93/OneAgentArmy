@@ -81,6 +81,7 @@ import com.parrotworks.oneagentarmy.model.Message
 import java.io.IOException
 import java.time.Instant
 import java.time.LocalDate
+import java.util.Locale
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -352,7 +353,7 @@ fun ChatScreen(
                         ) {
                             availableModels.forEach { option ->
                                 DropdownMenuItem(
-                                    text = { Text(stringResource(option.labelRes)) },
+                                    text = { Text(option.labelFor(polish = Locale.getDefault().language == "pl")) },
                                     onClick = {
                                         viewModel.selectModel(option.id)
                                         modelMenuExpanded = false

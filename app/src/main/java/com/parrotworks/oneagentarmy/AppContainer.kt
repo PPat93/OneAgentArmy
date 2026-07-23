@@ -13,6 +13,7 @@ import com.parrotworks.oneagentarmy.data.repository.ConversationRepository
 import com.parrotworks.oneagentarmy.data.repository.DataStoreSettingsRepository
 import com.parrotworks.oneagentarmy.data.repository.ExchangeRateRepository
 import com.parrotworks.oneagentarmy.data.repository.FactRepository
+import com.parrotworks.oneagentarmy.data.repository.ModelRegistryRepository
 import com.parrotworks.oneagentarmy.data.repository.RoomConversationRepository
 import com.parrotworks.oneagentarmy.data.repository.RoomFactRepository
 import com.parrotworks.oneagentarmy.data.repository.SettingsRepository
@@ -116,6 +117,14 @@ class AppContainer(context: Context) {
         .build()
 
     val exchangeRateRepository = ExchangeRateRepository(okHttpClient, settingsDataStore)
+
+    val modelRegistryRepository = ModelRegistryRepository(okHttpClient, settingsDataStore)
+
+    init {
+        // Re-apply the last fetched model catalog so a refresh done once sticks across
+        // app restarts; built-in defaults remain if nothing was ever fetched.
+        containerScope.launch { modelRegistryRepository.applyCachedCatalog() }
+    }
 
     private val toolRegistry = ToolRegistry(
         definitions = listOf(

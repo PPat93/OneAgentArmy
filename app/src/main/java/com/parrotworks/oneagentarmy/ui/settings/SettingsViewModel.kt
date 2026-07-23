@@ -3,19 +3,30 @@ package com.parrotworks.oneagentarmy.ui.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.parrotworks.oneagentarmy.data.repository.ConversationRepository
+import com.parrotworks.oneagentarmy.data.repository.ModelRegistryRepository
 import com.parrotworks.oneagentarmy.data.repository.SettingsRepository
 import com.parrotworks.oneagentarmy.provider.ai.AiProviderRegistry
 import com.parrotworks.oneagentarmy.provider.ai.tools.websearch.TAVILY_KEY_ID
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+sealed interface CatalogRefreshState {
+    data object Idle : CatalogRefreshState
+    data object Running : CatalogRefreshState
+    data object Success : CatalogRefreshState
+    data class Error(val detail: String) : CatalogRefreshState
+}
+
 class SettingsViewModel(
     private val repository: SettingsRepository,
     private val conversationRepository: ConversationRepository,
+    private val modelRegistryRepository: ModelRegistryRepository,
 ) : ViewModel() {
 
     val activeProvider: StateFlow<String> = repository.observeActiveProvider()
@@ -88,5 +99,22 @@ class SettingsViewModel(
 
     fun setRequestTimeoutSeconds(seconds: Int) {
         viewModelScope.launch { repository.setRequestTimeoutSeconds(seconds) }
+    }
+
+    val modelCatalogSyncedAtMillis: StateFlow<Long?> = modelRegistryRepository.lastSyncedAtMillis
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    private val _catalogRefreshState = MutableStateFlow<CatalogRefreshState>(CatalogRefreshState.Idle)
+    val catalogRefreshState: StateFlow<CatalogRefreshState> = _catalogRefreshState.asStateFlow()
+
+    fun refreshModelCatalog() {
+        if (_catalogRefreshState.value == CatalogRefreshState.Running) return
+        viewModelScope.launch {
+            _catalogRefreshState.value = CatalogRefreshState.Running
+            _catalogRefreshState.value = when (val result = modelRegistryRepository.refresh()) {
+                is ModelRegistryRepository.RefreshResult.Success -> CatalogRefreshState.Success
+                is ModelRegistryRepository.RefreshResult.Error -> CatalogRefreshState.Error(result.detail)
+            }
+        }
     }
 }

@@ -14,6 +14,7 @@ import com.parrotworks.oneagentarmy.data.local.AttachmentStore
 import com.parrotworks.oneagentarmy.data.repository.ConversationRepository
 import com.parrotworks.oneagentarmy.data.repository.ExchangeRateRepository
 import com.parrotworks.oneagentarmy.data.repository.FactRepository
+import com.parrotworks.oneagentarmy.data.repository.ModelRegistryRepository
 import com.parrotworks.oneagentarmy.data.repository.SettingsRepository
 import com.parrotworks.oneagentarmy.provider.ai.AiProvider
 import com.parrotworks.oneagentarmy.ui.chat.ChatScreen
@@ -41,6 +42,7 @@ fun OneAgentArmyNavHost(
     aiProvider: AiProvider,
     exchangeRateRepository: ExchangeRateRepository,
     attachmentStore: AttachmentStore,
+    modelRegistryRepository: ModelRegistryRepository,
     navController: NavHostController = rememberNavController(),
 ) {
     NavHost(navController = navController, startDestination = Destinations.CONVERSATION_LIST) {
@@ -114,7 +116,7 @@ fun OneAgentArmyNavHost(
         composable(Destinations.SETTINGS) {
             val viewModel: SettingsViewModel = viewModel(
                 factory = viewModelFactory {
-                    initializer { SettingsViewModel(settingsRepository, conversationRepository) }
+                    initializer { SettingsViewModel(settingsRepository, conversationRepository, modelRegistryRepository) }
                 },
             )
             SettingsScreen(
@@ -131,7 +133,7 @@ fun OneAgentArmyNavHost(
         composable(Destinations.SETTINGS_CHAT) {
             val viewModel: SettingsViewModel = viewModel(
                 factory = viewModelFactory {
-                    initializer { SettingsViewModel(settingsRepository, conversationRepository) }
+                    initializer { SettingsViewModel(settingsRepository, conversationRepository, modelRegistryRepository) }
                 },
             )
             SettingsChatScreen(
@@ -159,7 +161,7 @@ fun OneAgentArmyNavHost(
         composable(Destinations.SETTINGS_PROVIDERS) {
             val viewModel: SettingsViewModel = viewModel(
                 factory = viewModelFactory {
-                    initializer { SettingsViewModel(settingsRepository, conversationRepository) }
+                    initializer { SettingsViewModel(settingsRepository, conversationRepository, modelRegistryRepository) }
                 },
             )
             SettingsProvidersScreen(
@@ -170,7 +172,7 @@ fun OneAgentArmyNavHost(
         composable(Destinations.SETTINGS_TOOLS) {
             val viewModel: SettingsViewModel = viewModel(
                 factory = viewModelFactory {
-                    initializer { SettingsViewModel(settingsRepository, conversationRepository) }
+                    initializer { SettingsViewModel(settingsRepository, conversationRepository, modelRegistryRepository) }
                 },
             )
             SettingsToolsScreen(
