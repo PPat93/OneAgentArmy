@@ -46,6 +46,9 @@ class SettingsViewModel(
     val contextWindowSize: StateFlow<Int> = repository.observeContextWindowSize()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsRepository.DEFAULT_CONTEXT_WINDOW_SIZE)
 
+    val requestTimeoutSeconds: StateFlow<Int> = repository.observeRequestTimeoutSeconds()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsRepository.DEFAULT_REQUEST_TIMEOUT_SECONDS)
+
     fun saveApiKey(providerId: String, key: String) {
         if (key.isBlank()) return
         viewModelScope.launch { repository.saveApiKey(providerId, key) }
@@ -81,5 +84,9 @@ class SettingsViewModel(
 
     fun setContextWindowSize(size: Int) {
         viewModelScope.launch { repository.setContextWindowSize(size) }
+    }
+
+    fun setRequestTimeoutSeconds(seconds: Int) {
+        viewModelScope.launch { repository.setRequestTimeoutSeconds(seconds) }
     }
 }

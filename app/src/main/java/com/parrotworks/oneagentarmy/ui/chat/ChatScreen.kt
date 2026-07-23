@@ -69,6 +69,8 @@ import com.parrotworks.oneagentarmy.tools.calendar.CalendarIntentBuilder
 import com.parrotworks.oneagentarmy.ui.components.WaveLoadingIndicator
 import com.parrotworks.oneagentarmy.ui.components.formatCostEur
 import com.parrotworks.oneagentarmy.ui.components.shareText
+import com.parrotworks.oneagentarmy.ui.settings.formatTimeout
+import kotlinx.coroutines.delay
 import com.parrotworks.oneagentarmy.tools.calendar.buildOpenCalendarIntent
 import com.parrotworks.oneagentarmy.tools.clock.buildAlarmIntent
 import com.parrotworks.oneagentarmy.tools.clock.buildTimerIntent
@@ -170,9 +172,23 @@ fun ChatScreen(
     val inputText by viewModel.draftText.collectAsState()
     val contextWindowOverride by viewModel.contextWindowOverride.collectAsState()
     val effectiveContextWindowSize by viewModel.effectiveContextWindowSize.collectAsState()
+    val requestTimeoutSeconds by viewModel.requestTimeoutSeconds.collectAsState()
     var modelMenuExpanded by remember { mutableStateOf(false) }
     var factsMenuExpanded by remember { mutableStateOf(false) }
     var contextWindowDialogVisible by remember { mutableStateOf(false) }
+
+    // Elapsed time since the in-flight message was sent - purely informational, so the
+    // user can see how long a slow flagship model has been thinking.
+    var elapsedSeconds by remember { mutableStateOf(0) }
+    LaunchedEffect(isSending) {
+        elapsedSeconds = 0
+        if (isSending) {
+            while (true) {
+                delay(1_000)
+                elapsedSeconds++
+            }
+        }
+    }
     val listState = rememberLazyListState()
     val attachContext = LocalContext.current
     val shareTranscriptTitle = conversationTitle ?: stringResource(R.string.new_conversation)
@@ -430,6 +446,16 @@ fun ChatScreen(
                     modifier = Modifier.padding(horizontal = 8.dp),
                 )
             }
+            // Reassurance once a request has been running for 60% of the configured
+            // timeout - flagship/reasoning models legitimately take minutes.
+            if (isSending && elapsedSeconds >= requestTimeoutSeconds * 6 / 10) {
+                Text(
+                    text = stringResource(R.string.slow_request_warning, formatTimeout(requestTimeoutSeconds)),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                )
+            }
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -485,7 +511,14 @@ fun ChatScreen(
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                 )
                 if (isSending) {
-                    WaveLoadingIndicator(modifier = Modifier.padding(12.dp))
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        WaveLoadingIndicator(modifier = Modifier.padding(top = 12.dp, start = 12.dp, end = 12.dp))
+                        Text(
+                            text = formatTimeout(elapsedSeconds),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 } else {
                     IconButton(
                         onClick = { viewModel.sendMessage(inputText) },
@@ -725,6 +758,8 @@ private fun ChatErrorBanner(
             stringResource(R.string.error_invalid_api_key).withDetail(error.detail) to true
         is ChatError.NoConnectivity ->
             stringResource(R.string.error_no_connectivity).withDetail(error.detail) to false
+        is ChatError.Timeout ->
+            stringResource(R.string.error_timeout, formatTimeout(error.timeoutSeconds)).withDetail(error.detail) to true
         is ChatError.RateLimited ->
             stringResource(R.string.error_rate_limited).withDetail(error.detail) to false
         is ChatError.ServerError ->

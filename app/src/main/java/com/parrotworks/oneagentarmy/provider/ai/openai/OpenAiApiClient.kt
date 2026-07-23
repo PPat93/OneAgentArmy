@@ -1,6 +1,7 @@
 package com.parrotworks.oneagentarmy.provider.ai.openai
 
 import com.parrotworks.oneagentarmy.provider.ai.AiProviderException
+import com.parrotworks.oneagentarmy.provider.ai.toProviderException
 import com.parrotworks.oneagentarmy.provider.ai.openai.dto.ResponsesRequest
 import com.parrotworks.oneagentarmy.provider.ai.openai.dto.ResponsesResponse
 import com.parrotworks.oneagentarmy.provider.ai.openai.dto.OpenAiErrorResponse
@@ -38,7 +39,7 @@ class OpenAiApiClient(
             val response = try {
                 okHttpClient.newCall(httpRequest).execute()
             } catch (e: IOException) {
-                throw AiProviderException.NoConnectivity("${e.javaClass.simpleName}: ${e.message}")
+                throw e.toProviderException()
             }
 
             response.use {

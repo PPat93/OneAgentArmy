@@ -104,6 +104,13 @@ class DataStoreSettingsRepository(
         dataStore.edit { prefs -> prefs[CONTEXT_WINDOW_SIZE] = size }
     }
 
+    override fun observeRequestTimeoutSeconds(): Flow<Int> =
+        dataStore.data.map { prefs -> prefs[REQUEST_TIMEOUT_SECONDS] ?: SettingsRepository.DEFAULT_REQUEST_TIMEOUT_SECONDS }
+
+    override suspend fun setRequestTimeoutSeconds(seconds: Int) {
+        dataStore.edit { prefs -> prefs[REQUEST_TIMEOUT_SECONDS] = seconds }
+    }
+
     private companion object {
         val ACTIVE_PROVIDER = stringPreferencesKey("active_provider")
         val SEARCH_PROVIDER = stringPreferencesKey("search_provider")
@@ -111,5 +118,6 @@ class DataStoreSettingsRepository(
         val APP_LOCK_ENABLED = booleanPreferencesKey("app_lock_enabled")
         val SPENDING_THRESHOLD_EUR = doublePreferencesKey("spending_threshold_eur")
         val CONTEXT_WINDOW_SIZE = intPreferencesKey("context_window_size")
+        val REQUEST_TIMEOUT_SECONDS = intPreferencesKey("request_timeout_seconds")
     }
 }

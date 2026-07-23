@@ -38,6 +38,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.parrotworks.oneagentarmy.R
+import com.parrotworks.oneagentarmy.data.repository.SettingsRepository
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -53,7 +54,9 @@ fun SettingsScreen(
     onNavigateToAbout: () -> Unit,
 ) {
     val spendingThresholdEur by viewModel.spendingThresholdEur.collectAsState()
+    val requestTimeoutSeconds by viewModel.requestTimeoutSeconds.collectAsState()
     var showThresholdDialog by remember { mutableStateOf(false) }
+    var showTimeoutDialog by remember { mutableStateOf(false) }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -98,6 +101,10 @@ fun SettingsScreen(
                 thresholdEur = spendingThresholdEur,
                 onClick = { showThresholdDialog = true },
             )
+            RequestTimeoutCard(
+                timeoutSeconds = requestTimeoutSeconds,
+                onClick = { showTimeoutDialog = true },
+            )
             SettingsMenuCard(
                 title = stringResource(R.string.settings_help_title),
                 subtitle = stringResource(R.string.settings_help_subtitle),
@@ -118,6 +125,17 @@ fun SettingsScreen(
             onConfirm = { newThreshold ->
                 viewModel.setSpendingThresholdEur(newThreshold)
                 showThresholdDialog = false
+            },
+        )
+    }
+
+    if (showTimeoutDialog) {
+        RequestTimeoutDialog(
+            currentTimeoutSeconds = requestTimeoutSeconds,
+            onDismiss = { showTimeoutDialog = false },
+            onConfirm = { newTimeout ->
+                viewModel.setRequestTimeoutSeconds(newTimeout)
+                showTimeoutDialog = false
             },
         )
     }
@@ -196,6 +214,94 @@ private fun SpendingThresholdDialog(
                 }
                 TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
             }
+        },
+    )
+}
+
+@Composable
+private fun RequestTimeoutCard(
+    timeoutSeconds: Int,
+    onClick: () -> Unit,
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
+    ) {
+        ListItem(
+            headlineContent = {
+                Text(
+                    stringResource(R.string.request_timeout_title),
+                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                    style = MaterialTheme.typography.titleMedium,
+                )
+            },
+            supportingContent = {
+                Text(
+                    stringResource(R.string.request_timeout_current, formatTimeout(timeoutSeconds)),
+                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                )
+            },
+            trailingContent = {
+                Icon(
+                    Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                )
+            },
+            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+        )
+    }
+}
+
+@Composable
+private fun RequestTimeoutDialog(
+    currentTimeoutSeconds: Int,
+    onDismiss: () -> Unit,
+    onConfirm: (Int) -> Unit,
+) {
+    var text by remember { mutableStateOf(formatTimeout(currentTimeoutSeconds)) }
+    val parsed = parseTimeout(text)
+    val valid = parsed != null && parsed in 1..SettingsRepository.MAX_REQUEST_TIMEOUT_SECONDS
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.request_timeout_dialog_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    stringResource(R.string.request_timeout_dialog_explanation),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                OutlinedTextField(
+                    value = text,
+                    onValueChange = { text = it },
+                    singleLine = true,
+                    label = { Text(stringResource(R.string.request_timeout_field_label)) },
+                )
+                if (parsed != null && parsed > SettingsRepository.MAX_REQUEST_TIMEOUT_SECONDS) {
+                    Text(
+                        stringResource(
+                            R.string.request_timeout_max_exceeded,
+                            formatTimeout(SettingsRepository.MAX_REQUEST_TIMEOUT_SECONDS),
+                        ),
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { if (valid && parsed != null) onConfirm(parsed) },
+                enabled = valid,
+            ) {
+                Text(stringResource(R.string.save))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
         },
     )
 }

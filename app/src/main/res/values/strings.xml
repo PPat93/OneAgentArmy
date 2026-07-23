@@ -36,6 +36,14 @@
     <string name="error_missing_api_key">No OpenAI API key configured.</string>
     <string name="error_invalid_api_key">The API key was rejected by OpenAI.</string>
     <string name="error_no_connectivity">No internet connection.</string>
+    <string name="error_timeout">The request took longer than your timeout (%1$s) and was cancelled. Advanced models can take several minutes — you can raise the timeout in Settings.</string>
+    <string name="slow_request_warning">This is taking a while — your timeout is %1$s. Advanced models can take longer to answer.</string>
+    <string name="request_timeout_title">Request timeout</string>
+    <string name="request_timeout_current">%1$s — how long to wait for an AI answer before giving up</string>
+    <string name="request_timeout_dialog_title">Request timeout</string>
+    <string name="request_timeout_dialog_explanation">How long to wait for an AI answer before cancelling the request. Advanced (reasoning) models can take several minutes. Format m:ss, maximum 15:00.</string>
+    <string name="request_timeout_field_label">Timeout (m:ss, e.g. 4:00)</string>
+    <string name="request_timeout_max_exceeded">Maximum is %1$s.</string>
     <string name="error_rate_limited">Rate limit exceeded, try again shortly.</string>
     <string name="error_server">OpenAI server error (%1$d), try again.</string>
     <string name="error_unknown">Couldn\'t get a response: %1$s</string>
@@ -176,6 +184,9 @@
 
     <string name="help_section_context_title">Conversation context</string>
     <string name="help_section_context_body">Every message you send carries a number of previous messages from that conversation (20 by default), so the AI remembers what was said. Change the default in Settings → Chat &amp; display, or override it for just one conversation from the clock icon in that chat.\n\nThis also means an attached file or photo is resent with every following message as long as it\'s within that window — and counted toward the cost each time, so a very large window can add up.</string>
+
+    <string name="help_section_timeout_title">Slow answers &amp; timeout</string>
+    <string name="help_section_timeout_body">Advanced (reasoning) models can think for several minutes before answering. While waiting, the chat shows how long the request has been running.\n\nIf no answer arrives within the request timeout (Settings, default 4:00), the request is cancelled and you can resend. Raise the timeout if you often use flagship models.</string>
 
     <string name="help_section_personalization_title">Personalization</string>
     <string name="help_section_personalization_body">In Settings you can change the chat font size (Small/Normal/Large/Extra large).</string>
