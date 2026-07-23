@@ -26,6 +26,9 @@ interface SettingsRepository {
     fun observeContextWindowSize(): Flow<Int>
     suspend fun setContextWindowSize(size: Int)
 
+    fun observeRequestTimeoutSeconds(): Flow<Int>
+    suspend fun setRequestTimeoutSeconds(seconds: Int)
+
     companion object {
         // Active AI provider's hosted web search (e.g. OpenAI's web_search tool).
         const val SEARCH_PROVIDER_BUILT_IN = "provider"
@@ -38,5 +41,11 @@ interface SettingsRepository {
         // Hard ceiling on both the global default and any per-conversation override -
         // guards against a fat-fingered value (an extra zero or two), not a real use case.
         const val MAX_CONTEXT_WINDOW_SIZE = 10_000
+
+        // How long a single AI request may run before being cancelled. Flagship/reasoning
+        // models routinely need minutes; the ceiling keeps a stuck request from hanging
+        // the send state indefinitely.
+        const val DEFAULT_REQUEST_TIMEOUT_SECONDS = 240
+        const val MAX_REQUEST_TIMEOUT_SECONDS = 900
     }
 }

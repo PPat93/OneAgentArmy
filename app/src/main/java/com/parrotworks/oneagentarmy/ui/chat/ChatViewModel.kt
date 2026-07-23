@@ -62,6 +62,7 @@ sealed interface ChatError {
     data object MissingApiKey : ChatError
     data class InvalidApiKey(val detail: String?) : ChatError
     data class NoConnectivity(val detail: String?) : ChatError
+    data class Timeout(val timeoutSeconds: Int, val detail: String?) : ChatError
     data class RateLimited(val retryAfterSeconds: Int?, val detail: String?) : ChatError
     data class ServerError(val statusCode: Int, val detail: String?) : ChatError
     data class Unknown(val detail: String) : ChatError
@@ -106,6 +107,9 @@ class ChatViewModel(
 
     val chatFontScale: StateFlow<Float> = settingsRepository.observeChatFontScale()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 1.0f)
+
+    val requestTimeoutSeconds: StateFlow<Int> = settingsRepository.observeRequestTimeoutSeconds()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsRepository.DEFAULT_REQUEST_TIMEOUT_SECONDS)
 
     val messages: StateFlow<List<Message>> = repository.observeMessages(conversationId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
@@ -446,7 +450,13 @@ class ChatViewModel(
                 }
             }
         } catch (e: AiProviderException) {
-            _error.value = e.toChatError()
+            // Timeout carries the configured limit so the banner can state it - the
+            // exception itself doesn't know what the timeout was set to.
+            _error.value = if (e is AiProviderException.Timeout) {
+                ChatError.Timeout(requestTimeoutSeconds.value, e.detail)
+            } else {
+                e.toChatError()
+            }
         } finally {
             _isSending.value = false
         }
@@ -517,6 +527,8 @@ private fun AiProviderException.toChatError(): ChatError = when (this) {
     is AiProviderException.MissingApiKey -> ChatError.MissingApiKey
     is AiProviderException.InvalidApiKey -> ChatError.InvalidApiKey(detail)
     is AiProviderException.NoConnectivity -> ChatError.NoConnectivity(detail)
+    // Fallback only - requestAiReply intercepts Timeout first to attach the configured limit.
+    is AiProviderException.Timeout -> ChatError.Timeout(SettingsRepository.DEFAULT_REQUEST_TIMEOUT_SECONDS, detail)
     is AiProviderException.RateLimited -> ChatError.RateLimited(retryAfterSeconds, detail)
     is AiProviderException.ServerError -> ChatError.ServerError(statusCode, detail)
     is AiProviderException.Unknown -> ChatError.Unknown(detail)

@@ -53,6 +53,7 @@ fun SettingsHelpScreen(onBack: () -> Unit) {
         HelpSectionText(stringResource(R.string.help_section_automation_title), stringResource(R.string.help_section_automation_body)),
         HelpSectionText(stringResource(R.string.help_section_attachments_title), stringResource(R.string.help_section_attachments_body)),
         HelpSectionText(stringResource(R.string.help_section_context_title), stringResource(R.string.help_section_context_body)),
+        HelpSectionText(stringResource(R.string.help_section_timeout_title), stringResource(R.string.help_section_timeout_body)),
         HelpSectionText(stringResource(R.string.help_section_personalization_title), stringResource(R.string.help_section_personalization_body)),
         HelpSectionText(stringResource(R.string.help_section_app_lock_title), stringResource(R.string.help_section_app_lock_body)),
         HelpSectionText(stringResource(R.string.help_section_backup_title), stringResource(R.string.help_section_backup_body)),

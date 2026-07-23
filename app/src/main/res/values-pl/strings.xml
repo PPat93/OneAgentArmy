@@ -36,6 +36,14 @@
     <string name="error_missing_api_key">Nie skonfigurowano klucza API OpenAI.</string>
     <string name="error_invalid_api_key">Klucz API został odrzucony przez OpenAI.</string>
     <string name="error_no_connectivity">Brak połączenia z internetem.</string>
+    <string name="error_timeout">Zapytanie trwało dłużej niż Twój limit czasu (%1$s) i zostało anulowane. Zaawansowane modele potrafią myśleć kilka minut — limit możesz podnieść w Ustawieniach.</string>
+    <string name="slow_request_warning">Trochę to trwa — Twój limit czasu to %1$s. Zaawansowane modele mogą odpowiadać dłużej.</string>
+    <string name="request_timeout_title">Limit czasu zapytania</string>
+    <string name="request_timeout_current">%1$s — tyle czekamy na odpowiedź AI, zanim się poddamy</string>
+    <string name="request_timeout_dialog_title">Limit czasu zapytania</string>
+    <string name="request_timeout_dialog_explanation">Jak długo czekać na odpowiedź AI, zanim zapytanie zostanie anulowane. Zaawansowane (rozumujące) modele potrafią myśleć kilka minut. Format m:ss, maksimum 15:00.</string>
+    <string name="request_timeout_field_label">Limit (m:ss, np. 4:00)</string>
+    <string name="request_timeout_max_exceeded">Maksimum to %1$s.</string>
     <string name="error_rate_limited">Przekroczono limit zapytań, spróbuj ponownie za chwilę.</string>
     <string name="error_server">Błąd serwera OpenAI (%1$d), spróbuj ponownie.</string>
     <string name="error_unknown">Nie udało się uzyskać odpowiedzi: %1$s</string>
@@ -176,6 +184,9 @@
 
     <string name="help_section_context_title">Kontekst rozmowy</string>
     <string name="help_section_context_body">Każda wysłana wiadomość niesie ze sobą pewną liczbę poprzednich wiadomości z tej rozmowy (domyślnie 20) — dzięki temu AI pamięta, o czym była mowa. Domyślną wartość zmienisz w Ustawienia → Czat i wygląd, albo nadpiszesz tylko dla jednej rozmowy ikoną zegara w tym czacie.\n\nTo oznacza też, że raz załączony plik czy zdjęcie jest wysyłane ponownie przy każdej kolejnej wiadomości, dopóki mieści się w tym oknie — i za każdym razem wlicza się do kosztu, więc bardzo duże okno może podnieść rachunek.</string>
+
+    <string name="help_section_timeout_title">Wolne odpowiedzi i limit czasu</string>
+    <string name="help_section_timeout_body">Zaawansowane (rozumujące) modele potrafią myśleć kilka minut przed odpowiedzią. W trakcie czekania czat pokazuje, jak długo trwa zapytanie.\n\nJeśli odpowiedź nie przyjdzie w limicie czasu (Ustawienia, domyślnie 4:00), zapytanie jest anulowane i możesz wysłać ponownie. Podnieś limit, jeśli często używasz najmocniejszych modeli.</string>
 
     <string name="help_section_personalization_title">Personalizacja</string>
     <string name="help_section_personalization_body">W Ustawieniach możesz zmienić wielkość czcionki w czacie (Mała/Normalna/Duża/Bardzo duża).</string>

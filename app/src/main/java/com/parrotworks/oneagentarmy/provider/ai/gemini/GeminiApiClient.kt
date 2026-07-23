@@ -1,6 +1,7 @@
 package com.parrotworks.oneagentarmy.provider.ai.gemini
 
 import com.parrotworks.oneagentarmy.provider.ai.AiProviderException
+import com.parrotworks.oneagentarmy.provider.ai.toProviderException
 import com.parrotworks.oneagentarmy.provider.ai.gemini.dto.GeminiErrorResponse
 import com.parrotworks.oneagentarmy.provider.ai.gemini.dto.InteractionsRequest
 import com.parrotworks.oneagentarmy.provider.ai.gemini.dto.InteractionsResponse
@@ -38,7 +39,7 @@ class GeminiApiClient(
             val response = try {
                 okHttpClient.newCall(httpRequest).execute()
             } catch (e: IOException) {
-                throw AiProviderException.NoConnectivity("${e.javaClass.simpleName}: ${e.message}")
+                throw e.toProviderException()
             }
 
             response.use {
