@@ -25,7 +25,34 @@ class AnthropicApiClient(
         explicitNulls = false
     }
 
-    suspend fun createMessage(apiKey: String, request: MessagesRequest): MessagesResponse =
+    // Prompt caching is an optimization, never a requirement: if the API ever stops
+    // accepting cache_control (removed, renamed, or restricted to certain models),
+    // the request is retried once without it rather than failing the user's message.
+    // The flag makes that a one-time discovery per process instead of a wasted
+    // round-trip on every send, and it resets on next app start so a temporary
+    // server-side problem doesn't disable caching permanently.
+    @Volatile
+    private var cacheControlRejected = false
+
+    suspend fun createMessage(apiKey: String, request: MessagesRequest): MessagesResponse {
+        val effective = if (cacheControlRejected) request.copy(cacheControl = null) else request
+
+        return try {
+            execute(apiKey, effective)
+        } catch (e: AiProviderException.Unknown) {
+            // Anthropic maps 400 to Unknown. Only a request that actually carried
+            // cache_control is worth retrying, and only when the server's complaint
+            // mentions the cache - anything else is a real error and must surface.
+            if (effective.cacheControl != null && mentionsCache(e.detail)) {
+                cacheControlRejected = true
+                execute(apiKey, effective.copy(cacheControl = null))
+            } else {
+                throw e
+            }
+        }
+    }
+
+    private suspend fun execute(apiKey: String, request: MessagesRequest): MessagesResponse =
         withContext(Dispatchers.IO) {
             val body = json.encodeToString(MessagesRequest.serializer(), request)
                 .toRequestBody(JSON_MEDIA_TYPE)
@@ -57,6 +84,12 @@ class AnthropicApiClient(
                 }
             }
         }
+
+    // Deliberately broad: any 400 mentioning the cache triggers the retry. A false
+    // positive costs one extra request and loses only the caching discount, while a
+    // false negative would surface an error the app could have recovered from.
+    private fun mentionsCache(detail: String?): Boolean =
+        detail?.contains("cache", ignoreCase = true) == true
 
     // Always yields something diagnosable: the server's own error message when the body
     // parses, otherwise the raw body snippet, otherwise just the HTTP status.

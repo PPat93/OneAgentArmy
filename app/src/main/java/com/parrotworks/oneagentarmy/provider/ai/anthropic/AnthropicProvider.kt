@@ -9,6 +9,7 @@ import com.parrotworks.oneagentarmy.provider.ai.AiProviderRegistry
 import com.parrotworks.oneagentarmy.provider.ai.AiReply
 import com.parrotworks.oneagentarmy.provider.ai.AttachmentReader
 import com.parrotworks.oneagentarmy.provider.ai.anthropic.dto.MessagesRequest
+import com.parrotworks.oneagentarmy.provider.ai.anthropic.dto.ephemeralCacheControl
 import com.parrotworks.oneagentarmy.provider.ai.anthropic.dto.allToolUses
 import com.parrotworks.oneagentarmy.provider.ai.anthropic.dto.assistantMessage
 import com.parrotworks.oneagentarmy.provider.ai.anthropic.dto.functionToolJson
@@ -92,6 +93,11 @@ class AnthropicProvider(
                     usesDynamicFilteringSearch -> null
                     else -> toolChoiceAutoNoParallel()
                 },
+                // Every turn re-sends the whole rolling context window, so the prefix
+                // this caches is exactly what the next turn repeats - including any
+                // attachment still inside the window, which would otherwise be
+                // re-billed at full price on each follow-up.
+                cacheControl = ephemeralCacheControl(),
             )
             val response = apiClient.createMessage(apiKey, request)
             usageTotal += response.usage.toTokenUsage()
@@ -116,7 +122,10 @@ class AnthropicProvider(
                         sender = Sender.AI,
                         text = replyText,
                         timestamp = Instant.now(),
-                        inputTokens = usageTotal.inputTokens,
+                        // The displayed count is the prompt size, so it has to include
+                        // cached and cache-written tokens - inputTokens alone is now
+                        // only the full-price share.
+                        inputTokens = usageTotal.totalInputTokens,
                         outputTokens = usageTotal.outputTokens,
                         costUsd = AiProviderRegistry.estimateCostUsd(modelId, usageTotal),
                     ),
