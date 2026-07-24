@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -51,6 +52,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import android.content.ActivityNotFoundException
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -231,12 +233,19 @@ fun ChatScreen(
     var initialScrollHandled by remember { mutableStateOf(false) }
     LaunchedEffect(messages.size) {
         if (messages.isEmpty()) return@LaunchedEffect
-        if (!initialScrollHandled && focusMessageId != null) {
-            // Opened from a search result - land on the matched message instead of the bottom.
-            val index = chatItems.indexOfFirst { it is ChatListItem.MessageItem && it.message.id == focusMessageId }
-            listState.scrollToItem(index.coerceAtLeast(0))
-        } else {
-            listState.animateScrollToItem(0)
+        when {
+            !initialScrollHandled && focusMessageId != null -> {
+                // Opened from a search result - land on the matched message instead of the bottom.
+                val index = chatItems.indexOfFirst { it is ChatListItem.MessageItem && it.message.id == focusMessageId }
+                listState.scrollToItem(index.coerceAtLeast(0))
+            }
+            // A reply arrived while the screen was open: put its first line at the top
+            // so a long answer is read from the beginning rather than from its end.
+            // Only for replies - a message you just sent still lands at the bottom,
+            // next to the sending indicator.
+            initialScrollHandled && messages.last().sender == Sender.AI ->
+                listState.showStartOfNewestMessage()
+            else -> listState.animateScrollToItem(0)
         }
         initialScrollHandled = true
     }
@@ -547,6 +556,32 @@ fun ChatScreen(
         )
     }
 }
+
+// With reverseLayout the newest message is anchored at the bottom, so a reply taller
+// than the screen lands on its closing line and has to be scrolled back up to be read.
+// This pins its first line to the top of the viewport instead.
+//
+// A positive scroll offset moves further into the item, which in a reversed list means
+// toward its start; a reply shorter than the screen needs no offset and stays put.
+// Markdown renders asynchronously, so the bubble can keep growing for a few frames
+// after it first lays out - this re-aligns until the measured height settles, bounded
+// so it can never spin.
+private suspend fun LazyListState.showStartOfNewestMessage() {
+    scrollToItem(0)
+    var previousHeight = -1
+    repeat(MAX_ALIGN_PASSES) {
+        val info = layoutInfo
+        val newest = info.visibleItemsInfo.firstOrNull { it.index == 0 } ?: return
+        if (newest.size == previousHeight) return
+        previousHeight = newest.size
+        val viewportHeight = info.viewportEndOffset - info.viewportStartOffset
+        scrollToItem(0, (newest.size - viewportHeight).coerceAtLeast(0))
+        withFrameNanos { }
+    }
+}
+
+// Enough passes to outlast markdown rendering settling, few enough to stay bounded.
+private const val MAX_ALIGN_PASSES = 8
 
 // Same warning threshold as the global default in Settings - a long context window means
 // more resent tokens, and resent attachments are re-billed on every turn until they age
