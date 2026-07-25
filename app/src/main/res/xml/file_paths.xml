@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- Where a camera capture is written before the attachment pipeline re-encodes it
+         into the app's own attachments directory. Cache, not files, so Android can
+         reclaim it and nothing accumulates if a capture is abandoned. -->
+    <cache-path name="camera" path="camera/" />
+</paths>

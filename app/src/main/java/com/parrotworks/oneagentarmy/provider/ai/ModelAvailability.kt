@@ -44,5 +44,18 @@ fun parseAvailableModelIds(providerId: String, body: String): Set<String> = when
     else -> emptySet()
 }
 
-fun missingModelIds(registryModels: List<AiModelOption>, availableIds: Set<String>): List<String> =
-    registryModels.map { it.id }.filter { it !in availableIds }
+// Providers list concrete model ids, while the app (like the provider docs) uses
+// aliases. Anthropic publishes "claude-haiku-4-5-20251001" but the alias you actually
+// call is "claude-haiku-4-5" - an exact-match check reports that as retired even though
+// it works perfectly. So an id also counts as present when the listing carries a dated
+// snapshot of it. Erring toward "present" is the right bias here: a missed retirement
+// costs one confusing error later, a false alarm costs trust in every warning.
+private val DATED_SNAPSHOT_SUFFIX = Regex("""-\d{8}$""")
+
+fun missingModelIds(registryModels: List<AiModelOption>, availableIds: Set<String>): List<String> {
+    val aliasesOfListedSnapshots = availableIds.mapNotNullTo(mutableSetOf()) { listed ->
+        DATED_SNAPSHOT_SUFFIX.find(listed)?.let { match -> listed.removeRange(match.range) }
+    }
+    return registryModels.map { it.id }
+        .filter { it !in availableIds && it !in aliasesOfListedSnapshots }
+}

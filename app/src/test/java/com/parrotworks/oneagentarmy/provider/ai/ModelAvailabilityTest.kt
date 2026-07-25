@@ -60,6 +60,47 @@ class ModelAvailabilityTest {
     }
 
     @Test
+    fun `an alias is present when the listing only carries its dated snapshot`() {
+        // The real-world false alarm: Anthropic lists claude-haiku-4-5-20251001, the app
+        // (and every call it makes) uses the alias claude-haiku-4-5.
+        val models = AiProviderRegistry.builtInProviders.first { it.id == AiProviderRegistry.ANTHROPIC }.models
+
+        val missing = missingModelIds(
+            models,
+            setOf("claude-haiku-4-5-20251001", "claude-sonnet-5", "claude-opus-4-8"),
+        )
+
+        assertTrue("alias must not be reported as retired: $missing", missing.isEmpty())
+    }
+
+    @Test
+    fun `a differently-named model sharing a prefix does not count as the alias`() {
+        val models = listOf(
+            AiModelOption(
+                id = "claude-haiku-4-5",
+                label = "Haiku",
+                shortLabel = "H",
+                inputUsdPerMTok = 1.0,
+                outputUsdPerMTok = 5.0,
+            ),
+        )
+
+        // Derives the alias "claude-haiku-4-5-mini", which is a different model.
+        val missing = missingModelIds(models, setOf("claude-haiku-4-5-mini-20251001"))
+
+        assertEquals(listOf("claude-haiku-4-5"), missing)
+    }
+
+    @Test
+    fun `a genuinely absent model is still reported`() {
+        val models = AiProviderRegistry.builtInProviders.first { it.id == AiProviderRegistry.ANTHROPIC }.models
+
+        val missing = missingModelIds(models, setOf("claude-sonnet-5", "claude-opus-4-8"))
+
+        assertEquals(listOf("claude-haiku-4-5"), missing)
+    }
+
+    @Test
     fun `nothing is missing when the listing covers the registry`() {
         val models = AiProviderRegistry.builtInProviders.first { it.id == AiProviderRegistry.OPENAI }.models
 

@@ -31,6 +31,24 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Lets the system camera app write a capture into this app's cache. A
+             file:// URI can't be handed to another app on modern Android, so the
+             temp file is exposed through FileProvider instead.
+
+             The authority MUST be built from applicationId, which is NOT this app's
+             namespace (applicationId stayed com.piotrek.oneagentarmy so updates don't
+             wipe installed data). Code side uses context.packageName, which resolves
+             to the same value at runtime. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 
 </manifest>
