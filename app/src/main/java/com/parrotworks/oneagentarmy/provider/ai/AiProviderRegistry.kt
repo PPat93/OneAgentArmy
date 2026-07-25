@@ -23,6 +23,13 @@ data class AiModelOption(
     // Both are overridable from the remote catalog (models.json).
     val cachedInputUsdPerMTok: Double? = null,
     val cacheWriteUsdPerMTok: Double? = null,
+    // Hosted (provider-executed) web search is billed per search, as a line item
+    // separate from tokens - it was 17% of a real month's bill while the app counted
+    // none of it. Null means "not known for this model", and unlike the cache rates
+    // above it must NOT fall back to zero: an unpriced search would make a searching
+    // conversation look cheaper than it was. It falls back to a deliberately
+    // pessimistic default instead (see DEFAULT_HOSTED_SEARCH_USD_PER_CALL).
+    val hostedSearchUsdPerCall: Double? = null,
     // Not every model supports the hosted web_search tool in the Responses API
     // (gpt-4.1-nano rejects it with HTTP 400) - models without support fall back
     // to the Tavily function tool even when hosted search is selected in settings.
@@ -81,6 +88,7 @@ object AiProviderRegistry {
                     outputUsdPerMTok = 6.00,
                     cachedInputUsdPerMTok = 0.25,
                     cacheWriteUsdPerMTok = 1.25,
+                    hostedSearchUsdPerCall = 0.010,
                     supportsHostedWebSearch = true,
                 ),
                 AiModelOption(
@@ -92,6 +100,7 @@ object AiProviderRegistry {
                     outputUsdPerMTok = 30.00,
                     cachedInputUsdPerMTok = 1.25,
                     cacheWriteUsdPerMTok = 6.25,
+                    hostedSearchUsdPerCall = 0.010,
                     supportsHostedWebSearch = true,
                 ),
             ),
@@ -126,6 +135,7 @@ object AiProviderRegistry {
                     inputUsdPerMTok = 0.50,
                     outputUsdPerMTok = 3.00,
                     cachedInputUsdPerMTok = 0.125,
+                    hostedSearchUsdPerCall = 0.010,
                     supportsHostedWebSearch = true,
                 ),
                 AiModelOption(
@@ -136,6 +146,7 @@ object AiProviderRegistry {
                     inputUsdPerMTok = 1.50,
                     outputUsdPerMTok = 9.00,
                     cachedInputUsdPerMTok = 0.375,
+                    hostedSearchUsdPerCall = 0.010,
                     supportsHostedWebSearch = true,
                 ),
             ),
@@ -157,6 +168,7 @@ object AiProviderRegistry {
                     outputUsdPerMTok = 5.00,
                     cachedInputUsdPerMTok = 0.10,
                     cacheWriteUsdPerMTok = 1.25,
+                    hostedSearchUsdPerCall = 0.010,
                     supportsHostedWebSearch = true,
                 ),
                 // Intro pricing until Aug 2026 - bump to 3.00/15.00 afterwards (label too),
@@ -170,6 +182,7 @@ object AiProviderRegistry {
                     outputUsdPerMTok = 10.00,
                     cachedInputUsdPerMTok = 0.20,
                     cacheWriteUsdPerMTok = 2.50,
+                    hostedSearchUsdPerCall = 0.010,
                     supportsHostedWebSearch = true,
                 ),
                 AiModelOption(
@@ -181,6 +194,7 @@ object AiProviderRegistry {
                     outputUsdPerMTok = 25.00,
                     cachedInputUsdPerMTok = 0.50,
                     cacheWriteUsdPerMTok = 6.25,
+                    hostedSearchUsdPerCall = 0.010,
                     supportsHostedWebSearch = true,
                 ),
             ),
@@ -224,21 +238,32 @@ object AiProviderRegistry {
     fun shortLabelFor(modelId: String): String =
         modelOptionFor(modelId)?.shortLabel ?: modelId
 
-    // Token-based estimate only: hosted web search fees (billed per query) are not
-    // reflected; on Gemini's free tier the nominal cost is shown even though nothing
-    // is billed. Cache-discounted and cache-write tokens are priced separately when
-    // the model carries those rates, and at the full input price when it doesn't.
-    fun estimateCostUsd(modelId: String, usage: TokenUsage): Double? {
+    // Tokens plus hosted web searches, which providers bill per call as their own line
+    // item. Cache-discounted and cache-write tokens are priced separately when the model
+    // carries those rates, and at the full input price when it doesn't.
+    //
+    // Still an estimate, and one thing it deliberately does not model: on Gemini's free
+    // tier the nominal cost is shown even though nothing is actually billed.
+    fun estimateCostUsd(modelId: String, usage: TokenUsage, hostedSearchCalls: Int = 0): Double? {
         val model = modelOptionFor(modelId) ?: return null
         val cachedRate = model.cachedInputUsdPerMTok ?: model.inputUsdPerMTok
         val writeRate = model.cacheWriteUsdPerMTok ?: model.inputUsdPerMTok
-        return (
+        val searchRate = model.hostedSearchUsdPerCall ?: DEFAULT_HOSTED_SEARCH_USD_PER_CALL
+        val tokenCost = (
             usage.inputTokens * model.inputUsdPerMTok +
                 usage.cachedInputTokens * cachedRate +
                 usage.cacheWriteInputTokens * writeRate +
                 usage.outputTokens * model.outputUsdPerMTok
             ) / 1_000_000.0
+        return tokenCost + hostedSearchCalls.coerceAtLeast(0) * searchRate
     }
+
+    // Used when a model carries no hosted-search rate of its own. Set at the expensive end
+    // of what providers charge, on purpose: the alternative to guessing high is treating an
+    // unpriced search as free, which is exactly the silent under-reporting that let a real
+    // month's bill run 20% above what the app displayed. Per-model rates in models.json
+    // override it, so calibrating one model never requires an app release.
+    const val DEFAULT_HOSTED_SEARCH_USD_PER_CALL = 0.025
 }
 
 data class CatalogMergeResult(

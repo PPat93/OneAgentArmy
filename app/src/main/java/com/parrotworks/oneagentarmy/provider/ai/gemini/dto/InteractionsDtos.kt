@@ -89,6 +89,14 @@ fun InteractionsResponse.firstFunctionCall(): GeminiFunctionCall? {
     )
 }
 
+// Unlike OpenAI's `web_search_call` and Anthropic's `server_tool_use`, the exact step type
+// Gemini emits for a server-side search is not pinned down here. The match is therefore
+// loose on purpose: any step whose type mentions "search" counts. A false positive
+// over-states the cost slightly, a missed step would under-state it - and of the two, only
+// under-stating puts a surprise on the bill.
+fun InteractionsResponse.hostedSearchCallCount(): Int =
+    steps.count { it.stringField("type")?.contains("search", ignoreCase = true) == true }
+
 fun InteractionsResponse.outputText(): String? =
     steps.asSequence()
         .filter { it.stringField("type") == "model_output" }

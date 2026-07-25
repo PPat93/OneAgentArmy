@@ -44,6 +44,10 @@ interface ConversationDao {
     @Query("UPDATE conversations SET contextWindowOverride = :value WHERE id = :id")
     suspend fun setContextWindowOverride(id: String, value: Int?)
 
+    // Null clears the marker, which is what a successful resend does.
+    @Query("UPDATE messages SET deliveryFailure = :failure WHERE id = :messageId")
+    suspend fun setMessageDeliveryFailure(messageId: String, failure: String?)
+
     @Query("SELECT attachmentPath FROM messages WHERE conversationId IN (:conversationIds) AND attachmentPath IS NOT NULL")
     suspend fun attachmentPathsForConversations(conversationIds: List<String>): List<String>
 

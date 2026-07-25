@@ -78,6 +78,10 @@ class RoomConversationRepository(
         }
     }
 
+    override suspend fun setDeliveryFailure(messageId: String, failure: String?) {
+        dao.setMessageDeliveryFailure(messageId, failure)
+    }
+
     override suspend fun deleteConversation(conversationId: String) {
         // Attachment file paths must be captured before the CASCADE wipes the rows.
         val attachmentPaths = dao.attachmentPathsForConversations(listOf(conversationId))

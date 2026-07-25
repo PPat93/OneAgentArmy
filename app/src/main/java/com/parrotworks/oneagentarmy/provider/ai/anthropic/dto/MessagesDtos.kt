@@ -102,6 +102,11 @@ fun MessagesResponse.allToolUses(): List<AnthropicToolUse> =
         )
     }
 
+// Server-side tool invocations arrive as their own content blocks. Only web search is
+// counted: it is the one that carries a per-call charge on top of tokens.
+fun MessagesResponse.hostedSearchCallCount(): Int =
+    content.count { it.stringField("type") == "server_tool_use" && it.stringField("name") == "web_search" }
+
 fun MessagesResponse.outputText(): String? =
     content.asSequence()
         .filter { it.stringField("type") == "text" }
@@ -189,9 +194,14 @@ fun functionToolJson(definition: ToolDefinition, includeStrict: Boolean): JsonOb
 
 // Server-side web search - the tool type variant differs per model
 // (web_search_20260209 on Sonnet 5, web_search_20250305 on Haiku 4.5).
-fun webSearchToolJson(type: String): JsonObject = buildJsonObject {
+//
+// max_uses is a server-side ceiling the model cannot talk its way past, which the system
+// prompt's "never more than twice" alone cannot guarantee. Each search is billed on top of
+// tokens, so an over-eager model is a direct cost, not just latency.
+fun webSearchToolJson(type: String, maxUses: Int): JsonObject = buildJsonObject {
     put("type", JsonPrimitive(type))
     put("name", JsonPrimitive("web_search"))
+    put("max_uses", JsonPrimitive(maxUses))
 }
 
 // The loop handles one tool call at a time; parallel tool_use blocks would each

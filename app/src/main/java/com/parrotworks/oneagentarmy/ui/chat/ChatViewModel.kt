@@ -9,6 +9,7 @@ import com.parrotworks.oneagentarmy.data.repository.ConversationRepository
 import com.parrotworks.oneagentarmy.data.repository.ExchangeRateRepository
 import com.parrotworks.oneagentarmy.data.repository.FactRepository
 import com.parrotworks.oneagentarmy.data.repository.SettingsRepository
+import com.parrotworks.oneagentarmy.model.DeliveryFailure
 import com.parrotworks.oneagentarmy.model.Draft
 import com.parrotworks.oneagentarmy.model.Fact
 import com.parrotworks.oneagentarmy.model.Message
@@ -46,6 +47,7 @@ import com.parrotworks.oneagentarmy.tools.sms.parseSmsArgs
 import java.time.Instant
 import java.time.ZoneId
 import java.util.UUID
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -443,6 +445,12 @@ class ChatViewModel(
             .map { it.content }
 
     private suspend fun requestAiReply(history: List<Message>, modelId: String, selectedIds: Set<String>) {
+        // The message this reply belongs to. If nothing comes back, the reason is written
+        // onto it, so the gap in the transcript explains itself instead of looking like a
+        // message that vanished - the error banner below is in-memory and does not survive
+        // leaving the screen.
+        val awaiting = history.lastOrNull { it.sender == Sender.USER }
+        var failure: String? = null
         _isSending.value = true
         try {
             val historyToSend = ContextWindowStrategies.rollingChunked(effectiveContextWindowSize.value).apply(history)
@@ -451,35 +459,44 @@ class ChatViewModel(
                 is AiReply.ToolCall -> {
                     pendingActionUsage = reply.usage
                     pendingActionCost = reply.costUsd
-                    dispatchToolCall(reply.request)
+                    // A dispatched tool call is not a failure - the reply arrives later as
+                    // a note, once the user confirms or declines the action.
+                    dispatchToolCall(reply.request)?.let { toolError ->
+                        _error.value = toolError
+                        failure = toolError.deliveryFailureCode()
+                    }
                 }
             }
-        } catch (e: AiProviderException) {
-            // Timeout carries the configured limit so the banner can state it - the
-            // exception itself doesn't know what the timeout was set to.
-            _error.value = if (e is AiProviderException.Timeout) {
-                ChatError.Timeout(requestTimeoutSeconds.value, e.detail)
-            } else {
-                e.toChatError()
-            }
+        } catch (e: CancellationException) {
+            // The screen was closed mid-request. Not a delivery failure, and rethrowing
+            // is what keeps structured concurrency working.
+            throw e
+        } catch (e: Exception) {
+            // Deliberately broader than AiProviderException: a malformed 200 body throws
+            // SerializationException, which used to escape this catch, kill the app, and
+            // leave behind exactly the same silent unanswered message.
+            val chatError = e.toChatError(requestTimeoutSeconds.value)
+            _error.value = chatError
+            failure = chatError.deliveryFailureCode()
         } finally {
             _isSending.value = false
         }
+        // Clearing on success is how a resend heals the transcript. Guarded so the ordinary
+        // null -> null case doesn't write (and re-emit the message flow) on every turn.
+        if (awaiting != null && awaiting.deliveryFailure != failure) {
+            repository.setDeliveryFailure(awaiting.id, failure)
+        }
     }
 
-    private fun dispatchToolCall(request: ToolCallRequest) {
-        val parser = actionParsers[request.name]
-        if (parser == null) {
-            _error.value = ChatError.ToolArguments
-            return
-        }
+    private fun dispatchToolCall(request: ToolCallRequest): ChatError? {
+        val parser = actionParsers[request.name] ?: return ChatError.ToolArguments
         val action = try {
             parser(request.argumentsJson)
         } catch (e: Exception) {
-            _error.value = ChatError.ToolArguments
-            return
+            return ChatError.ToolArguments
         }
         _pendingAction.value = action
+        return null
     }
 
     private val actionParsers: Map<String, (String) -> PendingAction> = mapOf(
@@ -528,13 +545,31 @@ private fun deriveTitle(messageText: String): String {
     return if (singleLine.length <= 50) singleLine else singleLine.take(50) + "…"
 }
 
-private fun AiProviderException.toChatError(): ChatError = when (this) {
+// timeoutSeconds is passed in because the exception itself doesn't know what the limit was
+// configured to - only the banner needs to state it.
+internal fun Throwable.toChatError(timeoutSeconds: Int): ChatError = when (this) {
     is AiProviderException.MissingApiKey -> ChatError.MissingApiKey
     is AiProviderException.InvalidApiKey -> ChatError.InvalidApiKey(detail)
     is AiProviderException.NoConnectivity -> ChatError.NoConnectivity(detail)
-    // Fallback only - requestAiReply intercepts Timeout first to attach the configured limit.
-    is AiProviderException.Timeout -> ChatError.Timeout(SettingsRepository.DEFAULT_REQUEST_TIMEOUT_SECONDS, detail)
+    is AiProviderException.Timeout -> ChatError.Timeout(timeoutSeconds, detail)
     is AiProviderException.RateLimited -> ChatError.RateLimited(retryAfterSeconds, detail)
     is AiProviderException.ServerError -> ChatError.ServerError(statusCode, detail)
     is AiProviderException.Unknown -> ChatError.Unknown(detail)
+    // Not a provider failure but a bug on our side. Naming the exception type is the only
+    // clue there is, so it goes in rather than a generic "something went wrong".
+    else -> ChatError.Unknown("${javaClass.simpleName}: ${message ?: "no message"}")
+}
+
+// The durable counterpart of the banner - see DeliveryFailure for why these are frozen.
+internal fun ChatError.deliveryFailureCode(): String = when (this) {
+    is ChatError.MissingApiKey -> DeliveryFailure.MISSING_API_KEY
+    is ChatError.InvalidApiKey -> DeliveryFailure.INVALID_API_KEY
+    is ChatError.NoConnectivity -> DeliveryFailure.NO_CONNECTIVITY
+    is ChatError.Timeout -> DeliveryFailure.TIMEOUT
+    is ChatError.RateLimited -> DeliveryFailure.RATE_LIMITED
+    is ChatError.ServerError -> DeliveryFailure.SERVER_ERROR
+    is ChatError.ToolArguments -> DeliveryFailure.TOOL_ARGUMENTS
+    // The remaining cases never reach a message: attachment errors happen before sending
+    // and NoAppForAction after the reply already arrived.
+    else -> DeliveryFailure.UNEXPECTED
 }
