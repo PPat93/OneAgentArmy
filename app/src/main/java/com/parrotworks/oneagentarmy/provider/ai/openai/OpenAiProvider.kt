@@ -18,6 +18,7 @@ import com.parrotworks.oneagentarmy.provider.ai.openai.dto.toTokenUsage
 import com.parrotworks.oneagentarmy.provider.ai.openai.dto.firstFunctionCall
 import com.parrotworks.oneagentarmy.provider.ai.openai.dto.functionCallOutputItem
 import com.parrotworks.oneagentarmy.provider.ai.openai.dto.functionToolJson
+import com.parrotworks.oneagentarmy.provider.ai.openai.dto.hostedSearchCallCount
 import com.parrotworks.oneagentarmy.provider.ai.openai.dto.outputText
 import com.parrotworks.oneagentarmy.provider.ai.openai.dto.webSearchToolJson
 import com.parrotworks.oneagentarmy.provider.ai.tools.RoundTripToolExecutor
@@ -65,6 +66,9 @@ class OpenAiProvider(
         var input: List<JsonElement> = withSendTimes(history, clock.zone).map { historyItem(it) }
         var roundTripsUsed = 0
         var usageTotal = TokenUsage.ZERO
+        // Accumulated across round-trips like usageTotal: one message can span several
+        // requests, and each can have run its own server-side searches.
+        var hostedSearchCalls = 0
 
         while (true) {
             // Hard cap on provider-executed tool round-trips per message: once used up,
@@ -81,6 +85,7 @@ class OpenAiProvider(
             )
             val response = apiClient.createResponse(apiKey, request)
             usageTotal += response.usage.toTokenUsage()
+            hostedSearchCalls += response.hostedSearchCallCount()
 
             val functionCall = response.firstFunctionCall()
             if (functionCall == null) {
@@ -96,7 +101,7 @@ class OpenAiProvider(
                         // Prompt size, not just the full-price share (see TokenUsage).
                         inputTokens = usageTotal.totalInputTokens,
                         outputTokens = usageTotal.outputTokens,
-                        costUsd = AiProviderRegistry.estimateCostUsd(modelId, usageTotal),
+                        costUsd = AiProviderRegistry.estimateCostUsd(modelId, usageTotal, hostedSearchCalls),
                     ),
                 )
             }
@@ -117,7 +122,7 @@ class OpenAiProvider(
             return AiReply.ToolCall(
                 ToolCallRequest(functionCall.name, functionCall.arguments),
                 usage = usageTotal,
-                costUsd = AiProviderRegistry.estimateCostUsd(modelId, usageTotal),
+                costUsd = AiProviderRegistry.estimateCostUsd(modelId, usageTotal, hostedSearchCalls),
             )
         }
     }

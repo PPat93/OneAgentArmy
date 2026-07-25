@@ -84,6 +84,12 @@ fun ResponsesResponse.firstFunctionCall(): FunctionCallItem? {
     )
 }
 
+// Hosted web search runs entirely server-side, so it leaves no trace in the app's own
+// round-trip loop - the only evidence it happened (and how often) is one output item per
+// search. Each is billed separately from tokens.
+fun ResponsesResponse.hostedSearchCallCount(): Int =
+    output.count { it.stringField("type") == "web_search_call" }
+
 fun ResponsesResponse.outputText(): String? =
     output.asSequence()
         .filter { it.stringField("type") == "message" }

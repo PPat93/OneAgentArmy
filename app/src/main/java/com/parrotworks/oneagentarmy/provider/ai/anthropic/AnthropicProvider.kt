@@ -15,6 +15,7 @@ import com.parrotworks.oneagentarmy.provider.ai.anthropic.dto.assistantMessage
 import com.parrotworks.oneagentarmy.provider.ai.anthropic.dto.functionToolJson
 import com.parrotworks.oneagentarmy.provider.ai.anthropic.dto.historyMessage
 import com.parrotworks.oneagentarmy.provider.ai.anthropic.dto.historyMessageWithAttachment
+import com.parrotworks.oneagentarmy.provider.ai.anthropic.dto.hostedSearchCallCount
 import com.parrotworks.oneagentarmy.provider.ai.anthropic.dto.outputText
 import com.parrotworks.oneagentarmy.provider.ai.anthropic.dto.toolChoiceAutoNoParallel
 import com.parrotworks.oneagentarmy.provider.ai.anthropic.dto.toolChoiceNone
@@ -68,13 +69,20 @@ class AnthropicProvider(
             .filter { it.requiredKeyId == null || settingsRepository.getApiKey(it.requiredKeyId) != null }
             .map { functionToolJson(it, includeStrict = !usesDynamicFilteringSearch) }
         val tools: List<JsonElement> =
-            if (hostedSearchType != null) functionTools + webSearchToolJson(hostedSearchType) else functionTools
+            if (hostedSearchType != null) {
+                functionTools + webSearchToolJson(hostedSearchType, MAX_HOSTED_SEARCHES_PER_MESSAGE)
+            } else {
+                functionTools
+            }
 
         val system = buildSystemPrompt(clock, contextFacts)
         var messages: List<JsonElement> = withSendTimes(history, clock.zone).map { historyMessageFor(it) }
         var roundTripsUsed = 0
         var pauseTurnsUsed = 0
         var usageTotal = TokenUsage.ZERO
+        // Accumulated like usageTotal, and pause_turn makes that essential here: a single
+        // hosted-search turn can span several responses, each carrying its own searches.
+        var hostedSearchCalls = 0
 
         while (true) {
             // Hard cap on provider-executed tool round-trips per message. Tools stay
@@ -102,6 +110,7 @@ class AnthropicProvider(
             )
             val response = apiClient.createMessage(apiKey, request)
             usageTotal += response.usage.toTokenUsage()
+            hostedSearchCalls += response.hostedSearchCallCount()
 
             // Server-side tool loop (hosted web search) paused - echo the assistant
             // content back and the server resumes automatically. Not counted against
@@ -128,7 +137,7 @@ class AnthropicProvider(
                         // only the full-price share.
                         inputTokens = usageTotal.totalInputTokens,
                         outputTokens = usageTotal.outputTokens,
-                        costUsd = AiProviderRegistry.estimateCostUsd(modelId, usageTotal),
+                        costUsd = AiProviderRegistry.estimateCostUsd(modelId, usageTotal, hostedSearchCalls),
                     ),
                 )
             }
@@ -158,7 +167,7 @@ class AnthropicProvider(
             return AiReply.ToolCall(
                 ToolCallRequest(clientToolUse.name, clientToolUse.inputJson),
                 usage = usageTotal,
-                costUsd = AiProviderRegistry.estimateCostUsd(modelId, usageTotal),
+                costUsd = AiProviderRegistry.estimateCostUsd(modelId, usageTotal, hostedSearchCalls),
             )
         }
     }
@@ -184,6 +193,12 @@ class AnthropicProvider(
     private companion object {
         const val MAX_TOOL_ROUND_TRIPS = 4
         const val MAX_PAUSE_TURNS = 5
+
+        // Matches what the system prompt asks for, but enforced by the server. Two is
+        // enough for the genuine case (first results too shallow, refine once) and stops
+        // the pattern that ran up a real bill: a model searching five or six times for one
+        // question, each search charged separately from tokens.
+        const val MAX_HOSTED_SEARCHES_PER_MESSAGE = 2
         const val MAX_OUTPUT_TOKENS = 8192
         const val MISSING_ATTACHMENT_NOTE = "[attachment no longer available]"
     }

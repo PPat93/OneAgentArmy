@@ -17,6 +17,7 @@ import com.parrotworks.oneagentarmy.provider.ai.gemini.dto.firstFunctionCall
 import com.parrotworks.oneagentarmy.provider.ai.gemini.dto.functionResultStep
 import com.parrotworks.oneagentarmy.provider.ai.gemini.dto.functionToolJson
 import com.parrotworks.oneagentarmy.provider.ai.gemini.dto.googleSearchToolJson
+import com.parrotworks.oneagentarmy.provider.ai.gemini.dto.hostedSearchCallCount
 import com.parrotworks.oneagentarmy.provider.ai.gemini.dto.modelOutputStep
 import com.parrotworks.oneagentarmy.provider.ai.gemini.dto.outputText
 import com.parrotworks.oneagentarmy.provider.ai.gemini.dto.userInputStep
@@ -65,6 +66,9 @@ class GeminiProvider(
         var input: List<JsonElement> = withSendTimes(history, clock.zone).map { historyStepFor(it) }
         var roundTripsUsed = 0
         var usageTotal = TokenUsage.ZERO
+        // Accumulated across round-trips like usageTotal: one message can span several
+        // requests, and each can have run its own server-side searches.
+        var hostedSearchCalls = 0
 
         while (true) {
             // Hard cap on provider-executed tool round-trips per message: once used up,
@@ -79,6 +83,7 @@ class GeminiProvider(
             )
             val response = apiClient.createInteraction(apiKey, request)
             usageTotal += response.usage.toTokenUsage()
+            hostedSearchCalls += response.hostedSearchCallCount()
 
             val functionCall = response.firstFunctionCall()
             if (functionCall == null) {
@@ -94,7 +99,7 @@ class GeminiProvider(
                         // Prompt size, not just the full-price share (see TokenUsage).
                         inputTokens = usageTotal.totalInputTokens,
                         outputTokens = usageTotal.outputTokens,
-                        costUsd = AiProviderRegistry.estimateCostUsd(modelId, usageTotal),
+                        costUsd = AiProviderRegistry.estimateCostUsd(modelId, usageTotal, hostedSearchCalls),
                     ),
                 )
             }
@@ -115,7 +120,7 @@ class GeminiProvider(
             return AiReply.ToolCall(
                 ToolCallRequest(functionCall.name, functionCall.argumentsJson),
                 usage = usageTotal,
-                costUsd = AiProviderRegistry.estimateCostUsd(modelId, usageTotal),
+                costUsd = AiProviderRegistry.estimateCostUsd(modelId, usageTotal, hostedSearchCalls),
             )
         }
     }

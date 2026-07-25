@@ -25,6 +25,7 @@
           "outputUsdPerMTok": 6.00,
           "cachedInputUsdPerMTok": 0.25,
           "cacheWriteUsdPerMTok": 1.25,
+          "hostedSearchUsdPerCall": 0.010,
           "supportsHostedWebSearch": true
         },
         {
@@ -36,6 +37,7 @@
           "outputUsdPerMTok": 30.00,
           "cachedInputUsdPerMTok": 1.25,
           "cacheWriteUsdPerMTok": 6.25,
+          "hostedSearchUsdPerCall": 0.010,
           "supportsHostedWebSearch": true
         }
       ]
@@ -61,6 +63,7 @@
           "inputUsdPerMTok": 0.50,
           "outputUsdPerMTok": 3.00,
           "cachedInputUsdPerMTok": 0.125,
+          "hostedSearchUsdPerCall": 0.010,
           "supportsHostedWebSearch": true
         },
         {
@@ -71,6 +74,7 @@
           "inputUsdPerMTok": 1.50,
           "outputUsdPerMTok": 9.00,
           "cachedInputUsdPerMTok": 0.375,
+          "hostedSearchUsdPerCall": 0.010,
           "supportsHostedWebSearch": true
         }
       ]
@@ -87,6 +91,7 @@
           "outputUsdPerMTok": 5.00,
           "cachedInputUsdPerMTok": 0.10,
           "cacheWriteUsdPerMTok": 1.25,
+          "hostedSearchUsdPerCall": 0.010,
           "supportsHostedWebSearch": true
         },
         {
@@ -98,6 +103,7 @@
           "outputUsdPerMTok": 10.00,
           "cachedInputUsdPerMTok": 0.20,
           "cacheWriteUsdPerMTok": 2.50,
+          "hostedSearchUsdPerCall": 0.010,
           "supportsHostedWebSearch": true
         },
         {
@@ -109,6 +115,7 @@
           "outputUsdPerMTok": 25.00,
           "cachedInputUsdPerMTok": 0.50,
           "cacheWriteUsdPerMTok": 6.25,
+          "hostedSearchUsdPerCall": 0.010,
           "supportsHostedWebSearch": true
         }
       ]

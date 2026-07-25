@@ -35,6 +35,10 @@ data class CatalogModel(
     // app version keeps working and can never under-report a bill.
     val cachedInputUsdPerMTok: Double? = null,
     val cacheWriteUsdPerMTok: Double? = null,
+    // USD per hosted web search. Optional, but omitting it does NOT make search free -
+    // it falls back to a pessimistic default, because a catalog that forgot this field
+    // must not silently under-report a bill.
+    val hostedSearchUsdPerCall: Double? = null,
     val supportsHostedWebSearch: Boolean = false,
 )
 
@@ -49,6 +53,7 @@ fun CatalogModel.toOption() = AiModelOption(
     // model - it falls back to the full input price instead.
     cachedInputUsdPerMTok = cachedInputUsdPerMTok?.takeIf { it >= 0.0 },
     cacheWriteUsdPerMTok = cacheWriteUsdPerMTok?.takeIf { it >= 0.0 },
+    hostedSearchUsdPerCall = hostedSearchUsdPerCall?.takeIf { it >= 0.0 },
     supportsHostedWebSearch = supportsHostedWebSearch,
 )
 
