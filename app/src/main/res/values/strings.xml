@@ -63,7 +63,8 @@
     <string name="attach_file">Attach a file</string>
     <string name="remove_attachment">Remove attachment</string>
     <string name="error_attachment_too_large">The file is too large (limit ~30,000 characters). Trim it or send a fragment.</string>
-    <string name="attach_menu_image">Photo</string>
+    <string name="attach_menu_take_photo">Take a photo</string>
+    <string name="attach_menu_image">Choose a photo</string>
     <string name="attach_menu_pdf">PDF file</string>
     <string name="attach_menu_text">Text file (txt, md, csv)</string>
     <string name="error_pdf_too_large">The PDF is too large (limit 5 MB).</string>
@@ -166,7 +167,7 @@
     <string name="spending_threshold_clear">Clear</string>
 
     <string name="help_section_providers_title">AI providers and models</string>
-    <string name="help_section_providers_body">The app supports three providers, each with three models (cheapest to most capable):\n• OpenAI (ChatGPT)\n• Google (Gemini)\n• Anthropic (Claude)\n\nSwitch the active provider on the main screen or in Settings. The model is chosen per conversation in the chat screen (defaults to the cheapest available).\n\nModel lists and prices can change over time — tap "Refresh now" under Settings → AI providers to fetch the latest catalog without updating the app. The refresh also checks each provider\'s live model list and warns if a catalog model seems to have been retired.</string>
+    <string name="help_section_providers_body">The app supports three providers, each with three models (cheapest to most capable):\n• OpenAI (ChatGPT)\n• Google (Gemini)\n• Anthropic (Claude)\n\nSwitch the active provider on the main screen or in Settings. The model is chosen per conversation in the chat screen (defaults to the cheapest available).\n\nModel lists and prices can change over time — tap \"Refresh now\" under Settings → AI providers to fetch the latest catalog without updating the app. The refresh also checks each provider\'s live model list and warns if a catalog model seems to have been retired.</string>
 
     <string name="help_section_keys_title">API keys</string>
     <string name="help_section_keys_body">Each provider needs its own API key, entered in Settings → AI providers.\n\nKeys are encrypted locally (Android Keystore) and never leave the phone except in direct calls to that provider\'s servers — this app has no backend of its own.</string>
@@ -184,7 +185,7 @@
     <string name="help_section_automation_body">Weather (via Open-Meteo) and web search run automatically in the background when the AI needs them — no confirmation card, nothing to approve.\n\nChoose the search source in Settings → Tools:\n• Your provider\'s own built-in search\n• Tavily (needs its own API key)\n\nNot every model supports built-in search; the app falls back to Tavily automatically when it doesn\'t.</string>
 
     <string name="help_section_attachments_title">Attachments</string>
-    <string name="help_section_attachments_body">You can attach a photo, a PDF, or a text/CSV file to a message (the paperclip next to the input field).\n\n• Photos are automatically downscaled before sending.\n• PDFs are capped at 5 MB.</string>
+    <string name="help_section_attachments_body">You can attach a photo, a PDF, or a text/CSV file to a message (the paperclip next to the input field).\n\n• \"Take a photo\" opens the camera straight from the chat; \"Choose a photo\" picks an existing one. Both end up handled identically.\n• Photos are automatically downscaled before sending.\n• PDFs are capped at 5 MB.</string>
 
     <string name="help_section_context_title">Conversation context</string>
     <string name="help_section_context_body">Every message you send carries recent history from that conversation, so the AI remembers what was said — at least 40 messages by default, growing to 60 before older ones are dropped in one batch. Change the minimum in Settings → Chat &amp; display, or override it for just one conversation from the clock icon in that chat.\n\nWhy a batch: providers can serve a repeated prompt from a cache at about a tenth of the price, but only when it starts with exactly the same text as last time. Dropping one message per turn would change that opening every time and lose the discount, so history is trimmed in chunks instead.\n\nThis also means an attached file or photo is resent with every following message as long as it\'s within that window — cheap while it\'s cached, but a very large window still adds up.</string>

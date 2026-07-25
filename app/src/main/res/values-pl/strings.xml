@@ -63,7 +63,8 @@
     <string name="attach_file">Załącz plik</string>
     <string name="remove_attachment">Usuń załącznik</string>
     <string name="error_attachment_too_large">Plik jest za duży (limit ~30 000 znaków). Skróć go albo wyślij fragment.</string>
-    <string name="attach_menu_image">Zdjęcie</string>
+    <string name="attach_menu_take_photo">Zrób zdjęcie</string>
+    <string name="attach_menu_image">Wybierz zdjęcie</string>
     <string name="attach_menu_pdf">Plik PDF</string>
     <string name="attach_menu_text">Plik tekstowy (txt, md, csv)</string>
     <string name="error_pdf_too_large">PDF jest za duży (limit 5 MB).</string>
@@ -166,7 +167,7 @@
     <string name="spending_threshold_clear">Wyczyść</string>
 
     <string name="help_section_providers_title">Dostawcy AI i modele</string>
-    <string name="help_section_providers_body">Apka obsługuje trzech dostawców, każdy z trzema modelami (od najtańszego po najmocniejszy):\n• OpenAI (ChatGPT)\n• Google (Gemini)\n• Anthropic (Claude)\n\nAktywnego dostawcę przełączasz na głównym ekranie lub w Ustawieniach. Model wybierasz osobno dla każdej rozmowy w czacie (domyślnie najtańszy dostępny).\n\nListy modeli i ceny zmieniają się z czasem — kliknij "Odśwież teraz" w Ustawienia → Dostawcy AI, żeby pobrać aktualny katalog bez aktualizowania apki. Odświeżenie sprawdza też aktualną listę modeli u każdego dostawcy i ostrzega, jeśli któryś model z katalogu wygląda na wycofany.</string>
+    <string name="help_section_providers_body">Apka obsługuje trzech dostawców, każdy z trzema modelami (od najtańszego po najmocniejszy):\n• OpenAI (ChatGPT)\n• Google (Gemini)\n• Anthropic (Claude)\n\nAktywnego dostawcę przełączasz na głównym ekranie lub w Ustawieniach. Model wybierasz osobno dla każdej rozmowy w czacie (domyślnie najtańszy dostępny).\n\nListy modeli i ceny zmieniają się z czasem — kliknij \"Odśwież teraz\" w Ustawienia → Dostawcy AI, żeby pobrać aktualny katalog bez aktualizowania apki. Odświeżenie sprawdza też aktualną listę modeli u każdego dostawcy i ostrzega, jeśli któryś model z katalogu wygląda na wycofany.</string>
 
     <string name="help_section_keys_title">Klucze API</string>
     <string name="help_section_keys_body">Do każdego dostawcy potrzebny jest własny klucz API — wpisujesz go w Ustawieniach → Dostawcy AI.\n\nKlucze są szyfrowane lokalnie (Android Keystore) i nigdy nie opuszczają telefonu poza bezpośrednim połączeniem z serwerem danego dostawcy — ta apka nie ma własnego backendu.</string>
@@ -184,7 +185,7 @@
     <string name="help_section_automation_body">Pogoda (przez Open-Meteo) i wyszukiwanie w internecie działają automatycznie w tle, kiedy AI ich potrzebuje — bez karty do potwierdzenia, nic nie musisz zatwierdzać.\n\nŹródło wyszukiwania wybierasz w Ustawieniach → Narzędzia:\n• Wbudowane u dostawcy\n• Tavily (wymaga własnego klucza API)\n\nNie każdy model wspiera wbudowane wyszukiwanie — apka wtedy automatycznie przełącza się na Tavily.</string>
 
     <string name="help_section_attachments_title">Załączniki</string>
-    <string name="help_section_attachments_body">Do wiadomości możesz dołączyć zdjęcie, plik PDF albo plik tekstowy/CSV (spinacz obok pola wiadomości).\n\n• Zdjęcia są automatycznie zmniejszane przed wysyłką.\n• Pliki PDF są ograniczone do 5 MB.</string>
+    <string name="help_section_attachments_body">Do wiadomości możesz dołączyć zdjęcie, plik PDF albo plik tekstowy/CSV (spinacz obok pola wiadomości).\n\n• \"Zrób zdjęcie\" otwiera aparat prosto z czatu, \"Wybierz zdjęcie\" bierze istniejące. Oba trafiają dalej tak samo.\n• Zdjęcia są automatycznie zmniejszane przed wysyłką.\n• Pliki PDF są ograniczone do 5 MB.</string>
 
     <string name="help_section_context_title">Kontekst rozmowy</string>
     <string name="help_section_context_body">Każda wysłana wiadomość niesie ze sobą ostatnią historię rozmowy — dzięki temu AI pamięta, o czym była mowa. Domyślnie co najmniej 40 wiadomości, rosnąco do 60, po czym starsze są usuwane za jednym razem. Minimum zmienisz w Ustawienia → Czat i wygląd, albo nadpiszesz tylko dla jednej rozmowy ikoną zegara w tym czacie.\n\nDlaczego partiami: dostawcy potrafią podać powtarzalny prompt z cache\'u za jakieś dziesięć razy mniej, ale tylko wtedy, gdy zaczyna się dokładnie tym samym tekstem co poprzednio. Usuwanie po jednej wiadomości zmieniałoby ten początek za każdym razem i zniżka by przepadła — dlatego historia jest przycinana partiami.\n\nTo oznacza też, że raz załączony plik czy zdjęcie jest wysyłane ponownie przy każdej kolejnej wiadomości, dopóki mieści się w tym oknie — tanio, póki siedzi w cache\'u, ale bardzo duże okno i tak podnosi rachunek.</string>

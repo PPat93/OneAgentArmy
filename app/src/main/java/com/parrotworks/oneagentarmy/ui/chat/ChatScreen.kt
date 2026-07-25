@@ -63,6 +63,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.parrotworks.oneagentarmy.R
+import com.parrotworks.oneagentarmy.data.local.newCameraPhotoUri
 import com.parrotworks.oneagentarmy.data.repository.SettingsRepository
 import com.parrotworks.oneagentarmy.model.PendingAttachment
 import com.parrotworks.oneagentarmy.model.Sender
@@ -210,6 +211,16 @@ fun ChatScreen(
     }
     val pdfLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let(viewModel::attachPdf)
+    }
+    // The camera writes into a URI we choose up front, so it has to be held until the
+    // result comes back. A false result means the user backed out without shooting.
+    var pendingPhotoUri by remember { mutableStateOf<Uri?>(null) }
+    val takePhotoLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { captured ->
+        val uri = pendingPhotoUri
+        pendingPhotoUri = null
+        // Reuses the gallery path wholesale, so a capture gets the same downscale,
+        // re-encode and storage handling as any other image.
+        if (captured && uri != null) viewModel.attachImage(uri)
     }
     var attachMenuExpanded by remember { mutableStateOf(false) }
 
@@ -487,6 +498,24 @@ fun ChatScreen(
                         expanded = attachMenuExpanded,
                         onDismissRequest = { attachMenuExpanded = false },
                     ) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.attach_menu_take_photo)) },
+                            onClick = {
+                                attachMenuExpanded = false
+                                try {
+                                    val uri = newCameraPhotoUri(attachContext)
+                                    pendingPhotoUri = uri
+                                    takePhotoLauncher.launch(uri)
+                                } catch (e: ActivityNotFoundException) {
+                                    // No camera app installed (possible on an emulator image).
+                                    pendingPhotoUri = null
+                                    viewModel.reportNoAppForAction()
+                                } catch (e: IOException) {
+                                    pendingPhotoUri = null
+                                    viewModel.reportAttachmentError(e.message ?: "camera setup failed")
+                                }
+                            },
+                        )
                         DropdownMenuItem(
                             text = { Text(stringResource(R.string.attach_menu_image)) },
                             onClick = {
