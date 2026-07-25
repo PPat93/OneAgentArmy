@@ -16,4 +16,12 @@ interface DraftDao {
 
     @Query("DELETE FROM drafts WHERE conversationId = :conversationId")
     suspend fun deleteDraft(conversationId: String)
+
+    // Only a staged Media draft (photo/PDF) has a file on disk - a staged TextFile draft's
+    // content lives inline in attachmentContent, nothing to clean up there.
+    @Query("SELECT attachmentPath FROM drafts WHERE conversationId IN (:conversationIds) AND attachmentPath IS NOT NULL")
+    suspend fun attachmentPathsForConversations(conversationIds: List<String>): List<String>
+
+    @Query("DELETE FROM drafts WHERE conversationId IN (:conversationIds)")
+    suspend fun deleteDrafts(conversationIds: List<String>)
 }
