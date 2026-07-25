@@ -1,5 +1,6 @@
 package com.parrotworks.oneagentarmy.ui.chat
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -39,6 +40,7 @@ import com.mikepenz.markdown.m3.Markdown
 import com.mikepenz.markdown.m3.markdownColor
 import com.mikepenz.markdown.m3.markdownTypography
 import com.parrotworks.oneagentarmy.R
+import com.parrotworks.oneagentarmy.model.DeliveryFailure
 import com.parrotworks.oneagentarmy.model.Message
 import com.parrotworks.oneagentarmy.model.Sender
 import com.parrotworks.oneagentarmy.ui.components.AttachmentImage
@@ -128,6 +130,17 @@ private fun ChatBubbleContent(
                 }
             }
         }
+        // No reply ever came back for this message. Said plainly and permanently, because
+        // the error banner that reported it at the time is long gone - without this the
+        // message just sits there unanswered, looking like something got lost.
+        message.deliveryFailure?.let { failure ->
+            Text(
+                text = stringResource(R.string.delivery_failed, stringResource(deliveryFailureLabel(failure))),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
+            )
+        }
         val timeLine = buildString {
             append(timeFormatter.format(message.timestamp))
             message.costUsd?.let { append(" · ").append(formatCostEur(it, usdToEur)) }
@@ -152,6 +165,20 @@ private fun ChatBubbleContent(
             }
         }
     }
+}
+
+// Unknown codes fall through to the generic label rather than crashing - a database written
+// by a newer build (or a code we later retire) must still render.
+@StringRes
+private fun deliveryFailureLabel(failure: String): Int = when (failure) {
+    DeliveryFailure.MISSING_API_KEY -> R.string.delivery_reason_missing_api_key
+    DeliveryFailure.INVALID_API_KEY -> R.string.delivery_reason_invalid_api_key
+    DeliveryFailure.NO_CONNECTIVITY -> R.string.delivery_reason_no_connectivity
+    DeliveryFailure.TIMEOUT -> R.string.delivery_reason_timeout
+    DeliveryFailure.RATE_LIMITED -> R.string.delivery_reason_rate_limited
+    DeliveryFailure.SERVER_ERROR -> R.string.delivery_reason_server_error
+    DeliveryFailure.TOOL_ARGUMENTS -> R.string.delivery_reason_tool_arguments
+    else -> R.string.delivery_reason_unexpected
 }
 
 @Composable

@@ -48,6 +48,18 @@
     <string name="error_server">Błąd serwera OpenAI (%1$d), spróbuj ponownie.</string>
     <string name="error_unknown">Nie udało się uzyskać odpowiedzi: %1$s</string>
 
+    <!-- Trwały ślad pod wiadomością, na którą nie przyszła odpowiedź - w odróżnieniu od
+         banera błędu powyżej, który znika razem z ekranem. -->
+    <string name="delivery_failed">⚠ Brak odpowiedzi · %1$s</string>
+    <string name="delivery_reason_missing_api_key">brak klucza API</string>
+    <string name="delivery_reason_invalid_api_key">klucz API odrzucony</string>
+    <string name="delivery_reason_no_connectivity">brak połączenia</string>
+    <string name="delivery_reason_timeout">przekroczony limit czasu</string>
+    <string name="delivery_reason_rate_limited">limit zapytań</string>
+    <string name="delivery_reason_server_error">błąd dostawcy</string>
+    <string name="delivery_reason_tool_arguments">nieczytelne wywołanie narzędzia</string>
+    <string name="delivery_reason_unexpected">nieoczekiwany błąd</string>
+
     <string name="api_key_configured">Klucz API: skonfigurowany</string>
     <string name="api_key_missing">Klucz API: brak</string>
     <string name="api_key_label">Klucz API</string>
@@ -191,7 +203,7 @@
     <string name="help_section_context_body">Każda wysłana wiadomość niesie ze sobą ostatnią historię rozmowy — dzięki temu AI pamięta, o czym była mowa. Domyślnie co najmniej 40 wiadomości, rosnąco do 60, po czym starsze są usuwane za jednym razem. Minimum zmienisz w Ustawienia → Czat i wygląd, albo nadpiszesz tylko dla jednej rozmowy ikoną zegara w tym czacie.\n\nDlaczego partiami: dostawcy potrafią podać powtarzalny prompt z cache\'u za jakieś dziesięć razy mniej, ale tylko wtedy, gdy zaczyna się dokładnie tym samym tekstem co poprzednio. Usuwanie po jednej wiadomości zmieniałoby ten początek za każdym razem i zniżka by przepadła — dlatego historia jest przycinana partiami.\n\nTo oznacza też, że raz załączony plik czy zdjęcie jest wysyłane ponownie przy każdej kolejnej wiadomości, dopóki mieści się w tym oknie — tanio, póki siedzi w cache\'u, ale bardzo duże okno i tak podnosi rachunek.</string>
 
     <string name="help_section_timeout_title">Wolne odpowiedzi i limit czasu</string>
-    <string name="help_section_timeout_body">Zaawansowane (rozumujące) modele potrafią myśleć kilka minut przed odpowiedzią. W trakcie czekania czat pokazuje, jak długo trwa zapytanie.\n\nJeśli odpowiedź nie przyjdzie w limicie czasu (Ustawienia, domyślnie 4:00), zapytanie jest anulowane i możesz wysłać ponownie. Podnieś limit, jeśli często używasz najmocniejszych modeli.</string>
+    <string name="help_section_timeout_body">Zaawansowane (rozumujące) modele potrafią myśleć kilka minut przed odpowiedzią. W trakcie czekania czat pokazuje, jak długo trwa zapytanie.\n\nJeśli odpowiedź nie przyjdzie w limicie czasu (Ustawienia, domyślnie 4:00), zapytanie jest anulowane i możesz wysłać ponownie. Podnieś limit, jeśli często używasz najmocniejszych modeli.\n\nGdy zapytanie się nie powiedzie z jakiegokolwiek powodu, pod Twoją wiadomością pojawia się mała czerwona adnotacja: brak odpowiedzi i dlaczego. Zostaje tam na stałe, więc luka w starej rozmowie nigdy nie jest zagadką. Udane wysłanie ponowne ją usuwa.</string>
 
     <string name="help_section_personalization_title">Personalizacja</string>
     <string name="help_section_personalization_body">W Ustawieniach możesz zmienić wielkość czcionki w czacie (Mała/Normalna/Duża/Bardzo duża).</string>

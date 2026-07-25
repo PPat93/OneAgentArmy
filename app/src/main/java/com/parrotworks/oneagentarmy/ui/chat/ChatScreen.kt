@@ -1,5 +1,6 @@
 package com.parrotworks.oneagentarmy.ui.chat
 
+import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -73,7 +74,10 @@ import com.parrotworks.oneagentarmy.ui.components.WaveLoadingIndicator
 import com.parrotworks.oneagentarmy.ui.components.formatCostEur
 import com.parrotworks.oneagentarmy.ui.components.shareText
 import com.parrotworks.oneagentarmy.ui.settings.formatTimeout
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import com.parrotworks.oneagentarmy.tools.calendar.buildOpenCalendarIntent
 import com.parrotworks.oneagentarmy.tools.clock.buildAlarmIntent
 import com.parrotworks.oneagentarmy.tools.clock.buildTimerIntent
@@ -244,8 +248,13 @@ fun ChatScreen(
     var initialScrollHandled by remember { mutableStateOf(false) }
     LaunchedEffect(messages.size) {
         if (messages.isEmpty()) return@LaunchedEffect
+        val firstPass = !initialScrollHandled
+        // Marked before scrolling rather than after: a scroll call is cancelled the moment
+        // the user puts a finger on the list, and leaving the flag unset would make the
+        // next arriving reply look like a fresh open and skip the alignment below.
+        initialScrollHandled = true
         when {
-            !initialScrollHandled && focusMessageId != null -> {
+            firstPass && focusMessageId != null -> {
                 // Opened from a search result - land on the matched message instead of the bottom.
                 val index = chatItems.indexOfFirst { it is ChatListItem.MessageItem && it.message.id == focusMessageId }
                 listState.scrollToItem(index.coerceAtLeast(0))
@@ -254,11 +263,10 @@ fun ChatScreen(
             // so a long answer is read from the beginning rather than from its end.
             // Only for replies - a message you just sent still lands at the bottom,
             // next to the sending indicator.
-            initialScrollHandled && messages.last().sender == Sender.AI ->
+            !firstPass && messages.last().sender == Sender.AI ->
                 listState.showStartOfNewestMessage()
             else -> listState.animateScrollToItem(0)
         }
-        initialScrollHandled = true
     }
 
     Scaffold(
@@ -592,25 +600,39 @@ fun ChatScreen(
 //
 // A positive scroll offset moves further into the item, which in a reversed list means
 // toward its start; a reply shorter than the screen needs no offset and stays put.
-// Markdown renders asynchronously, so the bubble can keep growing for a few frames
-// after it first lays out - this re-aligns until the measured height settles, bounded
-// so it can never spin.
-private suspend fun LazyListState.showStartOfNewestMessage() {
-    scrollToItem(0)
-    var previousHeight = -1
-    repeat(MAX_ALIGN_PASSES) {
-        val info = layoutInfo
-        val newest = info.visibleItemsInfo.firstOrNull { it.index == 0 } ?: return
-        if (newest.size == previousHeight) return
-        previousHeight = newest.size
-        val viewportHeight = info.viewportEndOffset - info.viewportStartOffset
-        scrollToItem(0, (newest.size - viewportHeight).coerceAtLeast(0))
-        withFrameNanos { }
+//
+// The catch is that the bubble is nowhere near its final height on the frame the reply
+// first appears: markdown is parsed off the main thread and images decode asynchronously,
+// so the item starts out near-empty and inflates over the following frames. An offset
+// computed from that initial height is ~0, which in a reversed list is exactly the
+// bottom-anchored position we are trying to get away from. So this keeps re-aligning
+// every time the measured height changes, for as long as the window below lasts, instead
+// of aligning once and trusting the first measurement.
+//
+// It stops early the moment the user starts dragging - re-aligning under their finger
+// would feel like the list fighting them.
+private suspend fun LazyListState.showStartOfNewestMessage() = coroutineScope {
+    val userTookOver = launch {
+        interactionSource.interactions.first { it is DragInteraction.Start }
     }
+    var alignedHeight = -1
+    val deadline = withFrameNanos { it } + ALIGN_WINDOW_NANOS
+    while (!userTookOver.isCompleted) {
+        val info = layoutInfo
+        val newest = info.visibleItemsInfo.firstOrNull { it.index == 0 }
+        if (newest != null && newest.size != alignedHeight) {
+            alignedHeight = newest.size
+            val viewportHeight = info.viewportEndOffset - info.viewportStartOffset
+            scrollToItem(0, (newest.size - viewportHeight).coerceAtLeast(0))
+        }
+        if (withFrameNanos { it } >= deadline) break
+    }
+    userTookOver.cancel()
 }
 
-// Enough passes to outlast markdown rendering settling, few enough to stay bounded.
-private const val MAX_ALIGN_PASSES = 8
+// Long enough to outlast markdown parsing and image decoding for a screen-filling reply,
+// short enough that a late re-align can't read as the list moving on its own.
+private const val ALIGN_WINDOW_NANOS = 1_500_000_000L
 
 // Same warning threshold as the global default in Settings - a long context window means
 // more resent tokens, and resent attachments are re-billed on every turn until they age

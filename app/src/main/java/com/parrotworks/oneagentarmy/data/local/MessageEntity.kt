@@ -31,4 +31,5 @@ data class MessageEntity(
     val attachmentPath: String? = null,
     val attachmentMime: String? = null,
     val attachmentName: String? = null,
+    val deliveryFailure: String? = null,
 )

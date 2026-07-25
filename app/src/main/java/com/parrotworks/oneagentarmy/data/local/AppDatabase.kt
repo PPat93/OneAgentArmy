@@ -16,7 +16,7 @@ import java.util.UUID
         DraftEntity::class,
         CostEntryEntity::class,
     ],
-    version = 10,
+    version = 11,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -142,6 +142,15 @@ abstract class AppDatabase : RoomDatabase() {
                 // Nullable, no DEFAULT needed - null means "use the global Settings value",
                 // which is exactly what every existing conversation should keep meaning.
                 db.execSQL("ALTER TABLE conversations ADD COLUMN contextWindowOverride INTEGER")
+            }
+        }
+
+        val MIGRATION_10_11 = object : Migration(10, 11) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Nullable with no DEFAULT: null means "this message was answered, or
+                // predates failure tracking". Nothing to backfill - a failure that
+                // happened before this column existed was never recorded anywhere.
+                db.execSQL("ALTER TABLE messages ADD COLUMN deliveryFailure TEXT")
             }
         }
 

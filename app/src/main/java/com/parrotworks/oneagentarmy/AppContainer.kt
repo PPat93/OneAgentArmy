@@ -62,6 +62,7 @@ class AppContainer(context: Context) {
             AppDatabase.MIGRATION_7_8,
             AppDatabase.MIGRATION_8_9,
             AppDatabase.MIGRATION_9_10,
+            AppDatabase.MIGRATION_10_11,
         )
         .build()
 

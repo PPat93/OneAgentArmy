@@ -16,6 +16,9 @@ interface ConversationRepository {
     suspend fun clearDraft(conversationId: String)
     suspend fun createConversation(id: String, title: String, modelId: String)
     suspend fun addMessage(conversationId: String, message: Message)
+
+    // Records (or with null, clears) why a message went unanswered - see DeliveryFailure.
+    suspend fun setDeliveryFailure(messageId: String, failure: String?)
     suspend fun deleteConversation(conversationId: String)
     suspend fun deleteConversations(conversationIds: List<String>)
     suspend fun deleteAllConversations()

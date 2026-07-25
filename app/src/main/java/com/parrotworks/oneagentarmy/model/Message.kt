@@ -21,6 +21,9 @@ data class Message(
     val attachmentPath: String? = null,
     val attachmentMime: String? = null,
     val attachmentName: String? = null,
+    // Set on a USER message whose request came back with no reply - one of the
+    // DeliveryFailure codes. Cleared when a resend finally succeeds.
+    val deliveryFailure: String? = null,
 ) {
     companion object {
         const val ATTACHMENT_TYPE_IMAGE = "image"

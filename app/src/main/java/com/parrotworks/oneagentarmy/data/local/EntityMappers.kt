@@ -41,6 +41,7 @@ fun MessageEntity.toDomain() = Message(
     attachmentPath = attachmentPath,
     attachmentMime = attachmentMime,
     attachmentName = attachmentName,
+    deliveryFailure = deliveryFailure,
 )
 
 fun Message.toEntity() = MessageEntity(
@@ -57,6 +58,7 @@ fun Message.toEntity() = MessageEntity(
     attachmentPath = attachmentPath,
     attachmentMime = attachmentMime,
     attachmentName = attachmentName,
+    deliveryFailure = deliveryFailure,
 )
 
 fun FactEntity.toDomain() = Fact(

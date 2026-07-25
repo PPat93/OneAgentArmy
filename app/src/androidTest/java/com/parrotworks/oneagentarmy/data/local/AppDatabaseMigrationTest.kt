@@ -96,6 +96,36 @@ class AppDatabaseMigrationTest {
         }
     }
 
+    @Test
+    fun migrate10To11_existingMessagesDefaultToNullMeaningAnswered() {
+        helper.createDatabase(TEST_DB_NAME, 10).apply {
+            execSQL(
+                "INSERT INTO conversations (id, title, createdAt, modelId, pinned, lastMessageAt) " +
+                    "VALUES ('convo-1', 'Test', 1000, 'gpt-4.1-nano', 0, 1000)",
+            )
+            execSQL(
+                "INSERT INTO messages (id, conversationId, sender, text, textNormalized, timestamp) " +
+                    "VALUES ('msg-1', 'convo-1', 'USER', 'hi', 'hi', 1000)",
+            )
+            close()
+        }
+
+        val db = helper.runMigrationsAndValidate(TEST_DB_NAME, 11, true, AppDatabase.MIGRATION_10_11)
+
+        // Nothing to backfill: a failure from before this column existed was never recorded,
+        // so every pre-existing message has to read as "no known failure".
+        db.query("SELECT deliveryFailure FROM messages WHERE id = 'msg-1'").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertTrue(cursor.isNull(0))
+        }
+
+        db.execSQL("UPDATE messages SET deliveryFailure = 'timeout' WHERE id = 'msg-1'")
+        db.query("SELECT deliveryFailure FROM messages WHERE id = 'msg-1'").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals("timeout", cursor.getString(0))
+        }
+    }
+
     private companion object {
         const val TEST_DB_NAME = "migration-test-app-db"
     }
