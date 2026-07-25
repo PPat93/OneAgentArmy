@@ -10,6 +10,7 @@ import com.parrotworks.oneagentarmy.provider.ai.AiReply
 import com.parrotworks.oneagentarmy.provider.ai.AttachmentReader
 import com.parrotworks.oneagentarmy.provider.ai.TokenUsage
 import com.parrotworks.oneagentarmy.provider.ai.buildSystemPrompt
+import com.parrotworks.oneagentarmy.provider.ai.withSendTimes
 import com.parrotworks.oneagentarmy.provider.ai.gemini.dto.InteractionsRequest
 import com.parrotworks.oneagentarmy.provider.ai.gemini.dto.toTokenUsage
 import com.parrotworks.oneagentarmy.provider.ai.gemini.dto.firstFunctionCall
@@ -61,7 +62,7 @@ class GeminiProvider(
             if (useHostedSearch) functionTools + googleSearchToolJson() else functionTools
 
         val systemInstruction = buildSystemPrompt(clock, contextFacts)
-        var input: List<JsonElement> = history.map { historyStepFor(it) }
+        var input: List<JsonElement> = withSendTimes(history, clock.zone).map { historyStepFor(it) }
         var roundTripsUsed = 0
         var usageTotal = TokenUsage.ZERO
 

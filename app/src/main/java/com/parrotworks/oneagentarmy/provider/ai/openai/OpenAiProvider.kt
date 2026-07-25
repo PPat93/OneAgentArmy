@@ -10,6 +10,7 @@ import com.parrotworks.oneagentarmy.provider.ai.AiReply
 import com.parrotworks.oneagentarmy.provider.ai.AttachmentReader
 import com.parrotworks.oneagentarmy.provider.ai.TokenUsage
 import com.parrotworks.oneagentarmy.provider.ai.buildSystemPrompt
+import com.parrotworks.oneagentarmy.provider.ai.withSendTimes
 import com.parrotworks.oneagentarmy.provider.ai.openai.dto.ResponsesRequest
 import com.parrotworks.oneagentarmy.provider.ai.openai.dto.inputMessageItem
 import com.parrotworks.oneagentarmy.provider.ai.openai.dto.inputMessageItemWithAttachment
@@ -61,7 +62,7 @@ class OpenAiProvider(
             if (useHostedSearch) functionTools + webSearchToolJson() else functionTools
 
         val instructions = buildSystemPrompt(clock, contextFacts)
-        var input: List<JsonElement> = history.map { historyItem(it) }
+        var input: List<JsonElement> = withSendTimes(history, clock.zone).map { historyItem(it) }
         var roundTripsUsed = 0
         var usageTotal = TokenUsage.ZERO
 

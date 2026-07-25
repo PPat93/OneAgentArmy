@@ -23,6 +23,7 @@ import com.parrotworks.oneagentarmy.provider.ai.anthropic.dto.webSearchToolJson
 import com.parrotworks.oneagentarmy.provider.ai.TokenUsage
 import com.parrotworks.oneagentarmy.provider.ai.anthropic.dto.toTokenUsage
 import com.parrotworks.oneagentarmy.provider.ai.buildSystemPrompt
+import com.parrotworks.oneagentarmy.provider.ai.withSendTimes
 import com.parrotworks.oneagentarmy.provider.ai.tools.RoundTripToolExecutor
 import com.parrotworks.oneagentarmy.provider.ai.tools.ToolCallRequest
 import com.parrotworks.oneagentarmy.provider.ai.tools.ToolRegistry
@@ -70,7 +71,7 @@ class AnthropicProvider(
             if (hostedSearchType != null) functionTools + webSearchToolJson(hostedSearchType) else functionTools
 
         val system = buildSystemPrompt(clock, contextFacts)
-        var messages: List<JsonElement> = history.map { historyMessageFor(it) }
+        var messages: List<JsonElement> = withSendTimes(history, clock.zone).map { historyMessageFor(it) }
         var roundTripsUsed = 0
         var pauseTurnsUsed = 0
         var usageTotal = TokenUsage.ZERO
