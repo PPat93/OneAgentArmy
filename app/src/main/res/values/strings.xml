@@ -209,7 +209,7 @@
     <string name="help_section_personalization_body">In Settings you can change the chat font size (Small/Normal/Large/Extra large).</string>
 
     <string name="help_section_app_lock_title">App lock</string>
-    <string name="help_section_app_lock_body">Turn on App lock in Settings to require your fingerprint, face, or your phone\'s own screen lock (PIN/pattern/password) before the app opens.\n\n• Off by default.\n• Re-locks every time the app goes to the background — not just on restart.\n• The toggle is greyed out if your phone has no screen lock set up at all.</string>
+    <string name="help_section_app_lock_body">Turn on App lock in Settings to require your fingerprint, face, or your phone\'s own screen lock (PIN/pattern/password) before the app opens.\n\n• Off by default.\n• Re-locks every time the app goes to the background — not just on restart.\n• The toggle is greyed out if your phone has no screen lock set up at all.\n• Taking a photo or picking a file counts as going to the background, so the lock does appear on the way back. Whatever you shot or picked is kept and attached anyway — just unlock and it\'s there.</string>
 
     <string name="help_section_backup_title">Backup &amp; switching phones</string>
     <string name="help_section_backup_body">Your conversation history is included in Android\'s normal automatic backup, so it can come back if you switch phones or reinstall.\n\nYour saved API keys are deliberately excluded from that backup for security — you\'ll need to re-enter them after a restore, but nothing else is lost.</string>

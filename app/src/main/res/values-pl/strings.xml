@@ -209,7 +209,7 @@
     <string name="help_section_personalization_body">W Ustawieniach możesz zmienić wielkość czcionki w czacie (Mała/Normalna/Duża/Bardzo duża).</string>
 
     <string name="help_section_app_lock_title">Blokada aplikacji</string>
-    <string name="help_section_app_lock_body">Włącz blokadę aplikacji w Ustawieniach, żeby wymagać odcisku palca, twarzy albo własnej blokady ekranu telefonu (PIN/wzór/hasło) przy otwieraniu apki.\n\n• Domyślnie wyłączona.\n• Blokuje się ponownie za każdym razem gdy apka zejdzie do tła — nie tylko po restarcie.\n• Przełącznik jest wyszarzony, jeśli telefon w ogóle nie ma ustawionej żadnej blokady ekranu.</string>
+    <string name="help_section_app_lock_body">Włącz blokadę aplikacji w Ustawieniach, żeby wymagać odcisku palca, twarzy albo własnej blokady ekranu telefonu (PIN/wzór/hasło) przy otwieraniu apki.\n\n• Domyślnie wyłączona.\n• Blokuje się ponownie za każdym razem gdy apka zejdzie do tła — nie tylko po restarcie.\n• Przełącznik jest wyszarzony, jeśli telefon w ogóle nie ma ustawionej żadnej blokady ekranu.\n• Zrobienie zdjęcia albo wybranie pliku liczy się jako zejście do tła, więc blokada faktycznie pojawi się po powrocie. Zdjęcie czy plik i tak zostaje dołączone — wystarczy odblokować i już tam jest.</string>
 
     <string name="help_section_backup_title">Backup i zmiana telefonu</string>
     <string name="help_section_backup_body">Historia rozmów jest częścią zwykłego automatycznego backupu Androida, więc wraca po zmianie telefonu albo reinstalacji.\n\nZapisane klucze API są celowo wykluczone z tego backupu ze względów bezpieczeństwa — po przywróceniu trzeba je wpisać ponownie, ale nic innego nie ginie.</string>
