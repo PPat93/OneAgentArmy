@@ -29,6 +29,17 @@ interface SettingsRepository {
     fun observeRequestTimeoutSeconds(): Flow<Int>
     suspend fun setRequestTimeoutSeconds(seconds: Int)
 
+    // The conversation id currently reserved for an unsent "New conversation" - a
+    // never-sent chat has no row in the conversations table (that's only created on its
+    // first message), so without this a fresh random id minted on every tap would leave
+    // any draft typed under the previous one permanently unreachable: not shown in the
+    // conversation list (sourced from conversations, which this row never joined), and
+    // not the id the next tap generates either. Null once there is no such pending chat -
+    // either nothing has been started, or the last one received its first message and
+    // graduated to a real conversation row.
+    suspend fun getPendingNewConversationId(): String?
+    suspend fun setPendingNewConversationId(id: String?)
+
     companion object {
         // Active AI provider's hosted web search (e.g. OpenAI's web_search tool).
         const val SEARCH_PROVIDER_BUILT_IN = "provider"

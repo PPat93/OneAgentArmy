@@ -44,6 +44,14 @@ class RoomConversationRepository(
         draftDao.deleteDraft(conversationId)
     }
 
+    override suspend fun cleanupOrphanedDrafts(pendingNewConversationId: String?) {
+        val orphanIds = draftDao.orphanedConversationIds().filterNot { it == pendingNewConversationId }
+        if (orphanIds.isEmpty()) return
+        val attachmentPaths = draftDao.attachmentPathsForConversations(orphanIds)
+        draftDao.deleteDrafts(orphanIds)
+        attachmentStore.deleteAll(attachmentPaths)
+    }
+
     override suspend fun createConversation(id: String, title: String, modelId: String) {
         val now = Instant.now()
         val conversation = Conversation(

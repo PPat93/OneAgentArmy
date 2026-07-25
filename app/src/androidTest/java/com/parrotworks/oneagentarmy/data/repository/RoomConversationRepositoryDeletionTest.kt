@@ -19,13 +19,13 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 // A draft has no foreign key to conversations - by design, so it can hold a message typed
-// for a conversation whose row doesn't exist yet. The cost of that: deleting a conversation
-// does not automatically take its draft with it, which is exactly the kind of gap the app's
-// own cost-ledger bug (fixed earlier this project) came from - a table deliberately decoupled
-// from conversations turning into a silent leak on deletion. This exercises the real
-// repository against a real (in-memory) database and real file storage, the way the bug
-// would actually have surfaced: a photo staged from the camera, never sent, then the
-// conversation deleted.
+// for a conversation whose row doesn't exist yet. That decoupling cuts both ways: nothing
+// automatically takes a draft with it when its conversation disappears, whether that's an
+// explicit delete (deleteConversation/deleteConversations) or the conversation simply never
+// having been created in the first place (cleanupOrphanedDrafts - see its own doc comment on
+// ConversationRepository for how a draft ends up in that state without ever being deleted).
+// Both are exercised here against a real (in-memory) database and real file storage, the way
+// they'd actually surface: a photo staged from the camera, never sent.
 @RunWith(AndroidJUnit4::class)
 class RoomConversationRepositoryDeletionTest {
 
@@ -84,5 +84,47 @@ class RoomConversationRepositoryDeletionTest {
         repository.deleteConversation("drop")
 
         assertEquals("still typing this one", repository.observeDraft("keep").first()?.text)
+    }
+
+    // --- cleanupOrphanedDrafts: the other way a draft ends up pointing at nothing, without
+    // an explicit delete - a never-sent "New conversation" whose id, before the reuse fix,
+    // was thrown away the moment the user left and a fresh random one was minted next time.
+
+    @Test
+    fun cleanupOrphanedDrafts_removesADraftWhoseConversationWasNeverCreatedAndItsFile() = runBlocking {
+        val strandedId = "stranded-from-before-the-fix"
+        val attachmentPath = "stranded-photo.jpg"
+        val file = File(attachmentStore.absolutePath(attachmentPath))
+        file.parentFile?.mkdirs()
+        file.writeBytes(ByteArray(8))
+        repository.saveDraft(
+            strandedId,
+            Draft(text = "", attachment = PendingAttachment.Media("image", attachmentPath, "image/jpeg", "stranded-photo.jpg")),
+        )
+
+        repository.cleanupOrphanedDrafts(pendingNewConversationId = null)
+
+        assertNull(repository.observeDraft(strandedId).first())
+        assertFalse("an orphan's file must be cleaned up too, not just its row", file.exists())
+    }
+
+    @Test
+    fun cleanupOrphanedDrafts_keepsTheCurrentlyReservedNewConversationDraft() = runBlocking {
+        val reservedId = "reserved-for-the-new-conversation-button"
+        repository.saveDraft(reservedId, Draft(text = "still composing this one", attachment = null))
+
+        repository.cleanupOrphanedDrafts(pendingNewConversationId = reservedId)
+
+        assertEquals("still composing this one", repository.observeDraft(reservedId).first()?.text)
+    }
+
+    @Test
+    fun cleanupOrphanedDrafts_leavesAnExistingConversationsDraftAlone() = runBlocking {
+        repository.createConversation("real-convo", "Test", "gpt-4.1-nano")
+        repository.saveDraft("real-convo", Draft(text = "typing a follow-up", attachment = null))
+
+        repository.cleanupOrphanedDrafts(pendingNewConversationId = null)
+
+        assertEquals("typing a follow-up", repository.observeDraft("real-convo").first()?.text)
     }
 }

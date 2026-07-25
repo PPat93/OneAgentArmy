@@ -59,6 +59,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 sealed interface ChatError {
     data object MissingApiKey : ChatError
@@ -254,6 +255,22 @@ class ChatViewModel(
         viewModelScope.launch { persistDraft() }
     }
 
+    // The debounced save above runs on viewModelScope, which the framework cancels before
+    // onCleared() is even entered - a save still waiting out its delay is lost the instant
+    // this fires. Hooking every individual way to leave the screen (the arrow button, the
+    // system back gesture, navigating to Settings from within chat...) would be fragile and
+    // easy to under-cover - this screen, for instance, has no BackHandler at all, so the
+    // system back gesture bypasses the on-screen arrow entirely and would have skipped a
+    // save wired only there. onCleared runs no matter which exit path was taken, so the
+    // flush is placed here instead, once.
+    //
+    // Blocking briefly is deliberate: persistDraft is a single local SQLite upsert (no
+    // network, no large payload), and runBlocking is the only way to guarantee it completes
+    // before the ViewModel - and viewModelScope with it - is gone.
+    override fun onCleared() {
+        runBlocking { persistDraft() }
+    }
+
     fun attachFile(name: String, content: String) {
         if (content.length > MAX_ATTACHMENT_CHARS) {
             _error.value = ChatError.AttachmentTooLarge
@@ -367,6 +384,13 @@ class ChatViewModel(
                 // Persist a context window override chosen before the conversation row existed.
                 pendingContextWindowOverride.value?.let { override ->
                     repository.setContextWindowOverride(conversationId, override)
+                }
+                // This conversation just graduated from "reserved new-conversation id" to a
+                // real row - if it was the one reused across "New conversation" taps, that
+                // reservation is now spent, so the next tap must mint a fresh one rather
+                // than reopening this (now real, already-in-the-list) conversation.
+                if (settingsRepository.getPendingNewConversationId() == conversationId) {
+                    settingsRepository.setPendingNewConversationId(null)
                 }
             }
 
