@@ -92,7 +92,8 @@ class OpenAiProvider(
                         sender = Sender.AI,
                         text = replyText,
                         timestamp = Instant.now(),
-                        inputTokens = usageTotal.inputTokens,
+                        // Prompt size, not just the full-price share (see TokenUsage).
+                        inputTokens = usageTotal.totalInputTokens,
                         outputTokens = usageTotal.outputTokens,
                         costUsd = AiProviderRegistry.estimateCostUsd(modelId, usageTotal),
                     ),

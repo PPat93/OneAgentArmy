@@ -1,6 +1,7 @@
 package com.parrotworks.oneagentarmy.provider.ai.gemini.dto
 
 import com.parrotworks.oneagentarmy.provider.ai.TokenUsage
+import com.parrotworks.oneagentarmy.provider.ai.normalizeCacheAwareUsage
 import com.parrotworks.oneagentarmy.provider.ai.tools.ToolDefinition
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -37,13 +38,24 @@ data class InteractionsUsage(
     @SerialName("total_output_tokens") val totalOutputTokens: Long = 0,
     // Thought tokens are billed at the output rate but reported separately.
     @SerialName("total_thought_tokens") val totalThoughtTokens: Long = 0,
+    // "Number of tokens in the cached part of the prompt" - a SUBSET of
+    // total_input_tokens, not an extra bucket. Implicit caching is on by default for
+    // Gemini 2.5 and newer, so this arrives whether or not the app asks for it.
+    // There is no separate write charge to account for.
+    @SerialName("total_cached_tokens") val totalCachedTokens: Long = 0,
 )
 
 fun InteractionsUsage?.toTokenUsage(): TokenUsage =
     if (this == null) {
         TokenUsage.ZERO
     } else {
-        TokenUsage(totalInputTokens, totalOutputTokens + totalThoughtTokens)
+        normalizeCacheAwareUsage(
+            promptTokens = totalInputTokens,
+            outputTokens = totalOutputTokens + totalThoughtTokens,
+            cachedInputTokens = totalCachedTokens,
+            cacheWriteInputTokens = 0,
+            subsetAccounting = true,
+        )
     }
 
 @Serializable

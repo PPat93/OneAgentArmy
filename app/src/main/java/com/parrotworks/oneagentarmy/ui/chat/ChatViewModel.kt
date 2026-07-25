@@ -445,7 +445,7 @@ class ChatViewModel(
     private suspend fun requestAiReply(history: List<Message>, modelId: String, selectedIds: Set<String>) {
         _isSending.value = true
         try {
-            val historyToSend = ContextWindowStrategies.lastN(effectiveContextWindowSize.value).apply(history)
+            val historyToSend = ContextWindowStrategies.rollingChunked(effectiveContextWindowSize.value).apply(history)
             when (val reply = aiProvider.sendMessage(historyToSend, modelId, activeFactContents(selectedIds))) {
                 is AiReply.Text -> repository.addMessage(conversationId, reply.message)
                 is AiReply.ToolCall -> {
@@ -507,7 +507,7 @@ class ChatViewModel(
                 sender = Sender.AI,
                 text = text,
                 timestamp = Instant.now(),
-                inputTokens = usage?.inputTokens,
+                inputTokens = usage?.totalInputTokens,
                 outputTokens = usage?.outputTokens,
                 costUsd = cost,
             ),

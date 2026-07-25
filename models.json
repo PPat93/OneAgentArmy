@@ -12,6 +12,8 @@
           "shortLabel": "4.1 nano",
           "inputUsdPerMTok": 0.10,
           "outputUsdPerMTok": 0.40,
+          "cachedInputUsdPerMTok": 0.025,
+          "cacheWriteUsdPerMTok": 0.125,
           "supportsHostedWebSearch": false
         },
         {
@@ -21,6 +23,8 @@
           "shortLabel": "5.6 Luna",
           "inputUsdPerMTok": 1.00,
           "outputUsdPerMTok": 6.00,
+          "cachedInputUsdPerMTok": 0.25,
+          "cacheWriteUsdPerMTok": 1.25,
           "supportsHostedWebSearch": true
         },
         {
@@ -30,6 +34,8 @@
           "shortLabel": "5.6 Sol",
           "inputUsdPerMTok": 5.00,
           "outputUsdPerMTok": 30.00,
+          "cachedInputUsdPerMTok": 1.25,
+          "cacheWriteUsdPerMTok": 6.25,
           "supportsHostedWebSearch": true
         }
       ]
@@ -44,6 +50,7 @@
           "shortLabel": "3.1 Lite",
           "inputUsdPerMTok": 0.25,
           "outputUsdPerMTok": 1.50,
+          "cachedInputUsdPerMTok": 0.0625,
           "supportsHostedWebSearch": false
         },
         {
@@ -53,6 +60,7 @@
           "shortLabel": "3 Flash",
           "inputUsdPerMTok": 0.50,
           "outputUsdPerMTok": 3.00,
+          "cachedInputUsdPerMTok": 0.125,
           "supportsHostedWebSearch": true
         },
         {
@@ -62,6 +70,7 @@
           "shortLabel": "3.5 Flash",
           "inputUsdPerMTok": 1.50,
           "outputUsdPerMTok": 9.00,
+          "cachedInputUsdPerMTok": 0.375,
           "supportsHostedWebSearch": true
         }
       ]
@@ -76,6 +85,8 @@
           "shortLabel": "Haiku 4.5",
           "inputUsdPerMTok": 1.00,
           "outputUsdPerMTok": 5.00,
+          "cachedInputUsdPerMTok": 0.10,
+          "cacheWriteUsdPerMTok": 1.25,
           "supportsHostedWebSearch": true
         },
         {
@@ -85,6 +96,8 @@
           "shortLabel": "Sonnet 5",
           "inputUsdPerMTok": 2.00,
           "outputUsdPerMTok": 10.00,
+          "cachedInputUsdPerMTok": 0.20,
+          "cacheWriteUsdPerMTok": 2.50,
           "supportsHostedWebSearch": true
         },
         {
@@ -94,6 +107,8 @@
           "shortLabel": "Opus 4.8",
           "inputUsdPerMTok": 5.00,
           "outputUsdPerMTok": 25.00,
+          "cachedInputUsdPerMTok": 0.50,
+          "cacheWriteUsdPerMTok": 6.25,
           "supportsHostedWebSearch": true
         }
       ]

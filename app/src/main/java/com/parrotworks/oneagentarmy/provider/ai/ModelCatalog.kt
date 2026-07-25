@@ -29,6 +29,12 @@ data class CatalogModel(
     val shortLabel: String,
     val inputUsdPerMTok: Double,
     val outputUsdPerMTok: Double,
+    // Prompt-caching rates. Optional: omitting them (or a provider dropping its
+    // caching discount entirely) prices cached tokens at the full input rate, which
+    // is what the app did before caching existed - so a catalog written for an older
+    // app version keeps working and can never under-report a bill.
+    val cachedInputUsdPerMTok: Double? = null,
+    val cacheWriteUsdPerMTok: Double? = null,
     val supportsHostedWebSearch: Boolean = false,
 )
 
@@ -39,6 +45,10 @@ fun CatalogModel.toOption() = AiModelOption(
     shortLabel = shortLabel,
     inputUsdPerMTok = inputUsdPerMTok,
     outputUsdPerMTok = outputUsdPerMTok,
+    // A nonsensical (negative) cache rate is dropped rather than failing the whole
+    // model - it falls back to the full input price instead.
+    cachedInputUsdPerMTok = cachedInputUsdPerMTok?.takeIf { it >= 0.0 },
+    cacheWriteUsdPerMTok = cacheWriteUsdPerMTok?.takeIf { it >= 0.0 },
     supportsHostedWebSearch = supportsHostedWebSearch,
 )
 

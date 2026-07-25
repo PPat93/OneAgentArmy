@@ -1,6 +1,7 @@
 package com.parrotworks.oneagentarmy.provider.ai.openai.dto
 
 import com.parrotworks.oneagentarmy.provider.ai.TokenUsage
+import com.parrotworks.oneagentarmy.provider.ai.normalizeCacheAwareUsage
 import com.parrotworks.oneagentarmy.provider.ai.tools.ToolDefinition
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -42,10 +43,30 @@ data class ResponsesUsage(
     // Reasoning tokens are already included in output_tokens.
     @SerialName("input_tokens") val inputTokens: Long = 0,
     @SerialName("output_tokens") val outputTokens: Long = 0,
+    // Cached tokens are a SUBSET of input_tokens, not an extra bucket - caching is
+    // automatic on OpenAI above ~1024 prompt tokens, so this arrives whether or not
+    // the app asks for it. Newer model families additionally report cache writes.
+    @SerialName("input_tokens_details") val inputTokensDetails: ResponsesInputTokensDetails? = null,
+    @SerialName("cache_write_tokens") val cacheWriteTokens: Long = 0,
+)
+
+@Serializable
+data class ResponsesInputTokensDetails(
+    @SerialName("cached_tokens") val cachedTokens: Long = 0,
 )
 
 fun ResponsesUsage?.toTokenUsage(): TokenUsage =
-    if (this == null) TokenUsage.ZERO else TokenUsage(inputTokens, outputTokens)
+    if (this == null) {
+        TokenUsage.ZERO
+    } else {
+        normalizeCacheAwareUsage(
+            promptTokens = inputTokens,
+            outputTokens = outputTokens,
+            cachedInputTokens = inputTokensDetails?.cachedTokens ?: 0,
+            cacheWriteInputTokens = cacheWriteTokens,
+            subsetAccounting = true,
+        )
+    }
 
 data class FunctionCallItem(
     val callId: String,

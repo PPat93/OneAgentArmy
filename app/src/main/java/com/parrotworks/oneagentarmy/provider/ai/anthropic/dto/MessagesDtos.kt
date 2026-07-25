@@ -1,6 +1,7 @@
 package com.parrotworks.oneagentarmy.provider.ai.anthropic.dto
 
 import com.parrotworks.oneagentarmy.provider.ai.TokenUsage
+import com.parrotworks.oneagentarmy.provider.ai.normalizeCacheAwareUsage
 import com.parrotworks.oneagentarmy.provider.ai.tools.ToolDefinition
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -24,7 +25,20 @@ data class MessagesRequest(
     val messages: List<JsonElement>,
     val tools: List<JsonElement>? = null,
     @SerialName("tool_choice") val toolChoice: JsonElement? = null,
+    // Top-level automatic caching: the API places the breakpoint on the last
+    // cacheable block, which in a chat request is the end of the replayed history -
+    // exactly the prefix the next turn re-sends. Letting the API choose the spot
+    // means no breakpoint math here that could silently drift out of place as the
+    // message shape changes. Null omits the field entirely (explicitNulls = false),
+    // which is what AnthropicApiClient falls back to if the API ever rejects it.
+    @SerialName("cache_control") val cacheControl: JsonElement? = null,
 )
+
+// Ephemeral is the 5-minute cache, refreshed on every hit - long enough to cover an
+// active back-and-forth, which is where a chat app's repeated prefix actually pays off.
+fun ephemeralCacheControl(): JsonObject = buildJsonObject {
+    put("type", JsonPrimitive("ephemeral"))
+}
 
 @Serializable
 data class MessagesResponse(
@@ -38,10 +52,26 @@ data class AnthropicUsage(
     // Thinking tokens are already included in output_tokens.
     @SerialName("input_tokens") val inputTokens: Long = 0,
     @SerialName("output_tokens") val outputTokens: Long = 0,
+    // Anthropic reports cache traffic DISJOINTLY: input_tokens counts only what was
+    // neither read from nor written to the cache, so the full prompt is the sum of
+    // all three. Defaulting to 0 keeps old responses (and any future version that
+    // drops these fields) behaving exactly as before.
+    @SerialName("cache_read_input_tokens") val cacheReadInputTokens: Long = 0,
+    @SerialName("cache_creation_input_tokens") val cacheCreationInputTokens: Long = 0,
 )
 
 fun AnthropicUsage?.toTokenUsage(): TokenUsage =
-    if (this == null) TokenUsage.ZERO else TokenUsage(inputTokens, outputTokens)
+    if (this == null) {
+        TokenUsage.ZERO
+    } else {
+        normalizeCacheAwareUsage(
+            promptTokens = inputTokens,
+            outputTokens = outputTokens,
+            cachedInputTokens = cacheReadInputTokens,
+            cacheWriteInputTokens = cacheCreationInputTokens,
+            subsetAccounting = false,
+        )
+    }
 
 @Serializable
 data class AnthropicErrorResponse(

@@ -16,6 +16,13 @@ data class AiModelOption(
     // USD per 1M tokens - keep in sync with the price shown in the label string.
     val inputUsdPerMTok: Double,
     val outputUsdPerMTok: Double,
+    // Prompt-caching rates, USD per 1M tokens. Null means "not known for this
+    // model", which falls back to the full input price - so an unpriced or newly
+    // added model is estimated exactly as it was before caching existed, and a
+    // provider changing its discount can never make the app under-report a bill.
+    // Both are overridable from the remote catalog (models.json).
+    val cachedInputUsdPerMTok: Double? = null,
+    val cacheWriteUsdPerMTok: Double? = null,
     // Not every model supports the hosted web_search tool in the Responses API
     // (gpt-4.1-nano rejects it with HTTP 400) - models without support fall back
     // to the Tavily function tool even when hosted search is selected in settings.
@@ -62,6 +69,8 @@ object AiProviderRegistry {
                     shortLabel = "4.1 nano",
                     inputUsdPerMTok = 0.10,
                     outputUsdPerMTok = 0.40,
+                    cachedInputUsdPerMTok = 0.025,
+                    cacheWriteUsdPerMTok = 0.125,
                 ),
                 AiModelOption(
                     id = "gpt-5.6-luna",
@@ -70,6 +79,8 @@ object AiProviderRegistry {
                     shortLabel = "5.6 Luna",
                     inputUsdPerMTok = 1.00,
                     outputUsdPerMTok = 6.00,
+                    cachedInputUsdPerMTok = 0.25,
+                    cacheWriteUsdPerMTok = 1.25,
                     supportsHostedWebSearch = true,
                 ),
                 AiModelOption(
@@ -79,6 +90,8 @@ object AiProviderRegistry {
                     shortLabel = "5.6 Sol",
                     inputUsdPerMTok = 5.00,
                     outputUsdPerMTok = 30.00,
+                    cachedInputUsdPerMTok = 1.25,
+                    cacheWriteUsdPerMTok = 6.25,
                     supportsHostedWebSearch = true,
                 ),
             ),
@@ -99,6 +112,9 @@ object AiProviderRegistry {
                     shortLabel = "3.1 Lite",
                     inputUsdPerMTok = 0.25,
                     outputUsdPerMTok = 1.50,
+                    // Gemini's implicit caching charges nothing extra to write, so
+                    // cacheWriteUsdPerMTok is left unset (falls back to input price).
+                    cachedInputUsdPerMTok = 0.0625,
                 ),
                 // The Gemini 3 (non-.5) series is published only under preview ids -
                 // the bare "gemini-3-flash" alias 404s.
@@ -109,6 +125,7 @@ object AiProviderRegistry {
                     shortLabel = "3 Flash",
                     inputUsdPerMTok = 0.50,
                     outputUsdPerMTok = 3.00,
+                    cachedInputUsdPerMTok = 0.125,
                     supportsHostedWebSearch = true,
                 ),
                 AiModelOption(
@@ -118,6 +135,7 @@ object AiProviderRegistry {
                     shortLabel = "3.5 Flash",
                     inputUsdPerMTok = 1.50,
                     outputUsdPerMTok = 9.00,
+                    cachedInputUsdPerMTok = 0.375,
                     supportsHostedWebSearch = true,
                 ),
             ),
@@ -137,6 +155,8 @@ object AiProviderRegistry {
                     shortLabel = "Haiku 4.5",
                     inputUsdPerMTok = 1.00,
                     outputUsdPerMTok = 5.00,
+                    cachedInputUsdPerMTok = 0.10,
+                    cacheWriteUsdPerMTok = 1.25,
                     supportsHostedWebSearch = true,
                 ),
                 // Intro pricing until Aug 2026 - bump to 3.00/15.00 afterwards (label too),
@@ -148,6 +168,8 @@ object AiProviderRegistry {
                     shortLabel = "Sonnet 5",
                     inputUsdPerMTok = 2.00,
                     outputUsdPerMTok = 10.00,
+                    cachedInputUsdPerMTok = 0.20,
+                    cacheWriteUsdPerMTok = 2.50,
                     supportsHostedWebSearch = true,
                 ),
                 AiModelOption(
@@ -157,6 +179,8 @@ object AiProviderRegistry {
                     shortLabel = "Opus 4.8",
                     inputUsdPerMTok = 5.00,
                     outputUsdPerMTok = 25.00,
+                    cachedInputUsdPerMTok = 0.50,
+                    cacheWriteUsdPerMTok = 6.25,
                     supportsHostedWebSearch = true,
                 ),
             ),
@@ -200,12 +224,20 @@ object AiProviderRegistry {
     fun shortLabelFor(modelId: String): String =
         modelOptionFor(modelId)?.shortLabel ?: modelId
 
-    // Token-based estimate only: hosted web search fees (billed per query) and
-    // cache discounts are not reflected; on Gemini's free tier the nominal cost
-    // is shown even though nothing is billed.
+    // Token-based estimate only: hosted web search fees (billed per query) are not
+    // reflected; on Gemini's free tier the nominal cost is shown even though nothing
+    // is billed. Cache-discounted and cache-write tokens are priced separately when
+    // the model carries those rates, and at the full input price when it doesn't.
     fun estimateCostUsd(modelId: String, usage: TokenUsage): Double? {
         val model = modelOptionFor(modelId) ?: return null
-        return (usage.inputTokens * model.inputUsdPerMTok + usage.outputTokens * model.outputUsdPerMTok) / 1_000_000.0
+        val cachedRate = model.cachedInputUsdPerMTok ?: model.inputUsdPerMTok
+        val writeRate = model.cacheWriteUsdPerMTok ?: model.inputUsdPerMTok
+        return (
+            usage.inputTokens * model.inputUsdPerMTok +
+                usage.cachedInputTokens * cachedRate +
+                usage.cacheWriteInputTokens * writeRate +
+                usage.outputTokens * model.outputUsdPerMTok
+            ) / 1_000_000.0
     }
 }
 
