@@ -44,6 +44,14 @@ class RoomConversationRepository(
         draftDao.deleteDraft(conversationId)
     }
 
+    override suspend fun cleanupOrphanedDrafts(pendingNewConversationId: String?) {
+        val orphanIds = draftDao.orphanedConversationIds().filterNot { it == pendingNewConversationId }
+        if (orphanIds.isEmpty()) return
+        val attachmentPaths = draftDao.attachmentPathsForConversations(orphanIds)
+        draftDao.deleteDrafts(orphanIds)
+        attachmentStore.deleteAll(attachmentPaths)
+    }
+
     override suspend fun createConversation(id: String, title: String, modelId: String) {
         val now = Instant.now()
         val conversation = Conversation(
@@ -83,16 +91,20 @@ class RoomConversationRepository(
     }
 
     override suspend fun deleteConversation(conversationId: String) {
-        // Attachment file paths must be captured before the CASCADE wipes the rows.
-        val attachmentPaths = dao.attachmentPathsForConversations(listOf(conversationId))
-        dao.deleteConversation(conversationId)
-        attachmentStore.deleteAll(attachmentPaths)
+        deleteConversations(listOf(conversationId))
     }
 
     override suspend fun deleteConversations(conversationIds: List<String>) {
         if (conversationIds.isEmpty()) return
-        val attachmentPaths = dao.attachmentPathsForConversations(conversationIds)
+        // Both file paths and the draft row must be captured/deleted explicitly - a draft
+        // has no foreign key to conversations (by design, so it can outlive a not-yet-sent
+        // chat), which means it also doesn't automatically disappear when one does. Left
+        // alone, a staged-but-unsent photo would survive its conversation's deletion as an
+        // orphaned row pointing at a file nothing else references.
+        val attachmentPaths = dao.attachmentPathsForConversations(conversationIds) +
+            draftDao.attachmentPathsForConversations(conversationIds)
         dao.deleteConversations(conversationIds)
+        draftDao.deleteDrafts(conversationIds)
         attachmentStore.deleteAll(attachmentPaths)
     }
 

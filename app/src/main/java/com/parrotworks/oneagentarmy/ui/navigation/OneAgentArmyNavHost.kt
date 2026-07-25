@@ -1,6 +1,7 @@
 package com.parrotworks.oneagentarmy.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
@@ -33,6 +34,7 @@ import com.parrotworks.oneagentarmy.ui.settings.SettingsScreen
 import com.parrotworks.oneagentarmy.ui.settings.SettingsToolsScreen
 import com.parrotworks.oneagentarmy.ui.settings.SettingsViewModel
 import java.util.UUID
+import kotlinx.coroutines.launch
 
 @Composable
 fun OneAgentArmyNavHost(
@@ -52,13 +54,23 @@ fun OneAgentArmyNavHost(
                     initializer { ConversationListViewModel(conversationRepository, settingsRepository, exchangeRateRepository) }
                 },
             )
+            val coroutineScope = rememberCoroutineScope()
             ConversationListScreen(
                 viewModel = viewModel,
                 onConversationClick = { conversationId ->
                     navController.navigateSafely(Destinations.chatRoute(conversationId))
                 },
                 onNewConversation = {
-                    navController.navigateSafely(Destinations.chatRoute(UUID.randomUUID().toString()))
+                    // A never-sent chat has no conversations row (only created on its first
+                    // message), so reusing the same id across taps - rather than minting a
+                    // fresh random one every time - is what makes a draft typed here still
+                    // reachable the next time this button is tapped, instead of stranding it
+                    // under an id nothing will ever navigate to again.
+                    coroutineScope.launch {
+                        val pendingId = settingsRepository.getPendingNewConversationId()
+                            ?: UUID.randomUUID().toString().also { settingsRepository.setPendingNewConversationId(it) }
+                        navController.navigateSafely(Destinations.chatRoute(pendingId))
+                    }
                 },
                 onNavigateToSettings = { navController.navigateSafely(Destinations.SETTINGS) },
                 onNavigateToSearch = { navController.navigateSafely(Destinations.SEARCH) },

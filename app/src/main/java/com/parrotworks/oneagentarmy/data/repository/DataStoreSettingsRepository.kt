@@ -111,6 +111,15 @@ class DataStoreSettingsRepository(
         dataStore.edit { prefs -> prefs[REQUEST_TIMEOUT_SECONDS] = seconds }
     }
 
+    override suspend fun getPendingNewConversationId(): String? =
+        dataStore.data.first()[PENDING_NEW_CONVERSATION_ID]
+
+    override suspend fun setPendingNewConversationId(id: String?) {
+        dataStore.edit { prefs ->
+            if (id == null) prefs.remove(PENDING_NEW_CONVERSATION_ID) else prefs[PENDING_NEW_CONVERSATION_ID] = id
+        }
+    }
+
     private companion object {
         val ACTIVE_PROVIDER = stringPreferencesKey("active_provider")
         val SEARCH_PROVIDER = stringPreferencesKey("search_provider")
@@ -119,5 +128,6 @@ class DataStoreSettingsRepository(
         val SPENDING_THRESHOLD_EUR = doublePreferencesKey("spending_threshold_eur")
         val CONTEXT_WINDOW_SIZE = intPreferencesKey("context_window_size")
         val REQUEST_TIMEOUT_SECONDS = intPreferencesKey("request_timeout_seconds")
+        val PENDING_NEW_CONVERSATION_ID = stringPreferencesKey("pending_new_conversation_id")
     }
 }

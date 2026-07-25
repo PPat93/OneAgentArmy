@@ -22,6 +22,13 @@ class ConversationListViewModel(
 
     init {
         viewModelScope.launch { exchangeRateRepository.refreshIfStale() }
+        // Runs every time this screen is (re)created rather than as a one-off migration -
+        // the queries involved are a handful of tiny local lookups, cheap enough that
+        // "keep it tidy on every visit to the home screen" is simpler than tracking
+        // whether a one-time sweep has already happened.
+        viewModelScope.launch {
+            repository.cleanupOrphanedDrafts(settingsRepository.getPendingNewConversationId())
+        }
     }
 
     val usdToEur: StateFlow<Double> = exchangeRateRepository.usdToEur

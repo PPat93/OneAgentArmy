@@ -14,6 +14,10 @@ interface ConversationRepository {
     fun observeDraft(conversationId: String): Flow<Draft?>
     suspend fun saveDraft(conversationId: String, draft: Draft)
     suspend fun clearDraft(conversationId: String)
+
+    // Sweeps drafts left behind by conversations that never got a first message, other
+    // than the one currently reserved for an in-progress "New conversation" (if any).
+    suspend fun cleanupOrphanedDrafts(pendingNewConversationId: String?)
     suspend fun createConversation(id: String, title: String, modelId: String)
     suspend fun addMessage(conversationId: String, message: Message)
 
