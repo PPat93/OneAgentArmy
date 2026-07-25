@@ -1,6 +1,7 @@
 package com.parrotworks.oneagentarmy.provider.ai.tools.weather
 
 import com.parrotworks.oneagentarmy.provider.ai.AiProviderException
+import com.parrotworks.oneagentarmy.provider.ai.toProviderException
 import com.parrotworks.oneagentarmy.provider.ai.tools.weather.dto.ForecastResponse
 import com.parrotworks.oneagentarmy.provider.ai.tools.weather.dto.GeocodingResponse
 import com.parrotworks.oneagentarmy.provider.ai.tools.weather.dto.GeocodingResultDto
@@ -49,7 +50,7 @@ class OpenMeteoWeatherClient(
         val response = try {
             okHttpClient.newCall(Request.Builder().url(url).get().build()).execute()
         } catch (e: IOException) {
-            throw AiProviderException.NoConnectivity("${e.javaClass.simpleName}: ${e.message}")
+            throw e.toProviderException()
         }
         return response.use {
             val responseBody = it.body?.string().orEmpty()

@@ -1,6 +1,7 @@
 package com.parrotworks.oneagentarmy.provider.ai.tools.websearch
 
 import com.parrotworks.oneagentarmy.provider.ai.AiProviderException
+import com.parrotworks.oneagentarmy.provider.ai.toProviderException
 import com.parrotworks.oneagentarmy.provider.ai.tools.websearch.dto.TavilySearchRequest
 import com.parrotworks.oneagentarmy.provider.ai.tools.websearch.dto.TavilySearchResponse
 import java.io.IOException
@@ -34,7 +35,7 @@ class TavilyWebSearchClient(
             val response = try {
                 okHttpClient.newCall(httpRequest).execute()
             } catch (e: IOException) {
-                throw AiProviderException.NoConnectivity("${e.javaClass.simpleName}: ${e.message}")
+                throw e.toProviderException()
             }
 
             response.use {
