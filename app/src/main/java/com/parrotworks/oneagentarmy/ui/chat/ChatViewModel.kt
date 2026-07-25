@@ -271,19 +271,37 @@ class ChatViewModel(
         runBlocking { persistDraft() }
     }
 
+    // A picked photo/PDF is written into the attachments directory immediately, but until the
+    // message is actually sent the only thing referencing that file is the pending draft.
+    // Replacing or discarding the staged attachment therefore has to delete the file as well,
+    // or it is stranded on disk permanently - these live in filesDir, which (unlike a cache
+    // directory) Android never reclaims on its own.
+    //
+    // Deliberately NOT called from the send path: once the message row exists it owns that
+    // very same path, so clearing the pending reference there must leave the file alone.
+    private fun deleteStagedMedia(attachment: PendingAttachment?) {
+        val path = (attachment as? PendingAttachment.Media)?.path ?: return
+        viewModelScope.launch { attachmentStore.deleteAll(listOf(path)) }
+    }
+
     fun attachFile(name: String, content: String) {
         if (content.length > MAX_ATTACHMENT_CHARS) {
             _error.value = ChatError.AttachmentTooLarge
             return
         }
+        val replaced = _pendingAttachment.value
         _pendingAttachment.value = PendingAttachment.TextFile(name, content)
         persistDraftNow()
+        deleteStagedMedia(replaced)
     }
 
     fun attachImage(uri: Uri) {
         viewModelScope.launch {
             try {
                 val saved = attachmentStore.saveImage(uri)
+                // Captured only after the save succeeded - a failed pick must not throw away
+                // the attachment that is already staged.
+                val replaced = _pendingAttachment.value
                 _pendingAttachment.value = PendingAttachment.Media(
                     type = Message.ATTACHMENT_TYPE_IMAGE,
                     path = saved.path,
@@ -291,6 +309,7 @@ class ChatViewModel(
                     name = saved.name,
                 )
                 persistDraftNow()
+                deleteStagedMedia(replaced)
             } catch (e: Exception) {
                 _error.value = ChatError.Unknown(e.message ?: "image attachment failed")
             }
@@ -301,6 +320,7 @@ class ChatViewModel(
         viewModelScope.launch {
             try {
                 val saved = attachmentStore.savePdf(uri)
+                val replaced = _pendingAttachment.value
                 _pendingAttachment.value = PendingAttachment.Media(
                     type = Message.ATTACHMENT_TYPE_PDF,
                     path = saved.path,
@@ -308,6 +328,7 @@ class ChatViewModel(
                     name = saved.name,
                 )
                 persistDraftNow()
+                deleteStagedMedia(replaced)
             } catch (e: AttachmentTooLargeException) {
                 _error.value = ChatError.PdfTooLarge
             } catch (e: Exception) {
@@ -320,8 +341,10 @@ class ChatViewModel(
     fun attachmentAbsolutePath(path: String): String = attachmentStore.absolutePath(path)
 
     fun clearAttachment() {
+        val discarded = _pendingAttachment.value
         _pendingAttachment.value = null
         persistDraftNow()
+        deleteStagedMedia(discarded)
     }
 
     fun reportAttachmentError(detail: String) {
