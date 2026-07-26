@@ -16,7 +16,7 @@ import java.util.UUID
         DraftEntity::class,
         CostEntryEntity::class,
     ],
-    version = 11,
+    version = 12,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -151,6 +151,17 @@ abstract class AppDatabase : RoomDatabase() {
                 // predates failure tracking". Nothing to backfill - a failure that
                 // happened before this column existed was never recorded anywhere.
                 db.execSQL("ALTER TABLE messages ADD COLUMN deliveryFailure TEXT")
+            }
+        }
+
+        val MIGRATION_11_12 = object : Migration(11, 12) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // All nullable with no DEFAULT: null means "nothing was chosen before the
+                // first message", which is exactly what every existing draft row means -
+                // those choices had nowhere to be stored when they were written.
+                db.execSQL("ALTER TABLE drafts ADD COLUMN modelId TEXT")
+                db.execSQL("ALTER TABLE drafts ADD COLUMN contextWindowOverride INTEGER")
+                db.execSQL("ALTER TABLE drafts ADD COLUMN factIds TEXT")
             }
         }
 

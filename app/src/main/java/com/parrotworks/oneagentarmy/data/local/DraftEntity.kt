@@ -15,4 +15,12 @@ data class DraftEntity(
     val attachmentMediaType: String?,
     val attachmentPath: String?,
     val attachmentMime: String?,
+    // Choices made before the conversation row exists to hold them (see Draft).
+    val modelId: String? = null,
+    val contextWindowOverride: Int? = null,
+    // Comma-joined fact ids. These cannot live in conversation_facts: that table has a
+    // foreign key to a conversations row which, by definition, does not exist yet. Nothing
+    // can enforce referential integrity here either, so readers must tolerate an id whose
+    // fact was deleted meanwhile.
+    val factIds: String? = null,
 )

@@ -64,6 +64,34 @@ class RoomConversationRepositoryDeletionTest {
     }
 
     @Test
+    fun conversationExistsFlipsOnlyOnceTheConversationIsCreated() = runBlocking {
+        // Every pre-creation choice (model, facts, context window) branches on this, so it
+        // has to answer for a conversation that only has a draft, not a row.
+        repository.saveDraft("not-a-conversation-yet", Draft(text = "typing", attachment = null))
+        assertFalse(repository.conversationExists("not-a-conversation-yet"))
+
+        repository.createConversation("not-a-conversation-yet", "Test", "gpt-4.1-nano")
+
+        assertTrue(repository.conversationExists("not-a-conversation-yet"))
+    }
+
+    @Test
+    fun aDraftCanCarryPreCreationChoicesWithNoConversationRow() = runBlocking {
+        // The drafts table has no foreign key to conversations precisely so this works.
+        val draft = Draft(
+            text = "",
+            attachment = null,
+            modelId = "claude-opus-4-8",
+            contextWindowOverride = 80,
+            factIds = setOf("fact-a", "fact-b"),
+        )
+
+        repository.saveDraft("unsent-convo", draft)
+
+        assertEquals(draft, repository.observeDraft("unsent-convo").first())
+    }
+
+    @Test
     fun bulkDeleteAlsoTakesDraftsWithIt() = runBlocking {
         val ids = listOf("convo-a", "convo-b")
         ids.forEach { repository.createConversation(it, "Test", "gpt-4.1-nano") }

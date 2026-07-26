@@ -19,6 +19,10 @@ interface ConversationRepository {
     // than the one currently reserved for an in-progress "New conversation" (if any).
     suspend fun cleanupOrphanedDrafts(pendingNewConversationId: String?)
     suspend fun createConversation(id: String, title: String, modelId: String)
+
+    // False until the conversation's first message creates its row. Cheaper than collecting
+    // observeConversation just to null-check it, which is what several callers used to do.
+    suspend fun conversationExists(conversationId: String): Boolean
     suspend fun addMessage(conversationId: String, message: Message)
 
     // Records (or with null, clears) why a message went unanswered - see DeliveryFailure.

@@ -91,6 +91,7 @@
     <string name="pending_calendar_all_day">Cały dzień</string>
     <string name="chat_calendar_summary">📅 Wydarzenie: %1$s, %2$s – %3$s</string>
     <string name="chat_action_cancelled">Anulowano akcję.</string>
+    <string name="chat_action_unanswered">Akcja pozostała bez odpowiedzi.</string>
     <string name="error_no_app_for_action">Brak aplikacji do obsłużenia tej akcji.</string>
     <string name="error_tool_arguments">Nie udało się odczytać szczegółów akcji. Spróbuj ponownie.</string>
 
@@ -218,7 +219,7 @@
     <string name="help_section_conversations_body">Długie przytrzymanie kafelka rozmowy na głównym ekranie pozwala:\n• Zmienić nazwę\n• Usunąć (pojedynczo albo grupowo, przez tryb zaznaczania)\n• Przypiąć\n\nRozmowy sortowane są wg czasu ostatniej wiadomości, a przypięte są zawsze na górze.</string>
 
     <string name="help_section_drafts_title">Wracanie tam, gdzie skończyłeś</string>
-    <string name="help_section_drafts_body">Wiadomość, którą zacząłeś pisać (i każdy zaczęty załącznik), zapisuje się automatycznie — przełączenie się gdzie indziej albo całkowite zamknięcie apki jej nie skasuje.\n\nApka wraca też na ten sam ekran, na którym byłeś ostatnio, zamiast wracać do listy rozmów.</string>
+    <string name="help_section_drafts_body">Wiadomość, którą zacząłeś pisać (i każdy zaczęty załącznik), zapisuje się automatycznie — przełączenie się gdzie indziej albo całkowite zamknięcie apki jej nie skasuje.\n\nW zupełnie nowej rozmowie zapamiętywany jest też wybrany model, fakty kontekstowe i nadpisane okno kontekstu. To istotne: bez tego tekst by wrócił, a model po cichu wskoczyłby na domyślny i wysłałbyś zapytanie do innego modelu niż wybrany.\n\nApka wraca też na ten sam ekran, na którym byłeś ostatnio, zamiast wracać do listy rozmów.</string>
 
     <string name="help_section_search_title">Szukanie w rozmowach</string>
     <string name="help_section_search_body">Szkło powiększające na głównym ekranie otwiera wyszukiwanie po treści wszystkich rozmów naraz.\n\nKliknięcie wyniku otwiera tę rozmowę i przenosi dokładnie do pasującej wiadomości.\n\n(Ten ekran pomocy ma swoje własne, osobne pole wyszukiwania na górze strony.)</string>

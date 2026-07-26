@@ -35,6 +35,19 @@ interface ConversationDao {
     @Query("UPDATE conversations SET modelId = :modelId WHERE id = :id")
     suspend fun updateConversationModel(id: String, modelId: String)
 
+    // One-shot read of the single column addMessage needs to attribute a cost entry to a
+    // provider. Deliberately not observeConversation().first(): that spins up a Room Flow
+    // and an invalidation subscription on every message insert just to read one string, and
+    // addMessage is also reached from onCleared, where the work happens under runBlocking.
+    @Query("SELECT modelId FROM conversations WHERE id = :id")
+    suspend fun modelIdFor(id: String): String?
+
+    // "Has this conversation had its first message yet" - the question every pre-creation
+    // choice (model, facts, context window) has to ask before deciding whether to write to
+    // the conversations row or hold the value in the draft.
+    @Query("SELECT EXISTS(SELECT 1 FROM conversations WHERE id = :id)")
+    suspend fun conversationExists(id: String): Boolean
+
     @Query("UPDATE conversations SET lastMessageAt = :timestamp WHERE id = :id")
     suspend fun touchConversation(id: String, timestamp: Long)
 

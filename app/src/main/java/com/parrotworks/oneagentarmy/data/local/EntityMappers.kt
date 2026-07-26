@@ -92,6 +92,9 @@ fun DraftEntity.toDomain() = Draft(
         )
         else -> null
     },
+    modelId = modelId,
+    contextWindowOverride = contextWindowOverride,
+    factIds = factIds.orEmpty().split(FACT_ID_SEPARATOR).filter { it.isNotBlank() }.toSet(),
 )
 
 fun Draft.toEntity(conversationId: String) = DraftEntity(
@@ -107,4 +110,12 @@ fun Draft.toEntity(conversationId: String) = DraftEntity(
     attachmentMediaType = (attachment as? PendingAttachment.Media)?.type,
     attachmentPath = (attachment as? PendingAttachment.Media)?.path,
     attachmentMime = (attachment as? PendingAttachment.Media)?.mime,
+    modelId = modelId,
+    contextWindowOverride = contextWindowOverride,
+    // Stored as NULL rather than "" when nothing is selected, so the column reads the same
+    // as a row written before this feature existed.
+    factIds = factIds.takeIf { it.isNotEmpty() }?.joinToString(FACT_ID_SEPARATOR),
 )
+
+// Fact ids are UUIDs, so a comma can never occur inside one.
+private const val FACT_ID_SEPARATOR = ","

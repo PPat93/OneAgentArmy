@@ -169,6 +169,11 @@ fun ChatScreen(
     val isSending by viewModel.isSending.collectAsState()
     val error by viewModel.error.collectAsState()
     val pendingAction by viewModel.pendingAction.collectAsState()
+    // Pushed down eagerly rather than at the point of use: the ViewModel needs this text in
+    // onCleared, which runs after this composable is already gone and cannot resolve a string
+    // resource of its own.
+    val actionUnansweredNote = stringResource(R.string.chat_action_unanswered)
+    LaunchedEffect(actionUnansweredNote) { viewModel.setAbandonedActionNote(actionUnansweredNote) }
     val conversationTitle by viewModel.conversationTitle.collectAsState()
     val conversationCost by viewModel.conversationCost.collectAsState()
     val usdToEur by viewModel.usdToEur.collectAsState()
