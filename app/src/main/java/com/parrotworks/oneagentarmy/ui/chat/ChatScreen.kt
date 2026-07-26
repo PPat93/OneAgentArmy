@@ -52,6 +52,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import android.content.ActivityNotFoundException
@@ -168,6 +169,11 @@ fun ChatScreen(
     val isSending by viewModel.isSending.collectAsState()
     val error by viewModel.error.collectAsState()
     val pendingAction by viewModel.pendingAction.collectAsState()
+    // Pushed down eagerly rather than at the point of use: the ViewModel needs this text in
+    // onCleared, which runs after this composable is already gone and cannot resolve a string
+    // resource of its own.
+    val actionUnansweredNote = stringResource(R.string.chat_action_unanswered)
+    LaunchedEffect(actionUnansweredNote) { viewModel.setAbandonedActionNote(actionUnansweredNote) }
     val conversationTitle by viewModel.conversationTitle.collectAsState()
     val conversationCost by viewModel.conversationCost.collectAsState()
     val usdToEur by viewModel.usdToEur.collectAsState()
@@ -218,7 +224,13 @@ fun ChatScreen(
     }
     // The camera writes into a URI we choose up front, so it has to be held until the
     // result comes back. A false result means the user backed out without shooting.
-    var pendingPhotoUri by remember { mutableStateOf<Uri?>(null) }
+    //
+    // Saveable, not just remembered: the camera runs as a separate activity on top of this
+    // one, which is exactly when the system is most likely to recreate ours (rotation, or
+    // simply reclaiming memory while a camera app is in the foreground). The launcher's own
+    // key is rememberSaveable, so the result *is* still delivered after recreation - but a
+    // plainly-remembered URI would be null by then and the capture silently discarded.
+    var pendingPhotoUri by rememberSaveable { mutableStateOf<Uri?>(null) }
     val takePhotoLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { captured ->
         val uri = pendingPhotoUri
         pendingPhotoUri = null

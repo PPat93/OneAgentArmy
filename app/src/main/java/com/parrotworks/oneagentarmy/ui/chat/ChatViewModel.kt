@@ -101,6 +101,16 @@ class ChatViewModel(
             repository.observeDraft(conversationId).first()?.let { draft ->
                 _draftText.value = draft.text
                 _pendingAttachment.value = draft.attachment
+                pendingModel.value = draft.modelId
+                pendingContextWindowOverride.value = draft.contextWindowOverride
+                if (draft.factIds.isNotEmpty()) {
+                    // Nothing can stop a fact from being deleted while the draft sits unsent
+                    // (no foreign key is possible - see DraftEntity.factIds), so ids are kept
+                    // only if they still resolve. Restoring a dangling one would show a
+                    // selection count that doesn't match any visible fact.
+                    val stillExists = factRepository.observeFacts().first().mapTo(mutableSetOf()) { it.id }
+                    pendingFactIds.value = draft.factIds.intersect(stillExists)
+                }
             }
         }
     }
@@ -164,11 +174,12 @@ class ChatViewModel(
     fun toggleFact(factId: String) {
         viewModelScope.launch {
             val currentlySelected = factId in selectedFactIds.value
-            if (repository.observeConversation(conversationId).first() != null) {
+            if (repository.conversationExists(conversationId)) {
                 factRepository.setFactSelected(conversationId, factId, !currentlySelected)
             } else {
                 pendingFactIds.value =
                     if (currentlySelected) pendingFactIds.value - factId else pendingFactIds.value + factId
+                persistDraft()
             }
         }
     }
@@ -195,8 +206,10 @@ class ChatViewModel(
     fun setContextWindowOverride(value: Int?) {
         viewModelScope.launch {
             pendingContextWindowOverride.value = value
-            if (repository.observeConversation(conversationId).first() != null) {
+            if (repository.conversationExists(conversationId)) {
                 repository.setContextWindowOverride(conversationId, value)
+            } else {
+                persistDraft()
             }
         }
     }
@@ -241,12 +254,22 @@ class ChatViewModel(
     }
 
     private suspend fun persistDraft() {
-        val text = _draftText.value
-        val attachment = _pendingAttachment.value
-        if (text.isBlank() && attachment == null) {
+        // The model/facts/context-window choices are only worth carrying while there is no
+        // conversation row to hold them. Once it exists that row is the single source of
+        // truth, and copying the values into the draft as well would leave a stray draft row
+        // behind every time the text is cleared.
+        val unsent = !repository.conversationExists(conversationId)
+        val draft = Draft(
+            text = _draftText.value,
+            attachment = _pendingAttachment.value,
+            modelId = pendingModel.value.takeIf { unsent },
+            contextWindowOverride = pendingContextWindowOverride.value.takeIf { unsent },
+            factIds = if (unsent) pendingFactIds.value else emptySet(),
+        )
+        if (draft.isEmpty()) {
             repository.clearDraft(conversationId)
         } else {
-            repository.saveDraft(conversationId, Draft(text, attachment))
+            repository.saveDraft(conversationId, draft)
         }
     }
 
@@ -268,7 +291,37 @@ class ChatViewModel(
     // network, no large payload), and runBlocking is the only way to guarantee it completes
     // before the ViewModel - and viewModelScope with it - is gone.
     override fun onCleared() {
-        runBlocking { persistDraft() }
+        runBlocking {
+            persistDraft()
+            // A tool-call card the user walked away from still cost a billed API call, and
+            // its usage/cost live only in memory until persistAiNote writes them down.
+            // Leaving without answering would drop the money *and* every trace of the turn -
+            // the same silent gap deliveryFailure exists to prevent for failed requests.
+            if (_pendingAction.value != null) {
+                abandonedActionNote?.let { persistAiNote(it) }
+            }
+        }
+    }
+
+    // Handed over by the UI because onCleared has no Context, and no opportunity to ask for
+    // one - the same reason the confirm/cancel notes are passed in rather than built here.
+    private var abandonedActionNote: String? = null
+
+    fun setAbandonedActionNote(note: String) {
+        abandonedActionNote = note
+    }
+
+    // A picked photo/PDF is written into the attachments directory immediately, but until the
+    // message is actually sent the only thing referencing that file is the pending draft.
+    // Replacing or discarding the staged attachment therefore has to delete the file as well,
+    // or it is stranded on disk permanently - these live in filesDir, which (unlike a cache
+    // directory) Android never reclaims on its own.
+    //
+    // Deliberately NOT called from the send path: once the message row exists it owns that
+    // very same path, so clearing the pending reference there must leave the file alone.
+    private fun deleteStagedMedia(attachment: PendingAttachment?) {
+        val path = (attachment as? PendingAttachment.Media)?.path ?: return
+        viewModelScope.launch { attachmentStore.deleteAll(listOf(path)) }
     }
 
     fun attachFile(name: String, content: String) {
@@ -276,14 +329,19 @@ class ChatViewModel(
             _error.value = ChatError.AttachmentTooLarge
             return
         }
+        val replaced = _pendingAttachment.value
         _pendingAttachment.value = PendingAttachment.TextFile(name, content)
         persistDraftNow()
+        deleteStagedMedia(replaced)
     }
 
     fun attachImage(uri: Uri) {
         viewModelScope.launch {
             try {
                 val saved = attachmentStore.saveImage(uri)
+                // Captured only after the save succeeded - a failed pick must not throw away
+                // the attachment that is already staged.
+                val replaced = _pendingAttachment.value
                 _pendingAttachment.value = PendingAttachment.Media(
                     type = Message.ATTACHMENT_TYPE_IMAGE,
                     path = saved.path,
@@ -291,6 +349,7 @@ class ChatViewModel(
                     name = saved.name,
                 )
                 persistDraftNow()
+                deleteStagedMedia(replaced)
             } catch (e: Exception) {
                 _error.value = ChatError.Unknown(e.message ?: "image attachment failed")
             }
@@ -301,6 +360,7 @@ class ChatViewModel(
         viewModelScope.launch {
             try {
                 val saved = attachmentStore.savePdf(uri)
+                val replaced = _pendingAttachment.value
                 _pendingAttachment.value = PendingAttachment.Media(
                     type = Message.ATTACHMENT_TYPE_PDF,
                     path = saved.path,
@@ -308,6 +368,7 @@ class ChatViewModel(
                     name = saved.name,
                 )
                 persistDraftNow()
+                deleteStagedMedia(replaced)
             } catch (e: AttachmentTooLargeException) {
                 _error.value = ChatError.PdfTooLarge
             } catch (e: Exception) {
@@ -320,8 +381,10 @@ class ChatViewModel(
     fun attachmentAbsolutePath(path: String): String = attachmentStore.absolutePath(path)
 
     fun clearAttachment() {
+        val discarded = _pendingAttachment.value
         _pendingAttachment.value = null
         persistDraftNow()
+        deleteStagedMedia(discarded)
     }
 
     fun reportAttachmentError(detail: String) {
@@ -331,8 +394,14 @@ class ChatViewModel(
     fun selectModel(modelId: String) {
         viewModelScope.launch {
             pendingModel.value = modelId
-            if (repository.observeConversation(conversationId).first() != null) {
+            if (repository.conversationExists(conversationId)) {
                 repository.updateConversationModel(conversationId, modelId)
+            } else {
+                // No conversation row yet - the draft is the only place this can live, and it
+                // has to be written now rather than waiting for a keystroke to trigger the
+                // debounced save: picking a model and leaving without typing is exactly the
+                // case that used to silently revert to the default.
+                persistDraft()
             }
         }
     }

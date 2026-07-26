@@ -91,6 +91,7 @@
     <string name="pending_calendar_all_day">All day</string>
     <string name="chat_calendar_summary">📅 Event: %1$s, %2$s – %3$s</string>
     <string name="chat_action_cancelled">Action cancelled.</string>
+    <string name="chat_action_unanswered">Action left unanswered.</string>
     <string name="error_no_app_for_action">No app found to handle this action.</string>
     <string name="error_tool_arguments">Couldn\'t read the action details. Please try again.</string>
 
@@ -209,7 +210,7 @@
     <string name="help_section_personalization_body">In Settings you can change the chat font size (Small/Normal/Large/Extra large).</string>
 
     <string name="help_section_app_lock_title">App lock</string>
-    <string name="help_section_app_lock_body">Turn on App lock in Settings to require your fingerprint, face, or your phone\'s own screen lock (PIN/pattern/password) before the app opens.\n\n• Off by default.\n• Re-locks every time the app goes to the background — not just on restart.\n• The toggle is greyed out if your phone has no screen lock set up at all.</string>
+    <string name="help_section_app_lock_body">Turn on App lock in Settings to require your fingerprint, face, or your phone\'s own screen lock (PIN/pattern/password) before the app opens.\n\n• Off by default.\n• Re-locks every time the app goes to the background — not just on restart.\n• The toggle is greyed out if your phone has no screen lock set up at all.\n• Taking a photo or picking a file counts as going to the background, so the lock does appear on the way back. Whatever you shot or picked is kept and attached anyway — just unlock and it\'s there.</string>
 
     <string name="help_section_backup_title">Backup &amp; switching phones</string>
     <string name="help_section_backup_body">Your conversation history is included in Android\'s normal automatic backup, so it can come back if you switch phones or reinstall.\n\nYour saved API keys are deliberately excluded from that backup for security — you\'ll need to re-enter them after a restore, but nothing else is lost.</string>
@@ -224,7 +225,7 @@
     <string name="help_section_sharing_body">Tap the share icon next to Copy on any message to send it elsewhere.\n\nThe share icon in the chat\'s top bar sends the whole conversation as a plain-text transcript.</string>
 
     <string name="help_section_drafts_title">Picking up where you left off</string>
-    <string name="help_section_drafts_body">A message you\'ve started typing (and any attachment you\'ve staged) is saved automatically, so switching away — or the app closing entirely — won\'t lose it.\n\nThe app also reopens on whichever screen you were last on, instead of jumping back to the conversation list.</string>
+    <string name="help_section_drafts_body">A message you\'ve started typing (and any attachment you\'ve staged) is saved automatically, so switching away — or the app closing entirely — won\'t lose it.\n\nIn a brand-new conversation the model, context facts and context-window override you picked are kept too. That matters: without it the text would come back while the model quietly reverted to the default, and you\'d send on a different model than the one you chose.\n\nThe app also reopens on whichever screen you were last on, instead of jumping back to the conversation list.</string>
     <string name="fact_new_title">New fact</string>
     <string name="fact_edit_title">Edit fact</string>
     <string name="fact_title_label">Title</string>

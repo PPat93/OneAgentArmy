@@ -65,6 +65,9 @@ class RoomConversationRepository(
         dao.insertConversation(conversation.toEntity())
     }
 
+    override suspend fun conversationExists(conversationId: String): Boolean =
+        dao.conversationExists(conversationId)
+
     override suspend fun addMessage(conversationId: String, message: Message) {
         dao.insertMessage(message.toEntity())
         dao.touchConversation(conversationId, message.timestamp.toEpochMilli())
@@ -72,7 +75,7 @@ class RoomConversationRepository(
         if (costUsd != null) {
             // Ledger entry is independent of the message row it came from - it must
             // survive the conversation (and this message) later being deleted.
-            val modelId = dao.observeConversation(conversationId).first()?.modelId
+            val modelId = dao.modelIdFor(conversationId)
             if (modelId != null) {
                 dao.insertCostEntry(
                     CostEntryEntity(

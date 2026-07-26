@@ -126,6 +126,43 @@ class AppDatabaseMigrationTest {
         }
     }
 
+    @Test
+    fun migrate11To12_existingDraftsKeepNoPreCreationChoices() {
+        helper.createDatabase(TEST_DB_NAME, 11).apply {
+            execSQL(
+                "INSERT INTO drafts (conversationId, text, attachmentKind, attachmentName, " +
+                    "attachmentContent, attachmentMediaType, attachmentPath, attachmentMime) " +
+                    "VALUES ('unsent-convo', 'half a sentence', NULL, NULL, NULL, NULL, NULL, NULL)",
+            )
+            close()
+        }
+
+        val db = helper.runMigrationsAndValidate(TEST_DB_NAME, 12, true, AppDatabase.MIGRATION_11_12)
+
+        // A draft written before these columns existed had nowhere to record a model choice,
+        // so null is the only honest value - it must not be mistaken for an explicit pick.
+        db.query("SELECT text, modelId, contextWindowOverride, factIds FROM drafts WHERE conversationId = 'unsent-convo'")
+            .use { cursor ->
+                assertTrue(cursor.moveToFirst())
+                assertEquals("half a sentence", cursor.getString(0))
+                assertTrue(cursor.isNull(1))
+                assertTrue(cursor.isNull(2))
+                assertTrue(cursor.isNull(3))
+            }
+
+        db.execSQL(
+            "UPDATE drafts SET modelId = 'claude-opus-4-8', contextWindowOverride = 80, " +
+                "factIds = 'fact-a,fact-b' WHERE conversationId = 'unsent-convo'",
+        )
+        db.query("SELECT modelId, contextWindowOverride, factIds FROM drafts WHERE conversationId = 'unsent-convo'")
+            .use { cursor ->
+                assertTrue(cursor.moveToFirst())
+                assertEquals("claude-opus-4-8", cursor.getString(0))
+                assertEquals(80, cursor.getInt(1))
+                assertEquals("fact-a,fact-b", cursor.getString(2))
+            }
+    }
+
     private companion object {
         const val TEST_DB_NAME = "migration-test-app-db"
     }
