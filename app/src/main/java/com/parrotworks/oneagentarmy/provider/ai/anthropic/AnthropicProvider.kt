@@ -58,7 +58,7 @@ class AnthropicProvider(
             settingsRepository.observeSearchProvider().first() == SettingsRepository.SEARCH_PROVIDER_BUILT_IN &&
                 AiProviderRegistry.modelOptionFor(modelId)?.supportsHostedWebSearch == true
 
-        // The dynamic-filtering search variant (Sonnet 5 / Opus 4.8) runs code
+        // The dynamic-filtering search variant (Sonnet 5 / Opus 5) runs code
         // execution under the hood, which rejects disable_parallel_tool_use and
         // strict tools with HTTP 400 - both are skipped on those requests.
         val hostedSearchType = if (useHostedSearch) hostedSearchTypeFor(modelId) else null

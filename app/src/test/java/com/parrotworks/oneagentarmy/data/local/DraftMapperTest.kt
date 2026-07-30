@@ -17,7 +17,7 @@ class DraftMapperTest {
         val draft = Draft(
             text = "half a sentence",
             attachment = null,
-            modelId = "claude-opus-4-8",
+            modelId = "claude-opus-5",
             contextWindowOverride = 80,
             factIds = setOf("fact-a", "fact-b"),
         )
@@ -63,7 +63,7 @@ class DraftMapperTest {
         // without typing anything used to leave nothing behind, so the next visit silently
         // showed the cheapest default while the restored draft text made everything look
         // preserved.
-        assertFalse(Draft(text = "", attachment = null, modelId = "claude-opus-4-8").isEmpty())
+        assertFalse(Draft(text = "", attachment = null, modelId = "claude-opus-5").isEmpty())
     }
 
     @Test

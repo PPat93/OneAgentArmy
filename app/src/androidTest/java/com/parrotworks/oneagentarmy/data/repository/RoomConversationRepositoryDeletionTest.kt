@@ -81,7 +81,7 @@ class RoomConversationRepositoryDeletionTest {
         val draft = Draft(
             text = "",
             attachment = null,
-            modelId = "claude-opus-4-8",
+            modelId = "claude-opus-5",
             contextWindowOverride = 80,
             factIds = setOf("fact-a", "fact-b"),
         )

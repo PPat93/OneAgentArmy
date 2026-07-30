@@ -151,13 +151,13 @@ class AppDatabaseMigrationTest {
             }
 
         db.execSQL(
-            "UPDATE drafts SET modelId = 'claude-opus-4-8', contextWindowOverride = 80, " +
+            "UPDATE drafts SET modelId = 'claude-opus-5', contextWindowOverride = 80, " +
                 "factIds = 'fact-a,fact-b' WHERE conversationId = 'unsent-convo'",
         )
         db.query("SELECT modelId, contextWindowOverride, factIds FROM drafts WHERE conversationId = 'unsent-convo'")
             .use { cursor ->
                 assertTrue(cursor.moveToFirst())
-                assertEquals("claude-opus-4-8", cursor.getString(0))
+                assertEquals("claude-opus-5", cursor.getString(0))
                 assertEquals(80, cursor.getInt(1))
                 assertEquals("fact-a,fact-b", cursor.getString(2))
             }

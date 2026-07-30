@@ -35,10 +35,10 @@ class ModelAvailabilityTest {
 
     @Test
     fun `parses gemini model list and strips the models prefix`() {
-        val body = """{"models":[{"name":"models/gemini-3.5-flash"},{"name":"models/gemini-3-flash-preview"}]}"""
+        val body = """{"models":[{"name":"models/gemini-3.6-flash"},{"name":"models/gemini-3-flash-preview"}]}"""
 
         assertEquals(
-            setOf("gemini-3.5-flash", "gemini-3-flash-preview"),
+            setOf("gemini-3.6-flash", "gemini-3-flash-preview"),
             parseAvailableModelIds(AiProviderRegistry.GEMINI, body),
         )
     }
@@ -67,7 +67,7 @@ class ModelAvailabilityTest {
 
         val missing = missingModelIds(
             models,
-            setOf("claude-haiku-4-5-20251001", "claude-sonnet-5", "claude-opus-4-8"),
+            setOf("claude-haiku-4-5-20251001", "claude-sonnet-5", "claude-opus-5"),
         )
 
         assertTrue("alias must not be reported as retired: $missing", missing.isEmpty())
@@ -95,7 +95,7 @@ class ModelAvailabilityTest {
     fun `a genuinely absent model is still reported`() {
         val models = AiProviderRegistry.builtInProviders.first { it.id == AiProviderRegistry.ANTHROPIC }.models
 
-        val missing = missingModelIds(models, setOf("claude-sonnet-5", "claude-opus-4-8"))
+        val missing = missingModelIds(models, setOf("claude-sonnet-5", "claude-opus-5"))
 
         assertEquals(listOf("claude-haiku-4-5"), missing)
     }
@@ -145,7 +145,7 @@ class ModelAvailabilityTest {
     @Test
     fun `gemini check sends goog api key header`() = runBlocking {
         mockWebServerRule.server.enqueue(
-            MockResponse(code = 200, body = """{"models":[{"name":"models/gemini-3.5-flash"}]}"""),
+            MockResponse(code = 200, body = """{"models":[{"name":"models/gemini-3.6-flash"}]}"""),
         )
 
         val result = checker.listAvailable(AiProviderRegistry.GEMINI, "test-key")
@@ -154,7 +154,7 @@ class ModelAvailabilityTest {
         assertEquals("/v1beta/models", recorded.url.encodedPath)
         assertEquals("test-key", recorded.headers["x-goog-api-key"])
         assertEquals(
-            setOf("gemini-3.5-flash"),
+            setOf("gemini-3.6-flash"),
             (result as ModelAvailabilityChecker.ProviderCheck.Available).modelIds,
         )
     }
