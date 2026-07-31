@@ -37,7 +37,7 @@ fun parseAvailableModelIds(providerId: String, body: String): Set<String> = when
         availabilityJson.decodeFromString(AnthropicModelsResponse.serializer(), body)
             .data.map { it.id }.toSet()
     AiProviderRegistry.GEMINI ->
-        // Gemini names are prefixed ("models/gemini-3.5-flash") - stripped so they
+        // Gemini names are prefixed ("models/gemini-3.6-flash") - stripped so they
         // compare against the bare ids the registry uses.
         availabilityJson.decodeFromString(GeminiModelsResponse.serializer(), body)
             .models.map { it.name.removePrefix("models/") }.toSet()

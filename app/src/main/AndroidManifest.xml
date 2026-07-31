@@ -23,9 +23,13 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.OneAgentArmy">
 
+        <!-- adjustResize so the window shrinks when the keyboard opens, which is what makes
+             WindowInsets.ime report a real height to Compose. Without it the IME just draws
+             on top of the layout and imePadding() has nothing to work with. -->
         <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

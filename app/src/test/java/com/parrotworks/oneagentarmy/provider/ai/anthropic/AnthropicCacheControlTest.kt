@@ -26,7 +26,7 @@ class AnthropicCacheControlTest {
     private val client by lazy { AnthropicApiClient(redirectingClient(mockWebServerRule.server)) }
 
     private fun cachedRequest() = MessagesRequest(
-        model = "claude-opus-4-8",
+        model = "claude-opus-5",
         maxTokens = 1024,
         system = "You are helpful.",
         messages = listOf(historyMessage("user", "Hi")),

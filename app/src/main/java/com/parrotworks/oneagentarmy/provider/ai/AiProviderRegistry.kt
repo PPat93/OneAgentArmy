@@ -69,6 +69,10 @@ object AiProviderRegistry {
             displayName = "OpenAI (ChatGPT)",
             chipLabel = "ChatGPT",
             models = listOf(
+                // OpenAI charges no premium to write to the cache - a cache miss is billed at
+                // the ordinary input rate - so cacheWriteUsdPerMTok is deliberately unset on
+                // every OpenAI model and falls back to inputUsdPerMTok. (Anthropic, which does
+                // charge 1.25x to write, is the reason the field exists at all.)
                 AiModelOption(
                     id = "gpt-4.1-nano",
                     label = "GPT-4.1 nano - cheapest ($0.10 / $0.40 per 1M tokens)",
@@ -77,17 +81,15 @@ object AiProviderRegistry {
                     inputUsdPerMTok = 0.10,
                     outputUsdPerMTok = 0.40,
                     cachedInputUsdPerMTok = 0.025,
-                    cacheWriteUsdPerMTok = 0.125,
                 ),
                 AiModelOption(
                     id = "gpt-5.6-luna",
-                    label = "GPT-5.6 Luna - better quality ($1.00 / $6.00 per 1M tokens)",
-                    labelPl = "GPT-5.6 Luna - lepsza jakość ($1.00 / $6.00 za 1M tokenów)",
+                    label = "GPT-5.6 Luna - better quality ($0.20 / $1.20 per 1M tokens)",
+                    labelPl = "GPT-5.6 Luna - lepsza jakość ($0.20 / $1.20 za 1M tokenów)",
                     shortLabel = "5.6 Luna",
-                    inputUsdPerMTok = 1.00,
-                    outputUsdPerMTok = 6.00,
-                    cachedInputUsdPerMTok = 0.25,
-                    cacheWriteUsdPerMTok = 1.25,
+                    inputUsdPerMTok = 0.20,
+                    outputUsdPerMTok = 1.20,
+                    cachedInputUsdPerMTok = 0.02,
                     hostedSearchUsdPerCall = 0.010,
                     supportsHostedWebSearch = true,
                 ),
@@ -98,8 +100,7 @@ object AiProviderRegistry {
                     shortLabel = "5.6 Sol",
                     inputUsdPerMTok = 5.00,
                     outputUsdPerMTok = 30.00,
-                    cachedInputUsdPerMTok = 1.25,
-                    cacheWriteUsdPerMTok = 6.25,
+                    cachedInputUsdPerMTok = 0.50,
                     hostedSearchUsdPerCall = 0.010,
                     supportsHostedWebSearch = true,
                 ),
@@ -123,7 +124,8 @@ object AiProviderRegistry {
                     outputUsdPerMTok = 1.50,
                     // Gemini's implicit caching charges nothing extra to write, so
                     // cacheWriteUsdPerMTok is left unset (falls back to input price).
-                    cachedInputUsdPerMTok = 0.0625,
+                    // Cache hits are a flat 0.1x of input across the Gemini line.
+                    cachedInputUsdPerMTok = 0.025,
                 ),
                 // The Gemini 3 (non-.5) series is published only under preview ids -
                 // the bare "gemini-3-flash" alias 404s.
@@ -134,19 +136,21 @@ object AiProviderRegistry {
                     shortLabel = "3 Flash",
                     inputUsdPerMTok = 0.50,
                     outputUsdPerMTok = 3.00,
-                    cachedInputUsdPerMTok = 0.125,
-                    hostedSearchUsdPerCall = 0.010,
+                    cachedInputUsdPerMTok = 0.05,
+                    hostedSearchUsdPerCall = 0.014,
                     supportsHostedWebSearch = true,
                 ),
+                // Replaces Gemini 3.5 Flash, which it beats outright: same input price,
+                // $7.50 output instead of $9.00.
                 AiModelOption(
-                    id = "gemini-3.5-flash",
-                    label = "Gemini 3.5 Flash - better quality ($1.50 / $9.00 per 1M tokens)",
-                    labelPl = "Gemini 3.5 Flash - lepsza jakość ($1.50 / $9.00 za 1M tokenów)",
-                    shortLabel = "3.5 Flash",
+                    id = "gemini-3.6-flash",
+                    label = "Gemini 3.6 Flash - better quality ($1.50 / $7.50 per 1M tokens, free tier eligible)",
+                    labelPl = "Gemini 3.6 Flash - lepsza jakość ($1.50 / $7.50 za 1M tokenów, dostępny w darmowym tierze)",
+                    shortLabel = "3.6 Flash",
                     inputUsdPerMTok = 1.50,
-                    outputUsdPerMTok = 9.00,
-                    cachedInputUsdPerMTok = 0.375,
-                    hostedSearchUsdPerCall = 0.010,
+                    outputUsdPerMTok = 7.50,
+                    cachedInputUsdPerMTok = 0.15,
+                    hostedSearchUsdPerCall = 0.014,
                     supportsHostedWebSearch = true,
                 ),
             ),
@@ -171,12 +175,16 @@ object AiProviderRegistry {
                     hostedSearchUsdPerCall = 0.010,
                     supportsHostedWebSearch = true,
                 ),
-                // Intro pricing until Aug 2026 - bump to 3.00/15.00 afterwards (label too),
-                // ideally via the remote catalog rather than an app release.
+                // ACTION REQUIRED ON 2026-09-01: introductory pricing ends after 2026-08-31,
+                // when every rate below rises by 1.5x - 3.00 input / 15.00 output, 0.30 cache
+                // read, 3.75 cache write - and the label has to change with them. Until it is
+                // updated the app under-reports Sonnet 5 by a third, which is the one direction
+                // an estimate must never be wrong in. Fixable through models.json alone (no app
+                // release); the values here are only the fallback for a fresh install.
                 AiModelOption(
                     id = "claude-sonnet-5",
-                    label = "Claude Sonnet 5 - better quality ($2.00 / $10.00 per 1M tokens until Aug 2026, then $3.00 / $15.00)",
-                    labelPl = "Claude Sonnet 5 - lepsza jakość ($2.00 / $10.00 za 1M tokenów do sie 2026, potem $3.00 / $15.00)",
+                    label = "Claude Sonnet 5 - better quality ($2.00 / $10.00 per 1M tokens through Aug 31 2026, then $3.00 / $15.00)",
+                    labelPl = "Claude Sonnet 5 - lepsza jakość ($2.00 / $10.00 za 1M tokenów do 31 sie 2026, potem $3.00 / $15.00)",
                     shortLabel = "Sonnet 5",
                     inputUsdPerMTok = 2.00,
                     outputUsdPerMTok = 10.00,
@@ -185,11 +193,12 @@ object AiProviderRegistry {
                     hostedSearchUsdPerCall = 0.010,
                     supportsHostedWebSearch = true,
                 ),
+                // Opus 5 is priced identically to the Opus 4.8 it replaces here.
                 AiModelOption(
-                    id = "claude-opus-4-8",
-                    label = "Claude Opus 4.8 - flagship ($5.00 / $25.00 per 1M tokens)",
-                    labelPl = "Claude Opus 4.8 - flagowy ($5.00 / $25.00 za 1M tokenów)",
-                    shortLabel = "Opus 4.8",
+                    id = "claude-opus-5",
+                    label = "Claude Opus 5 - flagship ($5.00 / $25.00 per 1M tokens)",
+                    labelPl = "Claude Opus 5 - flagowy ($5.00 / $25.00 za 1M tokenów)",
+                    shortLabel = "Opus 5",
                     inputUsdPerMTok = 5.00,
                     outputUsdPerMTok = 25.00,
                     cachedInputUsdPerMTok = 0.50,

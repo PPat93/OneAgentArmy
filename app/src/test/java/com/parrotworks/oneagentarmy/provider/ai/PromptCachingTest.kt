@@ -80,7 +80,7 @@ class PromptCachingTest {
 
     @Test
     fun `each input bucket is priced at its own rate`() {
-        // claude-opus-4-8: $5.00 input, $25.00 output, $0.50 cache read, $6.25 cache write.
+        // claude-opus-5: $5.00 input, $25.00 output, $0.50 cache read, $6.25 cache write.
         val usage = TokenUsage(
             inputTokens = 1000,
             outputTokens = 500,
@@ -88,7 +88,7 @@ class PromptCachingTest {
             cacheWriteInputTokens = 2000,
         )
 
-        val cost = AiProviderRegistry.estimateCostUsd("claude-opus-4-8", usage)
+        val cost = AiProviderRegistry.estimateCostUsd("claude-opus-5", usage)
 
         // 5000 + 5000 + 12500 + 12500 millionths of a dollar.
         assertEquals(0.035, cost!!, 1e-9)
@@ -134,8 +134,8 @@ class PromptCachingTest {
         val allFullPrice = TokenUsage(inputTokens = 10_000, outputTokens = 0)
         val allCached = TokenUsage(inputTokens = 0, outputTokens = 0, cachedInputTokens = 10_000)
 
-        val full = AiProviderRegistry.estimateCostUsd("claude-opus-4-8", allFullPrice)!!
-        val cached = AiProviderRegistry.estimateCostUsd("claude-opus-4-8", allCached)!!
+        val full = AiProviderRegistry.estimateCostUsd("claude-opus-5", allFullPrice)!!
+        val cached = AiProviderRegistry.estimateCostUsd("claude-opus-5", allCached)!!
 
         assertTrue("cached should be cheaper than full price", cached < full)
     }
@@ -155,7 +155,7 @@ class PromptCachingTest {
             subsetAccounting = true,
         )
 
-        assertEquals(0.0, AiProviderRegistry.estimateCostUsd("claude-opus-4-8", usage)!!, 0.0)
+        assertEquals(0.0, AiProviderRegistry.estimateCostUsd("claude-opus-5", usage)!!, 0.0)
     }
 
     // --- remote catalog ---

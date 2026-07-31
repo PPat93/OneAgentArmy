@@ -6,8 +6,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -409,7 +412,12 @@ fun ChatScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
+                .padding(innerPadding)
+                // innerPadding already covers the navigation bar, so that part has to be
+                // marked consumed before imePadding is applied - otherwise an open keyboard
+                // adds its full height on top of the nav-bar gap and the input row floats.
+                .consumeWindowInsets(innerPadding)
+                .imePadding(),
         ) {
             if (messages.isEmpty()) {
                 Box(
@@ -501,7 +509,9 @@ fun ChatScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
+                // Bottom, not centre: once the field is allowed to grow to several lines,
+                // centring floats the attach/send buttons into the middle of a tall box.
+                verticalAlignment = Alignment.Bottom,
             ) {
                 Box {
                     IconButton(
@@ -564,9 +574,16 @@ fun ChatScreen(
                 OutlinedTextField(
                     value = inputText,
                     onValueChange = { viewModel.updateDraftText(it) },
-                    modifier = Modifier.weight(1f),
+                    // Capped height: this Row has no weight of its own, so an uncapped field
+                    // grows with the draft, starves the message list of its weight(1f) and
+                    // eventually pushes itself off the top of the screen. Past the cap the
+                    // field scrolls internally instead of growing.
+                    modifier = Modifier
+                        .weight(1f)
+                        .heightIn(max = MAX_INPUT_FIELD_HEIGHT),
                     placeholder = { Text(stringResource(R.string.message_placeholder)) },
                     enabled = !isSending,
+                    maxLines = MAX_INPUT_FIELD_LINES,
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                 )
                 if (isSending) {
@@ -650,6 +667,13 @@ private const val ALIGN_WINDOW_NANOS = 1_500_000_000L
 // more resent tokens, and resent attachments are re-billed on every turn until they age
 // out of the window.
 private const val CONTEXT_WINDOW_WARNING_THRESHOLD = 200
+
+// How far the message input may grow before it starts scrolling instead. Both limits are
+// needed: maxLines caps a wall of short lines, heightIn caps the pixel height regardless of
+// how the text wraps (and holds even at a large system font scale, where six lines can be
+// most of the screen).
+private const val MAX_INPUT_FIELD_LINES = 6
+private val MAX_INPUT_FIELD_HEIGHT = 160.dp
 
 @Composable
 private fun ContextWindowOverrideDialog(
