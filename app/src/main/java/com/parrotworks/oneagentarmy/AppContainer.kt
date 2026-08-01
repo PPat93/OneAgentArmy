@@ -124,6 +124,13 @@ class AppContainer(context: Context) {
         .connectTimeout(15, TimeUnit.SECONDS)
         .readTimeout(120, TimeUnit.SECONDS)
         .writeTimeout(30, TimeUnit.SECONDS)
+        // A non-streaming request to a reasoning model leaves the socket completely idle
+        // for however long the model thinks - no bytes in either direction. VPNs, carrier
+        // NATs and proxies routinely reap idle flows at around 60s, which arrives here as
+        // StreamResetException(CANCEL) long before the user's own timeout is anywhere near.
+        // HTTP/2 PING frames keep the connection observably alive without touching the
+        // request, and make a genuinely dead link fail fast instead of hanging.
+        .pingInterval(20, TimeUnit.SECONDS)
         .addInterceptor(aiTimeoutInterceptor)
         .build()
 
