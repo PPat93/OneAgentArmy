@@ -175,6 +175,7 @@ private fun deliveryFailureLabel(failure: String): Int = when (failure) {
     DeliveryFailure.INVALID_API_KEY -> R.string.delivery_reason_invalid_api_key
     DeliveryFailure.NO_CONNECTIVITY -> R.string.delivery_reason_no_connectivity
     DeliveryFailure.TIMEOUT -> R.string.delivery_reason_timeout
+    DeliveryFailure.CONNECTION_LOST -> R.string.delivery_reason_connection_lost
     DeliveryFailure.RATE_LIMITED -> R.string.delivery_reason_rate_limited
     DeliveryFailure.SERVER_ERROR -> R.string.delivery_reason_server_error
     DeliveryFailure.TOOL_ARGUMENTS -> R.string.delivery_reason_tool_arguments

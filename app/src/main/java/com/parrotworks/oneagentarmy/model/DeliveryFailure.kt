@@ -13,6 +13,11 @@ object DeliveryFailure {
     const val INVALID_API_KEY = "invalid_api_key"
     const val NO_CONNECTIVITY = "no_connectivity"
     const val TIMEOUT = "timeout"
+
+    // The connection died before the configured timeout could possibly have expired, so
+    // blaming that timeout would point the user at the wrong setting. Distinct from
+    // NO_CONNECTIVITY, which means the request never got off the ground at all.
+    const val CONNECTION_LOST = "connection_lost"
     const val RATE_LIMITED = "rate_limited"
     const val SERVER_ERROR = "server_error"
     const val TOOL_ARGUMENTS = "tool_arguments"
