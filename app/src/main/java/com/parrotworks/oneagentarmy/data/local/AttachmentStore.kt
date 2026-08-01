@@ -3,9 +3,13 @@ package com.parrotworks.oneagentarmy.data.local
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Matrix
 import android.net.Uri
 import android.provider.OpenableColumns
 import android.util.Base64
+import androidx.exifinterface.media.ExifInterface
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.IOException
 import java.util.UUID
@@ -28,7 +32,7 @@ class AttachmentStore(context: Context) {
     // caps the per-turn token cost of replaying the image with the history.
     suspend fun saveImage(uri: Uri): Saved = withContext(Dispatchers.IO) {
         val originalName = displayName(uri) ?: "image"
-        val bytes = readAllBytes(uri)
+        val bytes = readAllBytes(uri, MAX_IMAGE_BYTES)
 
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
@@ -42,18 +46,25 @@ class AttachmentStore(context: Context) {
         val sampled = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, decodeOptions)
             ?: throw IOException("Not a decodable image")
 
+        // Read before the pixels are touched: the tag lives in the original file, and the
+        // JPEG written at the end of this function carries no EXIF block at all.
+        val transform = imageTransformFor(exifOrientationOf(bytes))
+
+        // Scale first, rotate second - rotating by a multiple of 90 leaves the longer edge
+        // the same length, so the cap holds either way, and this rotates far fewer pixels.
         val longEdge = maxOf(sampled.width, sampled.height)
-        val bitmap = if (longEdge > MAX_IMAGE_EDGE_PX) {
+        val scaled = if (longEdge > MAX_IMAGE_EDGE_PX) {
             val scale = MAX_IMAGE_EDGE_PX.toFloat() / longEdge
             Bitmap.createScaledBitmap(
                 sampled,
                 (sampled.width * scale).toInt().coerceAtLeast(1),
                 (sampled.height * scale).toInt().coerceAtLeast(1),
                 true,
-            )
+            ).also { if (it !== sampled) sampled.recycle() }
         } else {
             sampled
         }
+        val bitmap = orient(scaled, transform)
 
         val fileName = "${UUID.randomUUID()}.jpg"
         directory.mkdirs()
@@ -63,10 +74,32 @@ class AttachmentStore(context: Context) {
         Saved(path = fileName, mime = "image/jpeg", name = originalName)
     }
 
+    private fun exifOrientationOf(bytes: ByteArray): Int =
+        try {
+            ByteArrayInputStream(bytes).use { stream ->
+                ExifInterface(stream).getAttributeInt(
+                    ExifInterface.TAG_ORIENTATION,
+                    ExifInterface.ORIENTATION_NORMAL,
+                )
+            }
+        } catch (e: IOException) {
+            // A missing or malformed EXIF block is not a reason to reject the picture.
+            ExifInterface.ORIENTATION_NORMAL
+        }
+
+    private fun orient(source: Bitmap, transform: ImageTransform): Bitmap {
+        if (transform.isIdentity) return source
+        val matrix = Matrix().apply {
+            postRotate(transform.rotationDegrees.toFloat())
+            if (transform.mirrored) postScale(-1f, 1f)
+        }
+        return Bitmap.createBitmap(source, 0, 0, source.width, source.height, matrix, true)
+            .also { if (it !== source) source.recycle() }
+    }
+
     suspend fun savePdf(uri: Uri): Saved = withContext(Dispatchers.IO) {
         val originalName = displayName(uri) ?: "document.pdf"
-        val bytes = readAllBytes(uri)
-        if (bytes.size > MAX_PDF_BYTES) throw AttachmentTooLargeException()
+        val bytes = readAllBytes(uri, MAX_PDF_BYTES)
 
         val fileName = "${UUID.randomUUID()}.pdf"
         directory.mkdirs()
@@ -86,9 +119,21 @@ class AttachmentStore(context: Context) {
         paths.forEach { File(directory, it).delete() }
     }
 
-    private fun readAllBytes(uri: Uri): ByteArray =
-        appContext.contentResolver.openInputStream(uri)?.use { it.readBytes() }
-            ?: throw IOException("Cannot open attachment")
+    // Stops at maxBytes instead of reading the whole stream and checking afterwards: an
+    // oversized file must never be materialised in memory, only to be rejected once it
+    // already has been. The image path had no ceiling at all before this.
+    private fun readAllBytes(uri: Uri, maxBytes: Int): ByteArray =
+        appContext.contentResolver.openInputStream(uri)?.use { stream ->
+            val collected = ByteArrayOutputStream()
+            val chunk = ByteArray(DEFAULT_BUFFER_SIZE)
+            while (true) {
+                val read = stream.read(chunk)
+                if (read == -1) break
+                if (collected.size() + read > maxBytes) throw AttachmentTooLargeException()
+                collected.write(chunk, 0, read)
+            }
+            collected.toByteArray()
+        } ?: throw IOException("Cannot open attachment")
 
     private fun displayName(uri: Uri): String? =
         appContext.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
@@ -100,5 +145,10 @@ class AttachmentStore(context: Context) {
         const val MAX_IMAGE_EDGE_PX = 1568
         const val JPEG_QUALITY = 80
         const val MAX_PDF_BYTES = 5 * 1024 * 1024
+
+        // Only a ceiling on what is read into memory, not a quality limit - the image is
+        // downscaled to MAX_IMAGE_EDGE_PX regardless of how big it arrives. Generous enough
+        // for any phone camera (a 48MP JPEG lands around 15MB) and for panoramas.
+        const val MAX_IMAGE_BYTES = 25 * 1024 * 1024
     }
 }

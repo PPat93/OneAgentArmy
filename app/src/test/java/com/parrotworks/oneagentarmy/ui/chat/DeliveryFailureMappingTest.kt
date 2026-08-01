@@ -14,24 +14,74 @@ class DeliveryFailureMappingTest {
 
     // --- exception -> banner ---
 
+    // Elapsed time only affects the timeout branch; everything else ignores it.
+    private val irrelevantElapsed = 0
+
     @Test
     fun `provider exceptions keep their specific error`() {
         assertEquals(
             ChatError.RateLimited(30, "slow down"),
-            AiProviderException.RateLimited(30, "slow down").toChatError(configuredTimeout),
+            AiProviderException.RateLimited(30, "slow down").toChatError(configuredTimeout, irrelevantElapsed),
         )
         assertEquals(
             ChatError.ServerError(503, "upstream"),
-            AiProviderException.ServerError(503, "upstream").toChatError(configuredTimeout),
+            AiProviderException.ServerError(503, "upstream").toChatError(configuredTimeout, irrelevantElapsed),
         )
-        assertEquals(ChatError.MissingApiKey, AiProviderException.MissingApiKey.toChatError(configuredTimeout))
+        assertEquals(
+            ChatError.MissingApiKey,
+            AiProviderException.MissingApiKey.toChatError(configuredTimeout, irrelevantElapsed),
+        )
     }
 
     @Test
     fun `timeout carries the configured limit rather than the default`() {
-        val error = AiProviderException.Timeout("read timed out").toChatError(configuredTimeout)
+        val error = AiProviderException.Timeout("read timed out")
+            .toChatError(configuredTimeout, elapsedSeconds = configuredTimeout)
 
         assertEquals(ChatError.Timeout(configuredTimeout, "read timed out"), error)
+    }
+
+    // --- telling a real timeout apart from a dropped connection ---
+
+    @Test
+    fun `a timeout-shaped failure well before the limit is reported as a lost connection`() {
+        // The reported case: a request with a photo died at ~1 minute against a 4 minute
+        // timeout, and the banner blamed the 4 minute setting - which had not been reached
+        // and which raising would not have helped.
+        val error = AiProviderException.Timeout("SocketTimeoutException: timeout")
+            .toChatError(configuredTimeout, elapsedSeconds = 60)
+
+        assertEquals(
+            ChatError.ConnectionCut(60, configuredTimeout, "SocketTimeoutException: timeout"),
+            error,
+        )
+    }
+
+    @Test
+    fun `a failure just short of the limit still counts as the real timeout`() {
+        // Whole-second truncation must not tip a genuine timeout into the other branch.
+        val error = AiProviderException.Timeout(null)
+            .toChatError(configuredTimeout, elapsedSeconds = configuredTimeout - 1)
+
+        assertEquals(ChatError.Timeout(configuredTimeout, null), error)
+    }
+
+    @Test
+    fun `overshooting the limit is still the real timeout`() {
+        // Several tool round trips each get their own read budget, so total elapsed can
+        // exceed the configured value.
+        val error = AiProviderException.Timeout(null)
+            .toChatError(configuredTimeout, elapsedSeconds = configuredTimeout * 3)
+
+        assertEquals(ChatError.Timeout(configuredTimeout, null), error)
+    }
+
+    @Test
+    fun `a lost connection is recorded under its own code, not as a timeout`() {
+        val cut = ChatError.ConnectionCut(12, configuredTimeout, null)
+
+        assertEquals(DeliveryFailure.CONNECTION_LOST, cut.deliveryFailureCode())
+        assertEquals("connection_lost", DeliveryFailure.CONNECTION_LOST)
     }
 
     @Test
@@ -39,7 +89,7 @@ class DeliveryFailureMappingTest {
         // The real case this exists for: a 200 response whose body doesn't match the DTOs.
         // It used to sail past a catch narrowed to AiProviderException and take the app down,
         // leaving behind an unanswered message with no explanation at all.
-        val error = SerializationException("Unexpected JSON token").toChatError(configuredTimeout)
+        val error = SerializationException("Unexpected JSON token").toChatError(configuredTimeout, irrelevantElapsed)
 
         assertTrue(error is ChatError.Unknown)
         assertTrue((error as ChatError.Unknown).detail.contains("SerializationException"))
@@ -48,7 +98,7 @@ class DeliveryFailureMappingTest {
 
     @Test
     fun `an exception with no message still produces a usable detail`() {
-        val error = IOException().toChatError(configuredTimeout)
+        val error = IOException().toChatError(configuredTimeout, irrelevantElapsed)
 
         assertEquals(ChatError.Unknown("IOException: no message"), error)
     }
@@ -100,6 +150,7 @@ class DeliveryFailureMappingTest {
         // These happen before a request is made, or after a reply already arrived.
         assertEquals(DeliveryFailure.UNEXPECTED, ChatError.AttachmentTooLarge.deliveryFailureCode())
         assertEquals(DeliveryFailure.UNEXPECTED, ChatError.PdfTooLarge.deliveryFailureCode())
+        assertEquals(DeliveryFailure.UNEXPECTED, ChatError.ImageTooLarge.deliveryFailureCode())
         assertEquals(DeliveryFailure.UNEXPECTED, ChatError.NoAppForAction.deliveryFailureCode())
     }
 }

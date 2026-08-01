@@ -66,6 +66,16 @@ sealed interface ChatError {
     data class InvalidApiKey(val detail: String?) : ChatError
     data class NoConnectivity(val detail: String?) : ChatError
     data class Timeout(val timeoutSeconds: Int, val detail: String?) : ChatError
+
+    // A timeout-shaped failure that fired well before the configured timeout could have -
+    // a dropped connection, a stalled upload, or the provider's own edge cutting an idle
+    // request. Reported separately so the message never blames a setting that was not
+    // involved, and names how long it actually lasted.
+    data class ConnectionCut(
+        val elapsedSeconds: Int,
+        val timeoutSeconds: Int,
+        val detail: String?,
+    ) : ChatError
     data class RateLimited(val retryAfterSeconds: Int?, val detail: String?) : ChatError
     data class ServerError(val statusCode: Int, val detail: String?) : ChatError
     data class Unknown(val detail: String) : ChatError
@@ -73,6 +83,7 @@ sealed interface ChatError {
     data object NoAppForAction : ChatError
     data object AttachmentTooLarge : ChatError
     data object PdfTooLarge : ChatError
+    data object ImageTooLarge : ChatError
 }
 
 sealed interface PendingAction {
@@ -350,6 +361,8 @@ class ChatViewModel(
                 )
                 persistDraftNow()
                 deleteStagedMedia(replaced)
+            } catch (e: AttachmentTooLargeException) {
+                _error.value = ChatError.ImageTooLarge
             } catch (e: Exception) {
                 _error.value = ChatError.Unknown(e.message ?: "image attachment failed")
             }
@@ -544,6 +557,9 @@ class ChatViewModel(
         // leaving the screen.
         val awaiting = history.lastOrNull { it.sender == Sender.USER }
         var failure: String? = null
+        // Monotonic on purpose: a clock adjustment mid-request must not make a five-second
+        // failure look like it ran for an hour, or vice versa.
+        val startedAt = System.nanoTime()
         _isSending.value = true
         try {
             val historyToSend = ContextWindowStrategies.rollingChunked(effectiveContextWindowSize.value).apply(history)
@@ -568,7 +584,8 @@ class ChatViewModel(
             // Deliberately broader than AiProviderException: a malformed 200 body throws
             // SerializationException, which used to escape this catch, kill the app, and
             // leave behind exactly the same silent unanswered message.
-            val chatError = e.toChatError(requestTimeoutSeconds.value)
+            val elapsedSeconds = ((System.nanoTime() - startedAt) / NANOS_PER_SECOND).toInt()
+            val chatError = e.toChatError(requestTimeoutSeconds.value, elapsedSeconds)
             _error.value = chatError
             failure = chatError.deliveryFailureCode()
         } finally {
@@ -633,6 +650,13 @@ private const val MAX_ATTACHMENT_CHARS = 30_000
 // burst only triggers one write, short enough that a quick app-switch rarely loses anything.
 private const val DRAFT_SAVE_DEBOUNCE_MS = 500L
 
+private const val NANOS_PER_SECOND = 1_000_000_000L
+
+// How far short of the configured timeout a failure may land and still be attributed to it.
+// Covers whole-second truncation and the moment between the socket giving up and the
+// exception surfacing here - anything earlier than this really was something else.
+private const val TIMEOUT_ATTRIBUTION_TOLERANCE_SECONDS = 2
+
 private fun deriveTitle(messageText: String): String {
     val singleLine = messageText.replace('\n', ' ').trim()
     return if (singleLine.length <= 50) singleLine else singleLine.take(50) + "…"
@@ -640,11 +664,22 @@ private fun deriveTitle(messageText: String): String {
 
 // timeoutSeconds is passed in because the exception itself doesn't know what the limit was
 // configured to - only the banner needs to state it.
-internal fun Throwable.toChatError(timeoutSeconds: Int): ChatError = when (this) {
+// elapsedSeconds is how long the request actually ran, measured from a monotonic clock.
+// It exists only to tell a real timeout apart from a connection that died early: OkHttp
+// reports both as the same exception types, so without it every dropped upload was
+// reported as "you exceeded your timeout" while quoting a limit it never reached.
+internal fun Throwable.toChatError(timeoutSeconds: Int, elapsedSeconds: Int): ChatError = when (this) {
     is AiProviderException.MissingApiKey -> ChatError.MissingApiKey
     is AiProviderException.InvalidApiKey -> ChatError.InvalidApiKey(detail)
     is AiProviderException.NoConnectivity -> ChatError.NoConnectivity(detail)
-    is AiProviderException.Timeout -> ChatError.Timeout(timeoutSeconds, detail)
+    is AiProviderException.Timeout ->
+        // The tolerance absorbs whole-second truncation, so a read that timed out at
+        // 239.6s against a 240s budget still reads as the genuine timeout it was.
+        if (elapsedSeconds >= timeoutSeconds - TIMEOUT_ATTRIBUTION_TOLERANCE_SECONDS) {
+            ChatError.Timeout(timeoutSeconds, detail)
+        } else {
+            ChatError.ConnectionCut(elapsedSeconds, timeoutSeconds, detail)
+        }
     is AiProviderException.RateLimited -> ChatError.RateLimited(retryAfterSeconds, detail)
     is AiProviderException.ServerError -> ChatError.ServerError(statusCode, detail)
     is AiProviderException.Unknown -> ChatError.Unknown(detail)
@@ -659,6 +694,7 @@ internal fun ChatError.deliveryFailureCode(): String = when (this) {
     is ChatError.InvalidApiKey -> DeliveryFailure.INVALID_API_KEY
     is ChatError.NoConnectivity -> DeliveryFailure.NO_CONNECTIVITY
     is ChatError.Timeout -> DeliveryFailure.TIMEOUT
+    is ChatError.ConnectionCut -> DeliveryFailure.CONNECTION_LOST
     is ChatError.RateLimited -> DeliveryFailure.RATE_LIMITED
     is ChatError.ServerError -> DeliveryFailure.SERVER_ERROR
     is ChatError.ToolArguments -> DeliveryFailure.TOOL_ARGUMENTS

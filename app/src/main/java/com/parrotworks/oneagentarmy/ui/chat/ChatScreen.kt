@@ -883,6 +883,14 @@ private fun ChatErrorBanner(
             stringResource(R.string.error_no_connectivity).withDetail(error.detail) to false
         is ChatError.Timeout ->
             stringResource(R.string.error_timeout, formatTimeout(error.timeoutSeconds)).withDetail(error.detail) to true
+        is ChatError.ConnectionCut ->
+            // No Settings action: raising the timeout would not have helped, and offering
+            // it is what sent the user looking at the wrong setting in the first place.
+            stringResource(
+                R.string.error_connection_cut,
+                formatTimeout(error.elapsedSeconds),
+                formatTimeout(error.timeoutSeconds),
+            ).withDetail(error.detail) to false
         is ChatError.RateLimited ->
             stringResource(R.string.error_rate_limited).withDetail(error.detail) to false
         is ChatError.ServerError ->
@@ -892,6 +900,7 @@ private fun ChatErrorBanner(
         ChatError.NoAppForAction -> stringResource(R.string.error_no_app_for_action) to false
         ChatError.AttachmentTooLarge -> stringResource(R.string.error_attachment_too_large) to false
         ChatError.PdfTooLarge -> stringResource(R.string.error_pdf_too_large) to false
+        ChatError.ImageTooLarge -> stringResource(R.string.error_image_too_large) to false
     }
 
     Card(

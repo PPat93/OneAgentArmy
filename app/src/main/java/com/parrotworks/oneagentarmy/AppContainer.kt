@@ -102,7 +102,16 @@ class AppContainer(context: Context) {
     private val aiTimeoutInterceptor = Interceptor { chain ->
         val request = chain.request()
         if (request.url.host in AI_PROVIDER_HOSTS) {
-            chain.withReadTimeout(aiRequestTimeoutSeconds.get(), TimeUnit.SECONDS).proceed(request)
+            val seconds = aiRequestTimeoutSeconds.get()
+            // Write as well as read. An image attachment makes the request body a few
+            // hundred KB of base64, which on a weak uplink can take longer to push than the
+            // 30s default below - and that surfaced as a timeout error quoting the user's
+            // (much larger) setting, which had nothing to do with it. Connect stays at the
+            // client default on purpose: an unreachable host should fail fast, not sit
+            // there for the length of a reasoning-model budget.
+            chain.withReadTimeout(seconds, TimeUnit.SECONDS)
+                .withWriteTimeout(seconds, TimeUnit.SECONDS)
+                .proceed(request)
         } else {
             chain.proceed(request)
         }

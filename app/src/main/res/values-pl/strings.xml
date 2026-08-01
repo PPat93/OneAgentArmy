@@ -37,6 +37,7 @@
     <string name="error_invalid_api_key">Klucz API został odrzucony przez OpenAI.</string>
     <string name="error_no_connectivity">Brak połączenia z internetem.</string>
     <string name="error_timeout">Zapytanie trwało dłużej niż Twój limit czasu (%1$s) i zostało anulowane. Zaawansowane modele potrafią myśleć kilka minut — limit możesz podnieść w Ustawieniach.</string>
+    <string name="error_connection_cut">Połączenie zostało przerwane po %1$s, długo przed Twoim limitem czasu (%2$s) — podniesienie limitu nic nie da. Słaby zasięg potrafi uciąć zapytanie, zwłaszcza przy wysyłaniu zdjęcia. Spróbuj wysłać ponownie.</string>
     <string name="slow_request_warning">Trochę to trwa — Twój limit czasu to %1$s. Zaawansowane modele mogą odpowiadać dłużej.</string>
     <string name="request_timeout_title">Limit czasu zapytania</string>
     <string name="request_timeout_current">%1$s — tyle czekamy na odpowiedź AI, zanim się poddamy</string>
@@ -55,6 +56,7 @@
     <string name="delivery_reason_invalid_api_key">klucz API odrzucony</string>
     <string name="delivery_reason_no_connectivity">brak połączenia</string>
     <string name="delivery_reason_timeout">przekroczony limit czasu</string>
+    <string name="delivery_reason_connection_lost">przerwane połączenie</string>
     <string name="delivery_reason_rate_limited">limit zapytań</string>
     <string name="delivery_reason_server_error">błąd dostawcy</string>
     <string name="delivery_reason_tool_arguments">nieczytelne wywołanie narzędzia</string>
@@ -80,6 +82,7 @@
     <string name="attach_menu_pdf">Plik PDF</string>
     <string name="attach_menu_text">Plik tekstowy (txt, md, csv)</string>
     <string name="error_pdf_too_large">PDF jest za duży (limit 5 MB).</string>
+    <string name="error_image_too_large">Plik obrazu jest za duży (limit 25 MB).</string>
 
     <string name="gemini_free_tier_note">Klucz z projektu Google Cloud bez billingu działa w darmowym tierze: modele Flash są darmowe w ramach dziennych limitów, ale Google może używać treści rozmów do treningu. Klucz z podpiętym billingiem jest płatny i wyłączony z treningu.</string>
 
@@ -204,7 +207,7 @@
     <string name="help_section_context_body">Każda wysłana wiadomość niesie ze sobą ostatnią historię rozmowy — dzięki temu AI pamięta, o czym była mowa. Domyślnie co najmniej 40 wiadomości, rosnąco do 60, po czym starsze są usuwane za jednym razem. Minimum zmienisz w Ustawienia → Czat i wygląd, albo nadpiszesz tylko dla jednej rozmowy ikoną zegara w tym czacie.\n\nDlaczego partiami: dostawcy potrafią podać powtarzalny prompt z cache\'u za jakieś dziesięć razy mniej, ale tylko wtedy, gdy zaczyna się dokładnie tym samym tekstem co poprzednio. Usuwanie po jednej wiadomości zmieniałoby ten początek za każdym razem i zniżka by przepadła — dlatego historia jest przycinana partiami.\n\nZ tego samego powodu stałe instrukcje dla AI nie zawierają zegara. Aktualny czas podróżuje razem z Twoimi wiadomościami — każda dostaje znacznik godziny wysłania, który już się nigdy nie zmienia. W czacie tych znaczników nie zobaczysz, istnieją tylko w tym, co jest wysyłane.\n\nTo oznacza też, że raz załączony plik czy zdjęcie jest wysyłane ponownie przy każdej kolejnej wiadomości, dopóki mieści się w tym oknie — tanio, póki siedzi w cache\'u, ale bardzo duże okno i tak podnosi rachunek.</string>
 
     <string name="help_section_timeout_title">Wolne odpowiedzi i limit czasu</string>
-    <string name="help_section_timeout_body">Zaawansowane (rozumujące) modele potrafią myśleć kilka minut przed odpowiedzią. W trakcie czekania czat pokazuje, jak długo trwa zapytanie.\n\nJeśli odpowiedź nie przyjdzie w limicie czasu (Ustawienia, domyślnie 4:00), zapytanie jest anulowane i możesz wysłać ponownie. Podnieś limit, jeśli często używasz najmocniejszych modeli.\n\nGdy przychodzi długa odpowiedź, czat przeskakuje na jej pierwszą linijkę, a nie na ostatnią — zaczynasz czytać od góry, zamiast przewijać w tył. Krótkie odpowiedzi zostają na swoim miejscu.\n\nGdy zapytanie się nie powiedzie z jakiegokolwiek powodu, pod Twoją wiadomością pojawia się mała czerwona adnotacja: brak odpowiedzi i dlaczego. Zostaje tam na stałe, więc luka w starej rozmowie nigdy nie jest zagadką. Udane wysłanie ponowne ją usuwa.</string>
+    <string name="help_section_timeout_body">Zaawansowane (rozumujące) modele potrafią myśleć kilka minut przed odpowiedzią. W trakcie czekania czat pokazuje, jak długo trwa zapytanie.\n\nJeśli odpowiedź nie przyjdzie w limicie czasu (Ustawienia, domyślnie 4:00), zapytanie jest anulowane i możesz wysłać ponownie. Podnieś limit, jeśli często używasz najmocniejszych modeli.\n\nJeśli samo połączenie zostanie przerwane wcześniej — słaby zasięg albo zablokowane wysyłanie zdjęcia — komunikat powie to wprost i poda, ile faktycznie trwało, zamiast obwiniać limit, którego nigdy nie osiągnięto.\n\nGdy przychodzi długa odpowiedź, czat przeskakuje na jej pierwszą linijkę, a nie na ostatnią — zaczynasz czytać od góry, zamiast przewijać w tył. Krótkie odpowiedzi zostają na swoim miejscu.\n\nGdy zapytanie się nie powiedzie z jakiegokolwiek powodu, pod Twoją wiadomością pojawia się mała czerwona adnotacja: brak odpowiedzi i dlaczego. Zostaje tam na stałe, więc luka w starej rozmowie nigdy nie jest zagadką. Udane wysłanie ponowne ją usuwa.</string>
 
     <string name="help_section_personalization_title">Personalizacja</string>
     <string name="help_section_personalization_body">W Ustawieniach możesz zmienić wielkość czcionki w czacie (Mała/Normalna/Duża/Bardzo duża).</string>
