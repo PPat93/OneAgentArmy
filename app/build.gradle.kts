@@ -89,6 +89,7 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.biometric)
+    implementation(libs.androidx.exifinterface)
     debugImplementation(libs.compose.ui.tooling)
 
     testImplementation(libs.junit)

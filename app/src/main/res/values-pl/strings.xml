@@ -80,6 +80,7 @@
     <string name="attach_menu_pdf">Plik PDF</string>
     <string name="attach_menu_text">Plik tekstowy (txt, md, csv)</string>
     <string name="error_pdf_too_large">PDF jest za duży (limit 5 MB).</string>
+    <string name="error_image_too_large">Plik obrazu jest za duży (limit 25 MB).</string>
 
     <string name="gemini_free_tier_note">Klucz z projektu Google Cloud bez billingu działa w darmowym tierze: modele Flash są darmowe w ramach dziennych limitów, ale Google może używać treści rozmów do treningu. Klucz z podpiętym billingiem jest płatny i wyłączony z treningu.</string>
 

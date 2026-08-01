@@ -73,6 +73,7 @@ sealed interface ChatError {
     data object NoAppForAction : ChatError
     data object AttachmentTooLarge : ChatError
     data object PdfTooLarge : ChatError
+    data object ImageTooLarge : ChatError
 }
 
 sealed interface PendingAction {
@@ -350,6 +351,8 @@ class ChatViewModel(
                 )
                 persistDraftNow()
                 deleteStagedMedia(replaced)
+            } catch (e: AttachmentTooLargeException) {
+                _error.value = ChatError.ImageTooLarge
             } catch (e: Exception) {
                 _error.value = ChatError.Unknown(e.message ?: "image attachment failed")
             }

@@ -100,6 +100,7 @@ class DeliveryFailureMappingTest {
         // These happen before a request is made, or after a reply already arrived.
         assertEquals(DeliveryFailure.UNEXPECTED, ChatError.AttachmentTooLarge.deliveryFailureCode())
         assertEquals(DeliveryFailure.UNEXPECTED, ChatError.PdfTooLarge.deliveryFailureCode())
+        assertEquals(DeliveryFailure.UNEXPECTED, ChatError.ImageTooLarge.deliveryFailureCode())
         assertEquals(DeliveryFailure.UNEXPECTED, ChatError.NoAppForAction.deliveryFailureCode())
     }
 }

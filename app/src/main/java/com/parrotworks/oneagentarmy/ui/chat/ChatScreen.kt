@@ -892,6 +892,7 @@ private fun ChatErrorBanner(
         ChatError.NoAppForAction -> stringResource(R.string.error_no_app_for_action) to false
         ChatError.AttachmentTooLarge -> stringResource(R.string.error_attachment_too_large) to false
         ChatError.PdfTooLarge -> stringResource(R.string.error_pdf_too_large) to false
+        ChatError.ImageTooLarge -> stringResource(R.string.error_image_too_large) to false
     }
 
     Card(

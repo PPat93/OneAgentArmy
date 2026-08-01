@@ -80,6 +80,7 @@
     <string name="attach_menu_pdf">PDF file</string>
     <string name="attach_menu_text">Text file (txt, md, csv)</string>
     <string name="error_pdf_too_large">The PDF is too large (limit 5 MB).</string>
+    <string name="error_image_too_large">The image file is too large (limit 25 MB).</string>
 
     <string name="gemini_free_tier_note">A key from a Google Cloud project without billing uses the free tier: Flash models are free within daily limits, but Google may use conversation content for training. A key with billing enabled is paid and excluded from training.</string>
 
