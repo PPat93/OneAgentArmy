@@ -277,7 +277,7 @@ object AiProviderRegistry {
 
 data class CatalogMergeResult(
     val providers: List<AiProviderInfo>,
-    // Catalog models rejected by validation (blank id, negative price) - not applied,
+    // Catalog models rejected by validation (blank id/label, negative price) - not applied,
     // but reported so the bad entry in models.json gets noticed and fixed.
     val droppedModelIds: List<String>,
 )
@@ -291,7 +291,8 @@ fun mergeCatalog(builtIn: List<AiProviderInfo>, catalog: ModelCatalog): CatalogM
     val providers = builtIn.map { provider ->
         val remoteEntries = catalog.providers.firstOrNull { it.id == provider.id }?.models.orEmpty()
         val (valid, invalid) = remoteEntries.partition {
-            it.id.isNotBlank() && it.inputUsdPerMTok >= 0.0 && it.outputUsdPerMTok >= 0.0
+            it.id.isNotBlank() && it.label.isNotBlank() && it.shortLabel.isNotBlank() &&
+                it.inputUsdPerMTok >= 0.0 && it.outputUsdPerMTok >= 0.0
         }
         dropped += invalid.map { it.id.ifBlank { "(missing id)" } }
         if (valid.isEmpty()) provider else provider.copy(models = valid.map { it.toOption() })

@@ -15,6 +15,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -44,6 +46,11 @@ class ModelRegistryRepository(
     )
 
     private val availabilityChecker = ModelAvailabilityChecker(okHttpClient)
+
+    // Serializes refresh() so the in-memory registry write and the DataStore persist always
+    // pair up from the same fetch, even if two refreshes are ever triggered concurrently
+    // (the Settings button already guards against this, but refresh() is public).
+    private val refreshMutex = Mutex()
 
     // Cross-checks every catalog model against what its provider actually lists.
     // Providers without a saved API key are skipped (their listing endpoints require one).
@@ -81,7 +88,11 @@ class ModelRegistryRepository(
             }
     }
 
-    suspend fun refresh(): RefreshResult = withContext(Dispatchers.IO) {
+    suspend fun refresh(): RefreshResult = refreshMutex.withLock {
+        refreshLocked()
+    }
+
+    private suspend fun refreshLocked(): RefreshResult = withContext(Dispatchers.IO) {
         val request = Request.Builder().url(CATALOG_URL).build()
         val body = try {
             okHttpClient.newCall(request).execute().use { response ->

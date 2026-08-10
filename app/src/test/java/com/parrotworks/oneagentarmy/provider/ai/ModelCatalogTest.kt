@@ -85,14 +85,16 @@ class ModelCatalogTest {
         val json = catalogJson(
             """{"id": "openai", "models": [
                 {"id": "", "label": "blank id", "shortLabel": "B", "inputUsdPerMTok": 1.0, "outputUsdPerMTok": 1.0},
-                {"id": "neg", "label": "negative price", "shortLabel": "N", "inputUsdPerMTok": -1.0, "outputUsdPerMTok": 1.0}
+                {"id": "neg", "label": "negative price", "shortLabel": "N", "inputUsdPerMTok": -1.0, "outputUsdPerMTok": 1.0},
+                {"id": "blank-label", "label": "", "shortLabel": "L", "inputUsdPerMTok": 1.0, "outputUsdPerMTok": 1.0},
+                {"id": "blank-short", "label": "Blank short", "shortLabel": "", "inputUsdPerMTok": 1.0, "outputUsdPerMTok": 1.0}
             ]}""",
         )
 
         val merged = mergeCatalog(AiProviderRegistry.builtInProviders, parseModelCatalog(json))
 
         assertEquals(AiProviderRegistry.builtInProviders, merged.providers)
-        assertEquals(listOf("(missing id)", "neg"), merged.droppedModelIds)
+        assertEquals(listOf("(missing id)", "neg", "blank-label", "blank-short"), merged.droppedModelIds)
     }
 
     @Test
