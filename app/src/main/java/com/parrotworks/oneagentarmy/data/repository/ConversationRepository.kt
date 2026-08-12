@@ -2,6 +2,7 @@ package com.parrotworks.oneagentarmy.data.repository
 
 import com.parrotworks.oneagentarmy.model.Conversation
 import com.parrotworks.oneagentarmy.model.Draft
+import com.parrotworks.oneagentarmy.model.EffortLevel
 import com.parrotworks.oneagentarmy.model.Message
 import com.parrotworks.oneagentarmy.model.MessageSearchResult
 import java.time.Instant
@@ -34,6 +35,7 @@ interface ConversationRepository {
     suspend fun updateConversationModel(conversationId: String, modelId: String)
     suspend fun setPinned(conversationId: String, pinned: Boolean)
     suspend fun setContextWindowOverride(conversationId: String, value: Int?)
+    suspend fun setEffort(conversationId: String, value: EffortLevel?)
     fun searchMessages(query: String): Flow<List<MessageSearchResult>>
     fun observeConversationCost(conversationId: String): Flow<Double?>
     fun observeCostSince(since: Instant): Flow<Double?>

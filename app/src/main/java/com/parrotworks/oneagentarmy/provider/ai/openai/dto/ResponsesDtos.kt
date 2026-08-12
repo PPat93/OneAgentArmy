@@ -30,7 +30,15 @@ data class ResponsesRequest(
     // With store=false, reasoning items can only be replayed on tool round-trips
     // if their encrypted content is returned to us.
     val include: List<String>? = null,
+    // {"effort": "low"|"medium"|"high"} - only ever built for models whose
+    // AiModelOption.supportsEffort is true; null omits the field entirely, which is
+    // the default request shape and matches the model's own server-side default.
+    val reasoning: JsonElement? = null,
 )
+
+fun reasoningEffortJson(effort: String): JsonObject = buildJsonObject {
+    put("effort", JsonPrimitive(effort))
+}
 
 @Serializable
 data class ResponsesResponse(

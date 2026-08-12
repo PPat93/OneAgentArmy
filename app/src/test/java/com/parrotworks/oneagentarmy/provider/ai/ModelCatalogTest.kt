@@ -16,7 +16,7 @@ class ModelCatalogTest {
         {"id": "openai", "models": [
             {"id": "gpt-x", "label": "GPT X - test", "labelPl": "GPT X - testowy",
              "shortLabel": "X", "inputUsdPerMTok": 0.5, "outputUsdPerMTok": 2.0,
-             "supportsHostedWebSearch": true}
+             "supportsHostedWebSearch": true, "supportsEffort": true}
         ]}
     """.trimIndent()
 
@@ -56,6 +56,7 @@ class ModelCatalogTest {
         // Provider identity stays compiled-in even when models are replaced.
         assertEquals("OpenAI (ChatGPT)", openai.displayName)
         assertTrue(merged.droppedModelIds.isEmpty())
+        assertTrue(openai.models.single().supportsEffort)
     }
 
     @Test

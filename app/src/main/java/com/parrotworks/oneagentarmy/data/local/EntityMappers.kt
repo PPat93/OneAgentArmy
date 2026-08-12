@@ -2,6 +2,7 @@ package com.parrotworks.oneagentarmy.data.local
 
 import com.parrotworks.oneagentarmy.model.Conversation
 import com.parrotworks.oneagentarmy.model.Draft
+import com.parrotworks.oneagentarmy.model.EffortLevel
 import com.parrotworks.oneagentarmy.model.Fact
 import com.parrotworks.oneagentarmy.model.Message
 import com.parrotworks.oneagentarmy.model.PendingAttachment
@@ -16,6 +17,7 @@ fun ConversationEntity.toDomain() = Conversation(
     pinned = pinned,
     lastMessageAt = Instant.ofEpochMilli(lastMessageAt),
     contextWindowOverride = contextWindowOverride,
+    effort = effort?.let(EffortLevel::valueOf),
 )
 
 fun Conversation.toEntity() = ConversationEntity(
@@ -26,6 +28,7 @@ fun Conversation.toEntity() = ConversationEntity(
     pinned = pinned,
     lastMessageAt = lastMessageAt.toEpochMilli(),
     contextWindowOverride = contextWindowOverride,
+    effort = effort?.name,
 )
 
 fun MessageEntity.toDomain() = Message(
@@ -94,6 +97,7 @@ fun DraftEntity.toDomain() = Draft(
     },
     modelId = modelId,
     contextWindowOverride = contextWindowOverride,
+    effort = effort?.let(EffortLevel::valueOf),
     factIds = factIds.orEmpty().split(FACT_ID_SEPARATOR).filter { it.isNotBlank() }.toSet(),
 )
 
@@ -112,6 +116,7 @@ fun Draft.toEntity(conversationId: String) = DraftEntity(
     attachmentMime = (attachment as? PendingAttachment.Media)?.mime,
     modelId = modelId,
     contextWindowOverride = contextWindowOverride,
+    effort = effort?.name,
     // Stored as NULL rather than "" when nothing is selected, so the column reads the same
     // as a row written before this feature existed.
     factIds = factIds.takeIf { it.isNotEmpty() }?.joinToString(FACT_ID_SEPARATOR),

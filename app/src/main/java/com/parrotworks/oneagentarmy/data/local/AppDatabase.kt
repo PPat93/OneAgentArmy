@@ -16,7 +16,7 @@ import java.util.UUID
         DraftEntity::class,
         CostEntryEntity::class,
     ],
-    version = 12,
+    version = 13,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -162,6 +162,16 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE drafts ADD COLUMN modelId TEXT")
                 db.execSQL("ALTER TABLE drafts ADD COLUMN contextWindowOverride INTEGER")
                 db.execSQL("ALTER TABLE drafts ADD COLUMN factIds TEXT")
+            }
+        }
+
+        val MIGRATION_12_13 = object : Migration(12, 13) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Nullable with no DEFAULT: null means "use the provider's default", which
+                // is exactly what every existing conversation/draft meant before this
+                // column existed - effort was never sent on the wire until now.
+                db.execSQL("ALTER TABLE conversations ADD COLUMN effort TEXT")
+                db.execSQL("ALTER TABLE drafts ADD COLUMN effort TEXT")
             }
         }
 

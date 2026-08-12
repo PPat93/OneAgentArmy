@@ -34,6 +34,11 @@ data class AiModelOption(
     // (gpt-4.1-nano rejects it with HTTP 400) - models without support fall back
     // to the Tavily function tool even when hosted search is selected in settings.
     val supportsHostedWebSearch: Boolean = false,
+    // Whether this model accepts a reasoning-depth override (OpenAI reasoning.effort /
+    // Anthropic output_config.effort). False for non-reasoning tiers (gpt-4.1-nano) and
+    // models that 400 on the field (claude-haiku-4-5) - the UI hides the effort picker
+    // and providers never send the parameter when this is false.
+    val supportsEffort: Boolean = false,
 ) {
     fun labelFor(polish: Boolean): String = if (polish) labelPl ?: label else label
 }
@@ -92,6 +97,7 @@ object AiProviderRegistry {
                     cachedInputUsdPerMTok = 0.02,
                     hostedSearchUsdPerCall = 0.010,
                     supportsHostedWebSearch = true,
+                    supportsEffort = true,
                 ),
                 AiModelOption(
                     id = "gpt-5.6-sol",
@@ -103,6 +109,7 @@ object AiProviderRegistry {
                     cachedInputUsdPerMTok = 0.50,
                     hostedSearchUsdPerCall = 0.010,
                     supportsHostedWebSearch = true,
+                    supportsEffort = true,
                 ),
             ),
             isAvailable = true,
@@ -192,6 +199,7 @@ object AiProviderRegistry {
                     cacheWriteUsdPerMTok = 2.50,
                     hostedSearchUsdPerCall = 0.010,
                     supportsHostedWebSearch = true,
+                    supportsEffort = true,
                 ),
                 // Opus 5 is priced identically to the Opus 4.8 it replaces here.
                 AiModelOption(
@@ -205,6 +213,7 @@ object AiProviderRegistry {
                     cacheWriteUsdPerMTok = 6.25,
                     hostedSearchUsdPerCall = 0.010,
                     supportsHostedWebSearch = true,
+                    supportsEffort = true,
                 ),
             ),
             isAvailable = true,

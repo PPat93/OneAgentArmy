@@ -1,6 +1,7 @@
 package com.parrotworks.oneagentarmy.provider.ai.openai
 
 import com.parrotworks.oneagentarmy.data.repository.SettingsRepository
+import com.parrotworks.oneagentarmy.model.EffortLevel
 import com.parrotworks.oneagentarmy.model.Message
 import com.parrotworks.oneagentarmy.model.Sender
 import com.parrotworks.oneagentarmy.provider.ai.AiProvider
@@ -12,6 +13,7 @@ import com.parrotworks.oneagentarmy.provider.ai.TokenUsage
 import com.parrotworks.oneagentarmy.provider.ai.buildSystemPrompt
 import com.parrotworks.oneagentarmy.provider.ai.withSendTimes
 import com.parrotworks.oneagentarmy.provider.ai.openai.dto.ResponsesRequest
+import com.parrotworks.oneagentarmy.provider.ai.openai.dto.reasoningEffortJson
 import com.parrotworks.oneagentarmy.provider.ai.openai.dto.inputMessageItem
 import com.parrotworks.oneagentarmy.provider.ai.openai.dto.inputMessageItemWithAttachment
 import com.parrotworks.oneagentarmy.provider.ai.openai.dto.toTokenUsage
@@ -42,11 +44,23 @@ class OpenAiProvider(
 
     private val executorsByName = executors.associateBy { it.toolName }
 
-    override suspend fun sendMessage(history: List<Message>, modelId: String, contextFacts: List<String>): AiReply {
+    override suspend fun sendMessage(
+        history: List<Message>,
+        modelId: String,
+        effort: EffortLevel?,
+        contextFacts: List<String>,
+    ): AiReply {
         val apiKey = settingsRepository.getApiKey(AiProviderRegistry.OPENAI)
         if (apiKey.isNullOrBlank()) throw AiProviderException.MissingApiKey
 
         val conversationId = history.last().conversationId
+        // Only ever sent to models that declare support - gpt-4.1-nano isn't a
+        // reasoning model and would 400 on this field.
+        val reasoning = if (effort != null && AiProviderRegistry.modelOptionFor(modelId)?.supportsEffort == true) {
+            reasoningEffortJson(effort.name.lowercase())
+        } else {
+            null
+        }
 
         // Hosted mode swaps the Tavily function tool for OpenAI's server-side web_search,
         // which needs no key and no round-trip on our side. Models that reject the hosted
@@ -82,6 +96,7 @@ class OpenAiProvider(
                 tools = toolsForThisRequest,
                 parallelToolCalls = if (toolsForThisRequest == null) null else false,
                 include = listOf("reasoning.encrypted_content"),
+                reasoning = reasoning,
             )
             val response = apiClient.createResponse(apiKey, request)
             usageTotal += response.usage.toTokenUsage()

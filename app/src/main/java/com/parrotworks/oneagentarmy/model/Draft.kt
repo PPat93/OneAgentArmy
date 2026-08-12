@@ -12,6 +12,7 @@ data class Draft(
     val attachment: PendingAttachment?,
     val modelId: String? = null,
     val contextWindowOverride: Int? = null,
+    val effort: EffortLevel? = null,
     val factIds: Set<String> = emptySet(),
 ) {
     // Nothing worth keeping - the draft row is deleted rather than stored blank. Note that a
@@ -22,5 +23,6 @@ data class Draft(
             attachment == null &&
             modelId == null &&
             contextWindowOverride == null &&
+            effort == null &&
             factIds.isEmpty()
 }

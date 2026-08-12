@@ -11,4 +11,7 @@ data class Conversation(
     val lastMessageAt: Instant,
     // Null means "use the global default" from Settings.
     val contextWindowOverride: Int? = null,
+    // Null means "use the provider's default" - only sent to models with
+    // AiModelOption.supportsEffort == true.
+    val effort: EffortLevel? = null,
 )

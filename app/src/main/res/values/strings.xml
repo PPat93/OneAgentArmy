@@ -67,6 +67,11 @@
     <string name="api_key_label">API key</string>
     <string name="coming_soon">Coming soon</string>
     <string name="model_label">Model</string>
+    <string name="effort_label">Effort</string>
+    <string name="effort_auto">Auto</string>
+    <string name="effort_low">Low</string>
+    <string name="effort_medium">Medium</string>
+    <string name="effort_high">High</string>
     <string name="provider_chip_label">Default AI:</string>
     <string name="monthly_cost_label">This month: %1$s</string>
     <string name="chat_font_scale_title">Chat font size</string>

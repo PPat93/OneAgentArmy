@@ -70,6 +70,7 @@ import androidx.compose.ui.unit.dp
 import com.parrotworks.oneagentarmy.R
 import com.parrotworks.oneagentarmy.data.local.newCameraPhotoUri
 import com.parrotworks.oneagentarmy.data.repository.SettingsRepository
+import com.parrotworks.oneagentarmy.model.EffortLevel
 import com.parrotworks.oneagentarmy.model.PendingAttachment
 import com.parrotworks.oneagentarmy.model.Sender
 import com.parrotworks.oneagentarmy.provider.ai.AiProviderRegistry
@@ -190,7 +191,9 @@ fun ChatScreen(
     val contextWindowOverride by viewModel.contextWindowOverride.collectAsState()
     val effectiveContextWindowSize by viewModel.effectiveContextWindowSize.collectAsState()
     val requestTimeoutSeconds by viewModel.requestTimeoutSeconds.collectAsState()
+    val effort by viewModel.effort.collectAsState()
     var modelMenuExpanded by remember { mutableStateOf(false) }
+    var effortMenuExpanded by remember { mutableStateOf(false) }
     var factsMenuExpanded by remember { mutableStateOf(false) }
     var contextWindowDialogVisible by remember { mutableStateOf(false) }
 
@@ -402,6 +405,36 @@ fun ChatScreen(
                                         modelMenuExpanded = false
                                     },
                                 )
+                            }
+                        }
+                    }
+                    if (selectedModel?.let(AiProviderRegistry::modelOptionFor)?.supportsEffort == true) {
+                        Box {
+                            TextButton(onClick = { effortMenuExpanded = true }) {
+                                Text(
+                                    text = effortLabel(effort),
+                                    color = MaterialTheme.colorScheme.primary,
+                                )
+                                Icon(
+                                    Icons.Default.ArrowDropDown,
+                                    contentDescription = stringResource(R.string.effort_label),
+                                    tint = MaterialTheme.colorScheme.primary,
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = effortMenuExpanded,
+                                onDismissRequest = { effortMenuExpanded = false },
+                            ) {
+                                val levels = listOf(null) + EffortLevel.entries
+                                levels.forEach { level ->
+                                    DropdownMenuItem(
+                                        text = { Text(effortLabel(level)) },
+                                        onClick = {
+                                            viewModel.setEffort(level)
+                                            effortMenuExpanded = false
+                                        },
+                                    )
+                                }
                             }
                         }
                     }
@@ -674,6 +707,14 @@ private const val CONTEXT_WINDOW_WARNING_THRESHOLD = 200
 // most of the screen).
 private const val MAX_INPUT_FIELD_LINES = 6
 private val MAX_INPUT_FIELD_HEIGHT = 160.dp
+
+@Composable
+private fun effortLabel(level: EffortLevel?): String = when (level) {
+    null -> stringResource(R.string.effort_auto)
+    EffortLevel.LOW -> stringResource(R.string.effort_low)
+    EffortLevel.MEDIUM -> stringResource(R.string.effort_medium)
+    EffortLevel.HIGH -> stringResource(R.string.effort_high)
+}
 
 @Composable
 private fun ContextWindowOverrideDialog(

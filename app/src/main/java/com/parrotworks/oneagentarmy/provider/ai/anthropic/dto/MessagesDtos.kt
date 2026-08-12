@@ -32,12 +32,21 @@ data class MessagesRequest(
     // message shape changes. Null omits the field entirely (explicitNulls = false),
     // which is what AnthropicApiClient falls back to if the API ever rejects it.
     @SerialName("cache_control") val cacheControl: JsonElement? = null,
+    // {"effort": "low"|"medium"|"high"} - only ever built for models whose
+    // AiModelOption.supportsEffort is true; null omits the field, which is the
+    // default request shape and matches the model's own server-side default
+    // (thinking stays on its adaptive default either way - this only tunes depth).
+    @SerialName("output_config") val outputConfig: JsonElement? = null,
 )
 
 // Ephemeral is the 5-minute cache, refreshed on every hit - long enough to cover an
 // active back-and-forth, which is where a chat app's repeated prefix actually pays off.
 fun ephemeralCacheControl(): JsonObject = buildJsonObject {
     put("type", JsonPrimitive("ephemeral"))
+}
+
+fun outputConfigEffort(effort: String): JsonObject = buildJsonObject {
+    put("effort", JsonPrimitive(effort))
 }
 
 @Serializable
