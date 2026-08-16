@@ -1,6 +1,7 @@
 package com.parrotworks.oneagentarmy.provider.ai.gemini
 
 import com.parrotworks.oneagentarmy.data.repository.SettingsRepository
+import com.parrotworks.oneagentarmy.model.EffortLevel
 import com.parrotworks.oneagentarmy.model.Message
 import com.parrotworks.oneagentarmy.model.Sender
 import com.parrotworks.oneagentarmy.provider.ai.AiProvider
@@ -43,7 +44,14 @@ class GeminiProvider(
 
     private val executorsByName = executors.associateBy { it.toolName }
 
-    override suspend fun sendMessage(history: List<Message>, modelId: String, contextFacts: List<String>): AiReply {
+    // effort is unused - Gemini has no equivalent parameter, and no Gemini model sets
+    // AiModelOption.supportsEffort, so the UI never lets it be non-null here anyway.
+    override suspend fun sendMessage(
+        history: List<Message>,
+        modelId: String,
+        effort: EffortLevel?,
+        contextFacts: List<String>,
+    ): AiReply {
         val apiKey = settingsRepository.getApiKey(AiProviderRegistry.GEMINI)
         if (apiKey.isNullOrBlank()) throw AiProviderException.MissingApiKey
 

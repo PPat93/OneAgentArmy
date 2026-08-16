@@ -11,6 +11,7 @@ import com.parrotworks.oneagentarmy.data.repository.FactRepository
 import com.parrotworks.oneagentarmy.data.repository.SettingsRepository
 import com.parrotworks.oneagentarmy.model.DeliveryFailure
 import com.parrotworks.oneagentarmy.model.Draft
+import com.parrotworks.oneagentarmy.model.EffortLevel
 import com.parrotworks.oneagentarmy.model.Fact
 import com.parrotworks.oneagentarmy.model.Message
 import com.parrotworks.oneagentarmy.model.PendingAttachment
@@ -114,6 +115,7 @@ class ChatViewModel(
                 _pendingAttachment.value = draft.attachment
                 pendingModel.value = draft.modelId
                 pendingContextWindowOverride.value = draft.contextWindowOverride
+                pendingEffort.value = draft.effort
                 if (draft.factIds.isNotEmpty()) {
                     // Nothing can stop a fact from being deleted while the draft sits unsent
                     // (no foreign key is possible - see DraftEntity.factIds), so ids are kept
@@ -225,6 +227,29 @@ class ChatViewModel(
         }
     }
 
+    // Reasoning-depth override chosen before the conversation exists - same trick as
+    // pendingModel/pendingContextWindowOverride. Null means "use the provider's default",
+    // which is also the UI's "Auto" state.
+    private val pendingEffort = MutableStateFlow<EffortLevel?>(null)
+
+    val effort: StateFlow<EffortLevel?> = combine(
+        repository.observeConversation(conversationId),
+        pendingEffort,
+    ) { conversation, pending ->
+        if (conversation != null) conversation.effort else pending
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    fun setEffort(value: EffortLevel?) {
+        viewModelScope.launch {
+            pendingEffort.value = value
+            if (repository.conversationExists(conversationId)) {
+                repository.setEffort(conversationId, value)
+            } else {
+                persistDraft()
+            }
+        }
+    }
+
     private val _isSending = MutableStateFlow(false)
     val isSending: StateFlow<Boolean> = _isSending.asStateFlow()
 
@@ -275,6 +300,7 @@ class ChatViewModel(
             attachment = _pendingAttachment.value,
             modelId = pendingModel.value.takeIf { unsent },
             contextWindowOverride = pendingContextWindowOverride.value.takeIf { unsent },
+            effort = pendingEffort.value.takeIf { unsent },
             factIds = if (unsent) pendingFactIds.value else emptySet(),
         )
         if (draft.isEmpty()) {
@@ -467,6 +493,10 @@ class ChatViewModel(
                 pendingContextWindowOverride.value?.let { override ->
                     repository.setContextWindowOverride(conversationId, override)
                 }
+                // Persist an effort level chosen before the conversation row existed.
+                pendingEffort.value?.let { effort ->
+                    repository.setEffort(conversationId, effort)
+                }
                 // This conversation just graduated from "reserved new-conversation id" to a
                 // real row - if it was the one reused across "New conversation" taps, that
                 // reservation is now spent, so the next tap must mint a fresh one rather
@@ -489,7 +519,7 @@ class ChatViewModel(
             )
             repository.addMessage(conversationId, userMessage)
 
-            requestAiReply(messages.value + userMessage, modelId, selectedIds)
+            requestAiReply(messages.value + userMessage, modelId, effort.value, selectedIds)
         }
     }
 
@@ -509,11 +539,11 @@ class ChatViewModel(
             val current = messages.value
 
             if (current.lastOrNull()?.id == message.id) {
-                requestAiReply(current, modelId, selectedIds)
+                requestAiReply(current, modelId, effort.value, selectedIds)
             } else {
                 val copy = message.copy(id = UUID.randomUUID().toString(), timestamp = Instant.now())
                 repository.addMessage(conversationId, copy)
-                requestAiReply(current + copy, modelId, selectedIds)
+                requestAiReply(current + copy, modelId, effort.value, selectedIds)
             }
         }
     }
@@ -550,7 +580,12 @@ class ChatViewModel(
             .filter { it.isGlobal || it.id in selectedIds }
             .map { it.content }
 
-    private suspend fun requestAiReply(history: List<Message>, modelId: String, selectedIds: Set<String>) {
+    private suspend fun requestAiReply(
+        history: List<Message>,
+        modelId: String,
+        effort: EffortLevel?,
+        selectedIds: Set<String>,
+    ) {
         // The message this reply belongs to. If nothing comes back, the reason is written
         // onto it, so the gap in the transcript explains itself instead of looking like a
         // message that vanished - the error banner below is in-memory and does not survive
@@ -563,7 +598,7 @@ class ChatViewModel(
         _isSending.value = true
         try {
             val historyToSend = ContextWindowStrategies.rollingChunked(effectiveContextWindowSize.value).apply(history)
-            when (val reply = aiProvider.sendMessage(historyToSend, modelId, activeFactContents(selectedIds))) {
+            when (val reply = aiProvider.sendMessage(historyToSend, modelId, effort, activeFactContents(selectedIds))) {
                 is AiReply.Text -> repository.addMessage(conversationId, reply.message)
                 is AiReply.ToolCall -> {
                     pendingActionUsage = reply.usage

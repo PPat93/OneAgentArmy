@@ -24,7 +24,8 @@
           "outputUsdPerMTok": 1.20,
           "cachedInputUsdPerMTok": 0.02,
           "hostedSearchUsdPerCall": 0.010,
-          "supportsHostedWebSearch": true
+          "supportsHostedWebSearch": true,
+          "supportsEffort": true
         },
         {
           "id": "gpt-5.6-sol",
@@ -35,7 +36,8 @@
           "outputUsdPerMTok": 30.00,
           "cachedInputUsdPerMTok": 0.50,
           "hostedSearchUsdPerCall": 0.010,
-          "supportsHostedWebSearch": true
+          "supportsHostedWebSearch": true,
+          "supportsEffort": true
         }
       ]
     },
@@ -101,7 +103,8 @@
           "cachedInputUsdPerMTok": 0.20,
           "cacheWriteUsdPerMTok": 2.50,
           "hostedSearchUsdPerCall": 0.010,
-          "supportsHostedWebSearch": true
+          "supportsHostedWebSearch": true,
+          "supportsEffort": true
         },
         {
           "id": "claude-opus-5",
@@ -113,7 +116,8 @@
           "cachedInputUsdPerMTok": 0.50,
           "cacheWriteUsdPerMTok": 6.25,
           "hostedSearchUsdPerCall": 0.010,
-          "supportsHostedWebSearch": true
+          "supportsHostedWebSearch": true,
+          "supportsEffort": true
         }
       ]
     }

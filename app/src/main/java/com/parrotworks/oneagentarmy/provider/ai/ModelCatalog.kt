@@ -40,6 +40,7 @@ data class CatalogModel(
     // must not silently under-report a bill.
     val hostedSearchUsdPerCall: Double? = null,
     val supportsHostedWebSearch: Boolean = false,
+    val supportsEffort: Boolean = false,
 )
 
 fun CatalogModel.toOption() = AiModelOption(
@@ -55,6 +56,7 @@ fun CatalogModel.toOption() = AiModelOption(
     cacheWriteUsdPerMTok = cacheWriteUsdPerMTok?.takeIf { it >= 0.0 },
     hostedSearchUsdPerCall = hostedSearchUsdPerCall?.takeIf { it >= 0.0 },
     supportsHostedWebSearch = supportsHostedWebSearch,
+    supportsEffort = supportsEffort,
 )
 
 // The schema version this app understands. A catalog with a different version is

@@ -67,6 +67,11 @@
     <string name="api_key_label">Klucz API</string>
     <string name="coming_soon">Wkrótce</string>
     <string name="model_label">Model</string>
+    <string name="effort_label">Wysiłek</string>
+    <string name="effort_auto">Auto</string>
+    <string name="effort_low">Niski</string>
+    <string name="effort_medium">Średni</string>
+    <string name="effort_high">Wysoki</string>
     <string name="provider_chip_label">Domyślne AI:</string>
     <string name="monthly_cost_label">W tym miesiącu: %1$s</string>
     <string name="chat_font_scale_title">Wielkość czcionki czatu</string>

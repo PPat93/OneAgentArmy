@@ -9,6 +9,7 @@ import com.parrotworks.oneagentarmy.data.local.toDomain
 import com.parrotworks.oneagentarmy.data.local.toEntity
 import com.parrotworks.oneagentarmy.model.Conversation
 import com.parrotworks.oneagentarmy.model.Draft
+import com.parrotworks.oneagentarmy.model.EffortLevel
 import com.parrotworks.oneagentarmy.model.Message
 import com.parrotworks.oneagentarmy.model.MessageSearchResult
 import com.parrotworks.oneagentarmy.provider.ai.AiProviderRegistry
@@ -129,6 +130,10 @@ class RoomConversationRepository(
 
     override suspend fun setContextWindowOverride(conversationId: String, value: Int?) {
         dao.setContextWindowOverride(conversationId, value)
+    }
+
+    override suspend fun setEffort(conversationId: String, value: EffortLevel?) {
+        dao.setEffort(conversationId, value?.name)
     }
 
     override fun observeConversationCost(conversationId: String): Flow<Double?> =

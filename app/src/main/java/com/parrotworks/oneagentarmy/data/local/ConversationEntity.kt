@@ -12,4 +12,5 @@ data class ConversationEntity(
     val pinned: Boolean = false,
     val lastMessageAt: Long,
     val contextWindowOverride: Int? = null,
+    val effort: String? = null,
 )

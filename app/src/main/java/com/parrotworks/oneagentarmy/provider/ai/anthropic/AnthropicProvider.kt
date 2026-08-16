@@ -1,6 +1,7 @@
 package com.parrotworks.oneagentarmy.provider.ai.anthropic
 
 import com.parrotworks.oneagentarmy.data.repository.SettingsRepository
+import com.parrotworks.oneagentarmy.model.EffortLevel
 import com.parrotworks.oneagentarmy.model.Message
 import com.parrotworks.oneagentarmy.model.Sender
 import com.parrotworks.oneagentarmy.provider.ai.AiProvider
@@ -16,6 +17,7 @@ import com.parrotworks.oneagentarmy.provider.ai.anthropic.dto.functionToolJson
 import com.parrotworks.oneagentarmy.provider.ai.anthropic.dto.historyMessage
 import com.parrotworks.oneagentarmy.provider.ai.anthropic.dto.historyMessageWithAttachment
 import com.parrotworks.oneagentarmy.provider.ai.anthropic.dto.hostedSearchCallCount
+import com.parrotworks.oneagentarmy.provider.ai.anthropic.dto.outputConfigEffort
 import com.parrotworks.oneagentarmy.provider.ai.anthropic.dto.outputText
 import com.parrotworks.oneagentarmy.provider.ai.anthropic.dto.toolChoiceAutoNoParallel
 import com.parrotworks.oneagentarmy.provider.ai.anthropic.dto.toolChoiceNone
@@ -46,11 +48,23 @@ class AnthropicProvider(
 
     private val executorsByName = executors.associateBy { it.toolName }
 
-    override suspend fun sendMessage(history: List<Message>, modelId: String, contextFacts: List<String>): AiReply {
+    override suspend fun sendMessage(
+        history: List<Message>,
+        modelId: String,
+        effort: EffortLevel?,
+        contextFacts: List<String>,
+    ): AiReply {
         val apiKey = settingsRepository.getApiKey(AiProviderRegistry.ANTHROPIC)
         if (apiKey.isNullOrBlank()) throw AiProviderException.MissingApiKey
 
         val conversationId = history.last().conversationId
+        // Only ever sent to models that declare support - claude-haiku-4-5 returns
+        // 400 on output_config.effort.
+        val outputConfig = if (effort != null && AiProviderRegistry.modelOptionFor(modelId)?.supportsEffort == true) {
+            outputConfigEffort(effort.name.lowercase())
+        } else {
+            null
+        }
 
         // Hosted mode swaps the Tavily function tool for Anthropic's server-side
         // web search, which needs no key and no round-trip on our side.
@@ -107,6 +121,7 @@ class AnthropicProvider(
                 // attachment still inside the window, which would otherwise be
                 // re-billed at full price on each follow-up.
                 cacheControl = ephemeralCacheControl(),
+                outputConfig = outputConfig,
             )
             val response = apiClient.createMessage(apiKey, request)
             usageTotal += response.usage.toTokenUsage()
