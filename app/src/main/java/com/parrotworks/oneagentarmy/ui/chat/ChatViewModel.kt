@@ -711,7 +711,11 @@ internal fun Throwable.toChatError(timeoutSeconds: Int, elapsedSeconds: Int): Ch
         // The tolerance absorbs whole-second truncation, so a read that timed out at
         // 239.6s against a 240s budget still reads as the genuine timeout it was.
         if (elapsedSeconds >= timeoutSeconds - TIMEOUT_ATTRIBUTION_TOLERANCE_SECONDS) {
-            ChatError.Timeout(timeoutSeconds, detail)
+            // The banner text only ever states the configured limit, never the actual
+            // elapsed time - appending it here is what makes a misattribution (elapsed
+            // far below the stated limit) visible in a screenshot instead of invisible.
+            val elapsedNote = "elapsed ${elapsedSeconds}s"
+            ChatError.Timeout(timeoutSeconds, if (detail.isNullOrBlank()) elapsedNote else "$detail ($elapsedNote)")
         } else {
             ChatError.ConnectionCut(elapsedSeconds, timeoutSeconds, detail)
         }

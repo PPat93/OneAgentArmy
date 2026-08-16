@@ -38,7 +38,7 @@ class DeliveryFailureMappingTest {
         val error = AiProviderException.Timeout("read timed out")
             .toChatError(configuredTimeout, elapsedSeconds = configuredTimeout)
 
-        assertEquals(ChatError.Timeout(configuredTimeout, "read timed out"), error)
+        assertEquals(ChatError.Timeout(configuredTimeout, "read timed out (elapsed 240s)"), error)
     }
 
     // --- telling a real timeout apart from a dropped connection ---
@@ -63,7 +63,7 @@ class DeliveryFailureMappingTest {
         val error = AiProviderException.Timeout(null)
             .toChatError(configuredTimeout, elapsedSeconds = configuredTimeout - 1)
 
-        assertEquals(ChatError.Timeout(configuredTimeout, null), error)
+        assertEquals(ChatError.Timeout(configuredTimeout, "elapsed 239s"), error)
     }
 
     @Test
@@ -73,7 +73,7 @@ class DeliveryFailureMappingTest {
         val error = AiProviderException.Timeout(null)
             .toChatError(configuredTimeout, elapsedSeconds = configuredTimeout * 3)
 
-        assertEquals(ChatError.Timeout(configuredTimeout, null), error)
+        assertEquals(ChatError.Timeout(configuredTimeout, "elapsed 720s"), error)
     }
 
     @Test
